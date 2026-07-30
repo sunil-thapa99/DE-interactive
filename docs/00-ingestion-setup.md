@@ -1,9 +1,9 @@
 # Snowflake Ingestion Setup — S3 Source (Shared Foundation)
 
 This file sets up the **common ingestion layer** used by all three ETL variants:
-- [snowflake-pipeline-01-tasks-streams.md](snowflake-pipeline-01-tasks-streams.md)
-- [snowflake-pipeline-02-dynamic-tables.md](snowflake-pipeline-02-dynamic-tables.md)
-- [snowflake-pipeline-03-external-orchestrator.md](snowflake-pipeline-03-external-orchestrator.md)
+- [01-tasks-streams.md](01-tasks-streams.md)
+- [02-dynamic-tables.md](02-dynamic-tables.md)
+- [03-external-orchestrator.md](03-external-orchestrator.md)
 
 Do this setup once, then follow whichever ETL file matches your chosen engine.
 

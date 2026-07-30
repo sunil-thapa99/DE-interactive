@@ -4,13 +4,26 @@ An interactive, static web dashboard for learning how to build a Snowflake inges
 
 **Live demo:** enable GitHub Pages (see below) and it'll be at `https://<your-username>.github.io/<repo-name>/`
 
-## What's included
+## Project structure
 
-- `index.html`, `styles.css`, `script.js`, `content.js` — the interactive dashboard (no build step, pure static files)
-- `snowflake-pipeline-00-ingestion-setup.md` — S3 → Snowpipe ingestion setup (shared by all variants)
-- `snowflake-pipeline-01-tasks-streams.md` — ETL via Streams + Tasks
-- `snowflake-pipeline-02-dynamic-tables.md` — ETL via Dynamic Tables
-- `snowflake-pipeline-03-external-orchestrator.md` — ETL via dbt + Airflow
+```
+.
+├── index.html                     # dashboard entry point (GitHub Pages serves this)
+├── assets/
+│   ├── css/
+│   │   └── styles.css             # dashboard styling (light/dark aware)
+│   └── js/
+│       ├── content.js             # dashboard content data (steps, code, quiz)
+│       └── script.js              # rendering, tabs, progress tracking, quiz logic
+├── docs/
+│   ├── 00-ingestion-setup.md      # S3 → Snowpipe ingestion setup (shared by all variants)
+│   ├── 01-tasks-streams.md        # ETL via Streams + Tasks
+│   ├── 02-dynamic-tables.md       # ETL via Dynamic Tables
+│   └── 03-external-orchestrator.md# ETL via dbt + Airflow
+├── .gitattributes
+├── .gitignore
+└── README.md
+```
 
 The dashboard includes: an architecture overview, step-by-step cards with copyable SQL and click-through navigation for Snowsight/AWS Console, a comparison table across the three ETL approaches, progress tracking (saved in your browser via `localStorage`), and a short quiz.
 

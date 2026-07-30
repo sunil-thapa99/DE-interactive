@@ -1,6 +1,6 @@
 # ETL Variant 3: External Orchestrator (Airflow / dbt)
 
-Prerequisite: complete [snowflake-pipeline-00-ingestion-setup.md](snowflake-pipeline-00-ingestion-setup.md) first — this assumes `AWS_INGEST_DB.RAW.LANDING` is being populated by Snowpipe. Snowflake only holds the raw + target tables; all scheduling/transform logic lives externally.
+Prerequisite: complete [00-ingestion-setup.md](00-ingestion-setup.md) first — this assumes `AWS_INGEST_DB.RAW.LANDING` is being populated by Snowpipe. Snowflake only holds the raw + target tables; all scheduling/transform logic lives externally.
 
 ## 1. Concept
 
