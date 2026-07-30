@@ -152,7 +152,7 @@
 
   function allCardIds() {
     const ids = [];
-    ["overview", "ingestion", "tasks", "dynamic", "orchestrator", "architecture", "governance", "interview"].forEach(k => {
+    ["overview", "ingestion", "tasks", "dynamic", "orchestrator", "architecture", "governance", "modeling", "interview"].forEach(k => {
       CONTENT[k].cards.forEach((_, i) => ids.push(cardId(k, i)));
     });
     return ids;

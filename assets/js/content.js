@@ -721,6 +721,188 @@ df.filter(col("ORDER_AMOUNT") > 100).group_by("ORDER_STATUS").count().show()`,
   ]
 },
 
+modeling: {
+  intro: {
+    title: "Data modeling & advanced loading — 4-5 YOE depth",
+    desc: "The pipeline so far loads one flat ORDERS table. Real Data Engineer roles expect you to design proper dimensional models, handle slowly changing history, tune bulk loads beyond Snowpipe, move data back out, and reason about newer table formats. Each card is a concept, a runnable example, and why it matters."
+  },
+  cards: [
+    {
+      title: "Star schema vs snowflake schema",
+      badge: "modeling",
+      concept: "A star schema puts one central fact table (transactional/measurable events — orders, clicks, payments) surrounded by denormalized dimension tables (customer, product, date) that each join directly to the fact table in a single hop. A snowflake schema normalizes those dimensions further (e.g. PRODUCT splits into PRODUCT → CATEGORY → DEPARTMENT), trading storage/redundancy for query simplicity. On Snowflake specifically, storage is cheap and compute is what you pay for, and every extra join hop is another operator in the query plan — so the star schema's single-hop joins are almost always the better default; snowflaking only pays off when a dimension attribute changes so often that denormalizing it would mean rewriting huge swaths of the dimension table on every update.",
+      navLabel: "Try it:",
+      nav: "Sketch the model before writing DDL: one fact table with foreign keys to each dimension's surrogate key, never the dimension's natural/business key.",
+      code: `CREATE TABLE ANALYTICS.DIM_CUSTOMER (
+  CUSTOMER_SK   NUMBER AUTOINCREMENT PRIMARY KEY,  -- surrogate key, stable even if source system changes
+  CUSTOMER_ID   STRING,                             -- natural/business key from the source
+  CUSTOMER_NAME STRING,
+  REGION        STRING
+);
+
+CREATE TABLE ANALYTICS.FACT_ORDERS (
+  ORDER_ID      STRING PRIMARY KEY,
+  CUSTOMER_SK   NUMBER REFERENCES ANALYTICS.DIM_CUSTOMER(CUSTOMER_SK),
+  ORDER_AMOUNT  NUMBER(12,2),
+  ORDER_TS      TIMESTAMP_NTZ
+);`,
+      noteLabel: "Why it matters:",
+      note: "Interviewers will ask you to justify fact vs. dimension classification on the spot — the test is: does this table represent something that happened (fact, usually numeric/additive) or something that describes/categorizes (dimension, usually text attributes)? Getting the surrogate-key pattern right (never join facts to dimensions on the natural key directly) is what makes SCD Type 2 possible in the next card."
+    },
+    {
+      title: "Slowly Changing Dimensions — Type 1, 2, and 3",
+      badge: "modeling",
+      concept: "SCD is about what happens when a dimension attribute changes (a customer moves region, a product gets recategorized) and whether you need to preserve that history. Type 1 overwrites — no history, simplest, use when the old value truly doesn't matter (correcting a typo). Type 2 adds a new row with validity dates and keeps the old row — full history, the standard choice for anything you'd ever need to report on 'as it was at the time' (e.g. which region a sale should be attributed to using the region that was true on the order date, not today's region). Type 3 adds a new column for the previous value — limited history (one prior state), rarely used, mainly when you only ever need 'current vs. immediately-previous.'",
+      navLabel: "Try it:",
+      nav: "Implement Type 2 with a MERGE that closes out the old row and inserts a new one in the same statement using a CTE.",
+      code: `MERGE INTO ANALYTICS.DIM_CUSTOMER_SCD2 AS tgt
+USING (
+  SELECT CUSTOMER_ID, CUSTOMER_NAME, REGION FROM STAGING.CUSTOMER_UPDATES
+) AS src
+ON tgt.CUSTOMER_ID = src.CUSTOMER_ID AND tgt.IS_CURRENT = TRUE
+WHEN MATCHED AND tgt.REGION != src.REGION THEN UPDATE SET
+  tgt.IS_CURRENT = FALSE, tgt.VALID_TO = CURRENT_TIMESTAMP()
+WHEN NOT MATCHED THEN INSERT (CUSTOMER_ID, CUSTOMER_NAME, REGION, VALID_FROM, VALID_TO, IS_CURRENT)
+  VALUES (src.CUSTOMER_ID, src.CUSTOMER_NAME, src.REGION, CURRENT_TIMESTAMP(), NULL, TRUE);
+-- Note: a single MERGE can't both close the old row AND insert the new one for the same key in one pass in all engines;
+-- production implementations typically run this as two statements (UPDATE old row, then INSERT new row) inside one transaction.`,
+      noteLabel: "Why it matters:",
+      note: "This is one of the most commonly asked hands-on SQL questions in DE interviews — 'design a table that tracks a customer's region history and write the load logic.' Being able to explain the VALID_FROM/VALID_TO/IS_CURRENT pattern and why a naive UPDATE-in-place (Type 1) loses the ability to correctly attribute historical facts is the actual signal they're looking for."
+    },
+    {
+      title: "COPY INTO file sizing & bulk load tuning",
+      badge: "loading",
+      concept: "Snowpipe (used elsewhere in this project) is optimized for frequent small files arriving continuously. For a one-time or scheduled bulk historical load, a plain COPY INTO on a warehouse is more efficient — but only if the source files are sized correctly. Snowflake parallelizes a COPY INTO load across the warehouse's available threads by file, not by splitting a single file — so 1 huge 5GB file loads on a single thread no matter how big the warehouse is, while 50 files of ~100MB each parallelize across many threads simultaneously. Snowflake's own guidance is roughly 100-250MB compressed per file as the sweet spot.",
+      navLabel: "Try it:",
+      nav: "Load a bulk historical export and check load parallelism.",
+      code: `COPY INTO AWS_INGEST_DB.RAW.LANDING (RAW_DATA)
+  FROM @AWS_INGEST_DB.RAW.S3_INGEST_STAGE/historical/
+  FILE_FORMAT = (FORMAT_NAME = AWS_INGEST_DB.RAW.FF_JSON)
+  PATTERN = '.*\\.json\\.gz'
+  PARALLEL = 8      -- warehouse-side load parallelism hint
+  ON_ERROR = 'CONTINUE';
+
+SELECT FILE_NAME, ROW_COUNT, STATUS FROM TABLE(INFORMATION_SCHEMA.COPY_HISTORY(
+  TABLE_NAME=>'AWS_INGEST_DB.RAW.LANDING', START_TIME=>DATEADD(HOUR,-2,CURRENT_TIMESTAMP())))
+ORDER BY LAST_LOAD_TIME DESC;`,
+      noteLabel: "Why it matters:",
+      note: "A common real interview scenario: 'a historical backfill of 200GB is taking 6 hours, how do you speed it up?' The answer is almost always file sizing/count and warehouse size, not application-level parallelism — an unaware candidate reaches for a bigger warehouse first when the actual bottleneck is 3 giant files that can't be parallelized regardless of warehouse size."
+    },
+    {
+      title: "Unloading data out of Snowflake",
+      badge: "loading",
+      concept: "COPY INTO works in both directions — the same command that loads data (stage → table) also unloads it (table → stage) when the direction of the arguments is reversed. This matters whenever another system (a data lake, a partner, a legacy BI tool) needs a flat-file export rather than direct query access, and it's also how you'd hand off data to a system that doesn't support Snowflake's connectors at all.",
+      navLabel: "Try it:",
+      nav: "Export a curated table back to S3 as partitioned Parquet files.",
+      code: `COPY INTO @AWS_INGEST_DB.RAW.S3_INGEST_STAGE/exports/orders/
+  FROM AWS_INGEST_DB.ANALYTICS.ORDERS
+  FILE_FORMAT = (TYPE = PARQUET)
+  HEADER = TRUE
+  MAX_FILE_SIZE = 134217728   -- ~128MB per output file, avoids one giant file on unload too
+  OVERWRITE = TRUE;`,
+      noteLabel: "Why it matters:",
+      note: "Same file-sizing logic from the loading card applies in reverse — MAX_FILE_SIZE keeps unloaded output from becoming one unwieldy file. Interviewers sometimes probe whether you know COPY INTO is bidirectional at all, since many candidates only ever think of it as a load command."
+    },
+    {
+      title: "Stream staleness",
+      badge: "gotcha",
+      concept: "A Stream depends on Time Travel metadata on its source table to compute the delta — if a stream goes unconsumed for longer than the source table's DATA_RETENTION_TIME_IN_DAYS (default 1 day on Standard edition), the stream becomes STALE and Snowflake can no longer reliably compute what changed. A stale stream doesn't error loudly by default in older behavior — querying it may silently return incomplete results unless you check its staleness first, which is exactly the kind of silent-data-loss bug that's hard to catch in code review.",
+      navLabel: "Try it:",
+      nav: "Check staleness before trusting a stream that hasn't been consumed recently — e.g. after a paused/suspended task.",
+      code: `SHOW STREAMS LIKE 'LANDING_STREAM' IN SCHEMA AWS_INGEST_DB.RAW;
+-- check the "stale" column in the result — 'true' means the delta is no longer trustworthy
+
+ALTER TABLE AWS_INGEST_DB.RAW.LANDING SET DATA_RETENTION_TIME_IN_DAYS = 3;  -- widen the safety window`,
+      noteLabel: "Why it matters:",
+      note: "This is a classic 'why did my Task+Stream pipeline silently stop producing correct results after I paused it for a few days' interview/real-world scenario. The fix is either widening retention on the source table or rebuilding the stream (which forces a fresh baseline, at the cost of the old delta)."
+    },
+    {
+      title: "Serverless task compute sizing",
+      badge: "gotcha",
+      concept: "A Task doesn't have to run on a warehouse you manage explicitly — omitting WAREHOUSE lets Snowflake run it as a serverless task, using Snowflake-managed compute that's billed separately and can auto-scale between runs based on observed workload. USER_TASK_MANAGED_INITIAL_WAREHOUSE_SIZE sets the starting size before Snowflake's own sizing heuristics take over.",
+      navLabel: "Try it:",
+      nav: "Convert a task to serverless when you don't want to own warehouse sizing for it.",
+      code: `CREATE TASK AWS_INGEST_DB.STAGING.TASK_LOAD_ORDERS_SERVERLESS
+  USER_TASK_MANAGED_INITIAL_WAREHOUSE_SIZE = 'XSMALL'
+  SCHEDULE = '1 MINUTE'
+  WHEN SYSTEM$STREAM_HAS_DATA('AWS_INGEST_DB.RAW.LANDING_STREAM')
+AS
+MERGE INTO AWS_INGEST_DB.ANALYTICS.ORDERS ... ;`,
+      noteLabel: "Why it matters:",
+      note: "Serverless tasks trade a bit of cost predictability (Snowflake decides sizing, billed per-second on its own credit rate) for zero warehouse management overhead — useful for infrequent, small, or unpredictable-load transform tasks where hand-tuning a dedicated warehouse isn't worth the effort. Worth knowing this option exists so you don't default to 'every task needs an explicit WAREHOUSE' when asked to design something lightweight."
+    },
+    {
+      title: "Schema inference & MATCH_BY_COLUMN_NAME",
+      badge: "loading",
+      concept: "Instead of hand-writing a CREATE TABLE and then casting every VARIANT field individually (as this project's core pipeline does), Snowflake can infer a table schema directly from a set of Parquet/Avro/CSV/JSON files using INFER_SCHEMA, and MATCH_BY_COLUMN_NAME lets a COPY INTO map source file columns to target table columns by name instead of positional order — useful when the source schema evolves (new columns added) without you rewriting the load statement.",
+      navLabel: "Try it:",
+      nav: "Auto-generate a table DDL from a sample of files instead of hand-typing every column.",
+      code: `SELECT * FROM TABLE(
+  INFER_SCHEMA(LOCATION => '@AWS_INGEST_DB.RAW.S3_INGEST_STAGE/historical/', FILE_FORMAT => 'AWS_INGEST_DB.RAW.FF_JSON')
+);
+
+CREATE TABLE AWS_INGEST_DB.RAW.ORDERS_TYPED
+  USING TEMPLATE (
+    SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*)) FROM TABLE(
+      INFER_SCHEMA(LOCATION => '@AWS_INGEST_DB.RAW.S3_INGEST_STAGE/historical/', FILE_FORMAT => 'AWS_INGEST_DB.RAW.FF_JSON')
+    )
+  );
+
+COPY INTO AWS_INGEST_DB.RAW.ORDERS_TYPED
+  FROM @AWS_INGEST_DB.RAW.S3_INGEST_STAGE/historical/
+  FILE_FORMAT = (FORMAT_NAME = AWS_INGEST_DB.RAW.FF_JSON)
+  MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE;`,
+      noteLabel: "Why it matters:",
+      note: "This is the more 'modern' loading pattern Snowflake has pushed for structured Parquet sources especially — it reduces the amount of hand-maintained VARIANT-casting SQL this project's ingestion setup relies on, at the cost of being less explicit about types. Good to mention as an alternative approach when asked 'how would you improve this ingestion design.'"
+    },
+    {
+      title: "External tables vs. Iceberg tables",
+      badge: "concept",
+      concept: "An external table lets you query files sitting in S3 (or another cloud store) as if they were a Snowflake table, without ever copying the data in — Snowflake reads directly from the external location on each query, refreshing its own metadata via a similar auto-refresh mechanism to Snowpipe. It's read-only and typically slower than a native table since there's no Snowflake-managed micro-partitioning. Iceberg Tables are the newer, more capable evolution: Snowflake can both read AND write Apache Iceberg-format tables stored in your own S3 bucket, with full DML support and near-native performance, while still being directly readable by other Iceberg-compatible engines (Spark, Athena, etc.) — solving the 'my data is locked into Snowflake's proprietary storage format' concern some orgs have.",
+      navLabel: "Try it:",
+      nav: "Contrast a basic external table against an Iceberg table over the same S3 location.",
+      code: `-- External table: read-only, Snowflake-managed metadata pointer to files in place
+CREATE EXTERNAL TABLE AWS_INGEST_DB.RAW.EXT_ORDERS
+  LOCATION = @AWS_INGEST_DB.RAW.S3_INGEST_STAGE/historical/
+  AUTO_REFRESH = TRUE
+  FILE_FORMAT = (TYPE = PARQUET);
+
+-- Iceberg table: Snowflake reads AND writes, data still lives in your own S3 bucket in open format
+CREATE ICEBERG TABLE AWS_INGEST_DB.ANALYTICS.ICEBERG_ORDERS
+  EXTERNAL_VOLUME = 'my_s3_iceberg_volume'
+  CATALOG = 'SNOWFLAKE'
+  BASE_LOCATION = 'iceberg/orders/'
+AS SELECT * FROM AWS_INGEST_DB.ANALYTICS.ORDERS;`,
+      noteLabel: "Why it matters:",
+      note: "Iceberg table support is one of the most actively-evolving parts of the Snowflake platform right now (2025-2026), and increasingly shows up in interviews as a 'have you kept up with the platform' signal, especially at orgs concerned about multi-engine/multi-cloud data lake strategies rather than being fully locked into Snowflake-proprietary storage."
+    },
+    {
+      title: "Troubleshooting scenario: a task has been running for 2 hours",
+      badge: "scenario",
+      navLabel: "How to approach it:",
+      nav: "This is a live-scenario question, not a lookup — walk the interviewer through your diagnostic order, not just the eventual fix.",
+      code: `SELECT * FROM TABLE(INFORMATION_SCHEMA.QUERY_HISTORY_BY_WAREHOUSE(WAREHOUSE_NAME=>'INGEST_WH'))
+WHERE EXECUTION_STATUS = 'RUNNING' ORDER BY START_TIME;
+
+SELECT SYSTEM$CANCEL_QUERY('<query_id>');   -- once you've confirmed it's genuinely stuck, not just slow`,
+      noteLabel: "Model answer:",
+      note: "\"First I'd check Query History filtered to that warehouse for RUNNING queries and open the Query Profile for the stuck one — I'm looking for spillage to remote storage (undersized warehouse for the data volume), a join producing far more rows than expected (bad join key), or the query just waiting on a warehouse that's queued behind other work. If it's a genuine runaway (e.g. a Cartesian join), I'd cancel it with SYSTEM$CANCEL_QUERY rather than let it keep burning credits, then fix the query and consider whether a resource monitor should have caught this earlier.\""
+    },
+    {
+      title: "Troubleshooting scenario: credit spend spiked 3x overnight",
+      badge: "scenario",
+      navLabel: "How to approach it:",
+      nav: "Another scenario question — show you'd investigate with data, not guess.",
+      code: `SELECT WAREHOUSE_NAME, DATE_TRUNC('hour', START_TIME) AS hr, SUM(CREDITS_USED) AS credits
+FROM SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY
+WHERE START_TIME > DATEADD(DAY, -2, CURRENT_TIMESTAMP())
+GROUP BY 1, 2 ORDER BY 3 DESC LIMIT 20;`,
+      noteLabel: "Model answer:",
+      note: "\"I'd start with WAREHOUSE_METERING_HISTORY bucketed by hour to find which specific warehouse and time window drove the spike, then cross-reference QUERY_HISTORY for that warehouse/window to find the specific query or queries responsible — common culprits are a Dynamic Table whose REFRESH_MODE silently fell back to FULL, a Task loop that started running every minute instead of skipping via STREAM_HAS_DATA due to a stream going stale, or someone running ad-hoc exploratory queries on a production-sized warehouse. I'd fix the immediate cause, then check whether a resource monitor threshold should be tightened so the next spike pages someone before it becomes a monthly bill surprise.\""
+    }
+  ]
+},
+
 interview: {
   intro: {
     title: "Interview prep — talk through this project",

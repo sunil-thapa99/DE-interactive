@@ -25,7 +25,7 @@ An interactive, static web dashboard for learning how to build a Snowflake inges
 └── README.md
 ```
 
-The dashboard includes: an architecture overview, step-by-step cards with copyable SQL and click-through navigation for Snowsight/AWS Console, a comparison table across the three ETL approaches, an **Architecture & Performance** tab and a **Governance & Advanced** tab (broader Snowflake concepts a 4-5 YOE Data Engineer is expected to know — clustering, caching, Time Travel/Fail-safe, RBAC, masking policies, secure data sharing, Snowpark, CI/CD, DR, and more), an **Interview Prep** tab (common DE/Snowflake interview questions with model answers, framed around this project), progress tracking (saved in your browser via `localStorage`), and a short quiz.
+The dashboard includes: an architecture overview, step-by-step cards with copyable SQL and click-through navigation for Snowsight/AWS Console (each ETL step also has an in-depth **Concept** explanation of the underlying mechanism, not just the how-to), a comparison table across the three ETL approaches, an **Architecture & Performance** tab and a **Governance & Advanced** tab (clustering, caching, Time Travel/Fail-safe, RBAC, masking policies, secure data sharing, Snowpark, CI/CD, DR), a **Data Modeling & Loading** tab (star/snowflake schema, SCD Type 1/2/3, COPY INTO file-sizing tuning, unloading, stream staleness, serverless tasks, schema inference, external/Iceberg tables, and two live troubleshooting scenarios), an **Interview Prep** tab (common DE/Snowflake interview questions with model answers, framed around this project), progress tracking (saved in your browser via `localStorage`), and a short quiz.
 
 ## Run locally
 
