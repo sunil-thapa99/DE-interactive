@@ -1,31 +1,40 @@
 # DE Interactive — Data Engineering Learning Dashboard
 
-An interactive, static web dashboard for learning Data Engineering concepts and interview prep. Currently covers a full Snowflake + AWS ingestion/ETL pipeline in depth (Snowpipe ingestion, three ETL orchestration patterns, architecture/performance, governance, data modeling, and interview Q&A) — structured so other technologies can be added as additional tabs over time.
+A hands-on, interview-focused learning platform for Data Engineering. The home page lists available technologies; each one opens its own interactive dashboard with step-by-step build guides, in-depth concept explanations, architecture/trade-off deep-dives, and an interview prep section.
 
 **Live demo:** https://sunil-thapa99.github.io/DE-interactive/
+
+## Technologies
+
+- **Snowflake + AWS** (`technologies/snowflake/`) — Snowpipe ingestion from S3, three ETL orchestration patterns (Tasks+Streams, Dynamic Tables, dbt+Airflow), architecture & performance, governance & advanced concepts, data modeling & loading, and interview Q&A.
+- More technologies (Kafka, Databricks+Spark, Airflow) are planned — see the home page for the roadmap.
 
 ## Project structure
 
 ```
 .
-├── index.html                     # dashboard entry point (GitHub Pages serves this)
+├── index.html                          # home page — technology picker (GitHub Pages serves this)
 ├── assets/
 │   ├── css/
-│   │   └── styles.css             # dashboard styling (light/dark aware)
+│   │   ├── home.css                    # home page styling
+│   │   └── styles.css                  # shared dashboard styling used by each technology module
 │   └── js/
-│       ├── content.js             # dashboard content data (steps, code, quiz)
-│       └── script.js              # rendering, tabs, progress tracking, quiz logic
+│       ├── content.js                  # Snowflake module content data (steps, code, quiz)
+│       └── script.js                   # Snowflake module rendering, tabs, progress tracking, quiz logic
+├── technologies/
+│   └── snowflake/
+│       └── index.html                  # Snowflake + AWS interactive dashboard
 ├── docs/
-│   ├── 00-ingestion-setup.md      # S3 → Snowpipe ingestion setup (shared by all variants)
-│   ├── 01-tasks-streams.md        # ETL via Streams + Tasks
-│   ├── 02-dynamic-tables.md       # ETL via Dynamic Tables
-│   └── 03-external-orchestrator.md# ETL via dbt + Airflow
+│   ├── 00-ingestion-setup.md           # S3 → Snowpipe ingestion setup (shared by all variants)
+│   ├── 01-tasks-streams.md             # ETL via Streams + Tasks
+│   ├── 02-dynamic-tables.md            # ETL via Dynamic Tables
+│   └── 03-external-orchestrator.md     # ETL via dbt + Airflow
 ├── .gitattributes
 ├── .gitignore
 └── README.md
 ```
 
-The dashboard includes: an architecture overview, step-by-step cards with copyable SQL and click-through navigation for Snowsight/AWS Console (each ETL step also has an in-depth **Concept** explanation of the underlying mechanism, not just the how-to), a comparison table across the three ETL approaches, an **Architecture & Performance** tab and a **Governance & Advanced** tab (clustering, caching, Time Travel/Fail-safe, RBAC, masking policies, secure data sharing, Snowpark, CI/CD, DR), a **Data Modeling & Loading** tab (star/snowflake schema, SCD Type 1/2/3, COPY INTO file-sizing tuning, unloading, stream staleness, serverless tasks, schema inference, external/Iceberg tables, and two live troubleshooting scenarios), an **Interview Prep** tab (common DE/Snowflake interview questions with model answers, framed around this project), progress tracking (saved in your browser via `localStorage`), and a short quiz.
+Adding a new technology: create `technologies/<name>/index.html` (copy the Snowflake module's structure/tab pattern), its own `content.js`/`script.js` under `assets/js/` (or namespaced within the technology folder if content grows large), then add a card to `index.html`'s technology grid.
 
 ## Run locally
 

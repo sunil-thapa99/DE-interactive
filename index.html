@@ -4,45 +4,69 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>DE Interactive — Data Engineering Learning Dashboard</title>
-<link rel="stylesheet" href="assets/css/styles.css?v=6" />
+<link rel="stylesheet" href="assets/css/home.css?v=1" />
 </head>
 <body>
 
-<header class="topbar">
-  <div class="brand">
-    <span class="logo">❄️</span>
-    <div>
-      <h1>DE Interactive</h1>
-      <p class="subtitle">Data Engineering learning dashboard — Snowflake + AWS ingestion/ETL today, more technologies to come</p>
+<div class="hero">
+  <span class="kicker">Data Engineering, learned by doing</span>
+  <h1>DE Interactive</h1>
+  <p>
+    A hands-on, interview-focused learning platform for Data Engineering. Each technology below opens its own
+    interactive dashboard: step-by-step build guides with click-through navigation, in-depth concept explanations
+    (not just copy-paste SQL), architecture deep-dives, and a dedicated interview prep section modeled on real
+    questions for that stack. Pick a technology to get started.
+  </p>
+</div>
+
+<div class="section">
+  <h2>Technologies</h2>
+  <div class="tech-grid">
+    <a class="tech-card" href="technologies/snowflake/index.html">
+      <span class="icon">&#10052;&#65039;</span>
+      <h3>Snowflake + AWS</h3>
+      <p>S3 ingestion via Snowpipe, three ETL orchestration patterns (Tasks+Streams, Dynamic Tables, dbt+Airflow), architecture &amp; performance, governance, data modeling, and interview Q&amp;A.</p>
+      <span class="tag">Available now</span>
+    </a>
+
+    <div class="tech-card disabled">
+      <span class="icon">&#128225;</span>
+      <h3>Apache Kafka</h3>
+      <p>Streaming ingestion, topics/partitions, consumer groups, exactly-once semantics, and Kafka Connect.</p>
+      <span class="tag soon">Coming soon</span>
+    </div>
+
+    <div class="tech-card disabled">
+      <span class="icon">&#129449;</span>
+      <h3>Databricks + Spark</h3>
+      <p>Delta Lake, Spark job tuning, Unity Catalog, medallion architecture, and cluster cost management.</p>
+      <span class="tag soon">Coming soon</span>
+    </div>
+
+    <div class="tech-card disabled">
+      <span class="icon">&#127939;</span>
+      <h3>Airflow</h3>
+      <p>DAG design, sensors vs. operators, backfills, XComs, and production-grade orchestration patterns.</p>
+      <span class="tag soon">Coming soon</span>
     </div>
   </div>
-  <div class="progress-wrap" title="Steps completed across all sections">
-    <div class="progress-label"><span id="progressCount">0</span>/<span id="progressTotal">0</span> steps done</div>
-    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+
+<div class="section">
+  <h2>What each technology module includes</h2>
+  <div class="what-list">
+    <div class="what-item"><strong>Step-by-step build guides</strong>Copyable code plus exact click-through navigation for the actual console/UI, not just abstract steps.</div>
+    <div class="what-item"><strong>In-depth concepts</strong>Why each step works the way it does, not just what to click — written for retention, not just completion.</div>
+    <div class="what-item"><strong>Architecture &amp; trade-offs</strong>Performance, cost, and design trade-offs a working engineer is expected to reason about.</div>
+    <div class="what-item"><strong>Interview prep</strong>Real question patterns with model answers, framed around the same project you just built.</div>
+    <div class="what-item"><strong>Progress tracking</strong>Checkable steps saved locally in your browser so you can pick up where you left off.</div>
+    <div class="what-item"><strong>Quizzes</strong>Quick knowledge checks to confirm concepts actually stuck.</div>
   </div>
-</header>
-
-<nav class="tabs" id="tabs">
-  <button class="tab active" data-tab="overview">Overview</button>
-  <button class="tab" data-tab="ingestion">1. Ingestion Setup</button>
-  <button class="tab" data-tab="tasks">2a. Tasks + Streams</button>
-  <button class="tab" data-tab="dynamic">2b. Dynamic Tables</button>
-  <button class="tab" data-tab="orchestrator">2c. External Orchestrator</button>
-  <button class="tab" data-tab="compare">Compare</button>
-  <button class="tab" data-tab="architecture">3. Architecture &amp; Performance</button>
-  <button class="tab" data-tab="governance">4. Governance &amp; Advanced</button>
-  <button class="tab" data-tab="modeling">5. Data Modeling &amp; Loading</button>
-  <button class="tab" data-tab="interview">Interview Prep</button>
-  <button class="tab" data-tab="quiz">Quiz</button>
-</nav>
-
-<main id="app"></main>
+</div>
 
 <footer>
-  <p>Built for learning purposes — fill in real account IDs, bucket names, and ARNs before running against a live environment.</p>
+  <p>Built for learning purposes. Source on <a href="https://github.com/sunil-thapa99/DE-interactive" style="color:inherit">GitHub</a>.</p>
 </footer>
 
-<script src="assets/js/content.js?v=6"></script>
-<script src="assets/js/script.js?v=6"></script>
 </body>
 </html>
