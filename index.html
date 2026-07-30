@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Snowflake + AWS Ingestion Pipeline — Interactive Learning Dashboard</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">❄️</span>
+    <div>
+      <h1>Snowflake × AWS Ingestion Pipeline</h1>
+      <p class="subtitle">Interactive learning dashboard — S3 ingestion, ETL patterns, and best practices</p>
+    </div>
+  </div>
+  <div class="progress-wrap" title="Steps completed across all sections">
+    <div class="progress-label"><span id="progressCount">0</span>/<span id="progressTotal">0</span> steps done</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab active" data-tab="overview">Overview</button>
+  <button class="tab" data-tab="ingestion">1. Ingestion Setup</button>
+  <button class="tab" data-tab="tasks">2a. Tasks + Streams</button>
+  <button class="tab" data-tab="dynamic">2b. Dynamic Tables</button>
+  <button class="tab" data-tab="orchestrator">2c. External Orchestrator</button>
+  <button class="tab" data-tab="compare">Compare</button>
+  <button class="tab" data-tab="quiz">Quiz</button>
+</nav>
+
+<main id="app"></main>
+
+<footer>
+  <p>Built for learning purposes — fill in real account IDs, bucket names, and ARNs before running against a live environment.</p>
+</footer>
+
+<script src="content.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
