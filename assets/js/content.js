@@ -458,6 +458,252 @@ models:
   ]
 },
 
+architecture: {
+  intro: {
+    title: "Snowflake architecture & performance — 4-5 YOE depth",
+    desc: "This pipeline only exercises ingestion/ETL. A mid-to-senior Data Engineer interview will also probe how Snowflake stores data, caches it, and how you'd diagnose and tune a slow or expensive query. Each card below is a concept, a runnable example, and why it matters."
+  },
+  cards: [
+    {
+      title: "Micro-partitions & automatic clustering",
+      badge: "storage",
+      navLabel: "Try it:",
+      nav: "Run the query below against any sizeable table you own, then read the results — depth is how deep pruning had to go to satisfy the filter.",
+      code: `SELECT SYSTEM$CLUSTERING_INFORMATION('AWS_INGEST_DB.ANALYTICS.ORDERS', '(ORDER_TS)');
+
+-- Add a clustering key if scans on this column stay expensive at scale
+ALTER TABLE AWS_INGEST_DB.ANALYTICS.ORDERS CLUSTER BY (ORDER_TS);`,
+      noteLabel: "Why it matters:",
+      note: "Snowflake stores every table as immutable 16MB (compressed) micro-partitions, each with min/max metadata per column. Queries prune partitions using that metadata instead of scanning everything — this is why there are no traditional indexes. Clustering keys reorder data so partitions for a given key range don't overlap; without a good natural insert order (e.g. append-only by timestamp) on a huge table, clustering can meaningfully cut scan cost. Don't add clustering keys reflexively — they cost re-clustering credits and only pay off on multi-TB tables with a clear, selective filter pattern."
+    },
+    {
+      title: "Three caching layers: result, warehouse, metadata",
+      badge: "performance",
+      navLabel: "Try it:",
+      nav: "Run the same query twice back-to-back — the second run should return near-instantly from the result cache. Check the Query Profile UI (Snowsight → Monitoring → Query History → click a query) to see which cache served it.",
+      code: `-- Result cache: identical query text + unchanged underlying data = instant return, no compute
+SELECT COUNT(*) FROM AWS_INGEST_DB.ANALYTICS.ORDERS;   -- run twice, compare "Bytes scanned" in Query Profile
+
+-- Force a cache bypass for benchmarking
+ALTER SESSION SET USE_CACHED_RESULT = FALSE;`,
+      noteLabel: "Why it matters:",
+      note: "Result cache (24hr, per-query-text, account-wide, free) is the cheapest possible win and interviewers ask about it directly. Warehouse cache (local SSD on the compute nodes) speeds up repeat scans of the same data on a warm warehouse — this is why the same warehouse tends to get faster after a few runs, and why AUTO_SUSPEND has a real trade-off (suspend too aggressively and you lose warm cache, but stay up too long and you burn idle credits). Metadata cache (partition min/max stats) is what makes SELECT COUNT(*) and MIN/MAX-only queries return without touching storage at all."
+    },
+    {
+      title: "Time Travel vs Fail-safe",
+      badge: "resilience",
+      navLabel: "Try it:",
+      nav: "Simulate an accidental drop and recover it.",
+      code: `DROP TABLE AWS_INGEST_DB.ANALYTICS.ORDERS;
+UNDROP TABLE AWS_INGEST_DB.ANALYTICS.ORDERS;
+
+-- Query as of a point in time within the retention window
+SELECT * FROM AWS_INGEST_DB.ANALYTICS.ORDERS
+  AT (OFFSET => -60*30)   -- 30 minutes ago
+LIMIT 10;
+
+ALTER TABLE AWS_INGEST_DB.ANALYTICS.ORDERS SET DATA_RETENTION_TIME_IN_DAYS = 7;`,
+      noteLabel: "Why it matters:",
+      note: "Time Travel (0-90 days depending on edition, table type, and DATA_RETENTION_TIME_IN_DAYS) is user-queryable and lets you UNDROP or query AT/BEFORE a timestamp — this is your primary recovery tool for accidental deletes/updates. Fail-safe (7 fixed days, kicks in only after Time Travel expires) is Snowflake-managed disaster recovery only — you cannot query or restore it yourself; you'd have to open a support case. A common interview trap: 'how would you recover data deleted 10 days ago on a Standard-edition table with 1-day retention?' — the honest answer is you likely can't; that's exactly why retention settings should be a deliberate choice per table, not a default left alone."
+    },
+    {
+      title: "Warehouse scaling: scale up vs scale out",
+      badge: "compute",
+      navLabel: "Try it:",
+      nav: "Compare a single complex query's runtime against a bigger warehouse size (scale up) vs concurrent query throughput against a multi-cluster warehouse (scale out).",
+      code: `ALTER WAREHOUSE INGEST_WH SET WAREHOUSE_SIZE = 'MEDIUM';  -- scale UP: speeds up one query (more nodes per cluster)
+
+ALTER WAREHOUSE INGEST_WH SET
+  MIN_CLUSTER_COUNT = 1
+  MAX_CLUSTER_COUNT = 3
+  SCALING_POLICY = 'STANDARD';                              -- scale OUT: handles more concurrent queries`,
+      noteLabel: "Why it matters:",
+      note: "Scaling up (bigger T-shirt size) helps a single large/complex query finish faster by giving it more compute nodes. Scaling out (multi-cluster) doesn't speed up any individual query — it spins up additional clusters of the same size to absorb queuing when many users/queries hit the same warehouse concurrently. Picking the wrong lever is a classic interview 'what's wrong with this setup' question: a BI dashboard with 50 concurrent users on an undersized single-cluster XL warehouse needs multi-cluster, not a bigger size."
+    },
+    {
+      title: "Reading the Query Profile for a slow query",
+      badge: "performance",
+      navLabel: "Try it:",
+      nav: "Snowsight → Monitoring → Query History → click a slow query → Query Profile tab (visual operator tree).",
+      code: null,
+      noteLabel: "Why it matters:",
+      note: "The three things to check first: (1) 'Bytes spilled to local/remote storage' — a sort or join too big for the warehouse's memory, spilling to disk (local) or worse, cloud storage (remote), which is dramatically slower — usually fixed by a bigger warehouse or a better filter earlier in the query, not by adding an index (there isn't one); (2) a join that explodes row count in the operator tree (a mismatched join key producing a fan-out) — visible as a large 'rows produced' jump at one operator; (3) 'Partitions scanned' vs 'partitions total' — low pruning ratio on a filtered query usually means the filter column isn't naturally clustered and might need a clustering key at scale."
+    },
+    {
+      title: "Materialized Views vs Dynamic Tables",
+      badge: "trade-off",
+      navLabel: "Try it:",
+      nav: "Contrast the two for the same aggregation use case.",
+      code: `-- Materialized view: single-table, simple aggregation, auto-maintained by Snowflake background service
+CREATE MATERIALIZED VIEW AWS_INGEST_DB.ANALYTICS.MV_DAILY_ORDER_TOTALS AS
+SELECT DATE_TRUNC('day', ORDER_TS) AS ORDER_DAY, SUM(ORDER_AMOUNT) AS TOTAL
+FROM AWS_INGEST_DB.ANALYTICS.ORDERS
+GROUP BY 1;
+
+-- Dynamic table: multi-table joins, chaining, explicit target lag control
+CREATE DYNAMIC TABLE AWS_INGEST_DB.ANALYTICS.DT_DAILY_ORDER_TOTALS
+  TARGET_LAG = '10 minutes' WAREHOUSE = INGEST_WH
+AS SELECT DATE_TRUNC('day', ORDER_TS) AS ORDER_DAY, SUM(ORDER_AMOUNT) AS TOTAL
+FROM AWS_INGEST_DB.ANALYTICS.ORDERS GROUP BY 1;`,
+      noteLabel: "Why it matters:",
+      note: "Materialized views are restricted to a single source table, no joins, and Snowflake decides refresh timing for you — simplest option for a single-table rollup. Dynamic Tables support joins and multi-table DAGs, and let you control staleness explicitly via TARGET_LAG — the better choice once your transform needs more than one source table, which is most real pipelines. A materialized view still wins when you want zero operational thought and the query really is single-table."
+    },
+    {
+      title: "Resource monitors — capping runaway spend",
+      badge: "cost",
+      navLabel: "Try it:",
+      nav: "Snowsight → Admin → Cost Management → Resource Monitors → Create Resource Monitor (or the SQL below as ACCOUNTADMIN).",
+      code: `CREATE RESOURCE MONITOR INGEST_MONITOR
+  WITH CREDIT_QUOTA = 100
+  FREQUENCY = MONTHLY
+  START_TIMESTAMP = IMMEDIATELY
+  TRIGGERS
+    ON 75 PERCENT DO NOTIFY
+    ON 100 PERCENT DO SUSPEND
+    ON 110 PERCENT DO SUSPEND_IMMEDIATE;
+
+ALTER WAREHOUSE INGEST_WH SET RESOURCE_MONITOR = INGEST_MONITOR;`,
+      noteLabel: "Why it matters:",
+      note: "A misconfigured task loop or a runaway ad-hoc query on an oversized warehouse can burn a month's compute budget in a day. Resource monitors are the guardrail: notify at a threshold, suspend gracefully at 100%, hard-suspend at 110%. Interviewers ask this specifically to see if you think about cost governance proactively, not just performance."
+    }
+  ]
+},
+
+governance: {
+  intro: {
+    title: "Governance, sharing & advanced Snowflake — 4-5 YOE depth",
+    desc: "Beyond building pipelines, a mid/senior DE is expected to reason about who can see what data, how to share it outside the pipeline's own account, and how to operate the platform (CI/CD, DR, semi-structured data at scale)."
+  },
+  cards: [
+    {
+      title: "RBAC hierarchy: roles, not users",
+      badge: "security",
+      navLabel: "Try it:",
+      nav: "Sketch the role graph for a real org before you build it: SYSADMIN owns objects, custom functional roles (e.g. DATA_ENGINEER, ANALYST) get granted privileges and are granted up to SYSADMIN, humans/service accounts are granted the functional roles — never privileges directly.",
+      code: `CREATE ROLE DATA_ENGINEER;
+GRANT ROLE DATA_ENGINEER TO ROLE SYSADMIN;      -- role hierarchy: SYSADMIN can see/manage everything below it
+GRANT ALL ON DATABASE AWS_INGEST_DB TO ROLE DATA_ENGINEER;
+GRANT ROLE DATA_ENGINEER TO USER <some_user>;   -- humans/service accounts get the functional role, not raw grants`,
+      noteLabel: "Why it matters:",
+      note: "ACCOUNTADMIN is for break-glass/account admin only, never day-to-day work. SECURITYADMIN manages roles/users/grants; SYSADMIN should own all warehouse/database/schema objects so it can always see and manage them via the role hierarchy. This project's `INGEST_ETL_ROLE` is a simplification — a real org would split it into narrower functional roles (ingest-only, transform-only, read-only reporting) so a compromised or buggy service account can't touch more than its slice."
+    },
+    {
+      title: "Row access policies & column masking",
+      badge: "governance",
+      navLabel: "Try it:",
+      nav: "Apply a mask so only a specific role sees a sensitive column in full.",
+      code: `CREATE MASKING POLICY MASK_CUSTOMER_EMAIL AS (val STRING) RETURNS STRING ->
+  CASE WHEN CURRENT_ROLE() IN ('DATA_ENGINEER', 'ACCOUNTADMIN') THEN val
+       ELSE REGEXP_REPLACE(val, '.+@', '***@') END;
+
+ALTER TABLE AWS_INGEST_DB.ANALYTICS.CUSTOMERS
+  MODIFY COLUMN EMAIL SET MASKING POLICY MASK_CUSTOMER_EMAIL;
+
+CREATE ROW ACCESS POLICY RAP_REGION_FILTER AS (region STRING) RETURNS BOOLEAN ->
+  CURRENT_ROLE() = 'ACCOUNTADMIN' OR region = CURRENT_ROLE();`,
+      noteLabel: "Why it matters:",
+      note: "Masking policies are attached once to a column and apply everywhere that column is queried — including through views and joins — so PII protection can't be bypassed by writing a different query. Row access policies do the equivalent for rows (e.g. a sales rep only sees their own region). This is the mechanism interviewers expect you to reach for over 'we filter it in the application layer,' which is not actually enforced at the data layer."
+    },
+    {
+      title: "Secure Data Sharing (zero-copy)",
+      badge: "sharing",
+      navLabel: "Try it:",
+      nav: "Snowsight → Data Products → Private Sharing (or the SQL below) to share curated tables with another Snowflake account without copying data.",
+      code: `CREATE SHARE ORDERS_SHARE;
+GRANT USAGE ON DATABASE AWS_INGEST_DB TO SHARE ORDERS_SHARE;
+GRANT USAGE ON SCHEMA AWS_INGEST_DB.ANALYTICS TO SHARE ORDERS_SHARE;
+GRANT SELECT ON TABLE AWS_INGEST_DB.ANALYTICS.ORDERS TO SHARE ORDERS_SHARE;
+ALTER SHARE ORDERS_SHARE ADD ACCOUNTS = <consumer_account_locator>;`,
+      noteLabel: "Why it matters:",
+      note: "The consumer account queries live data directly against your storage — no export, no copy, no staleness, and you control access down to the object grant. This is Snowflake's headline differentiator over 'send them a nightly extract' data exchange, and a very likely 'how would you share this with another team/company' interview question."
+    },
+    {
+      title: "Zero-copy cloning for dev/test",
+      badge: "operations",
+      navLabel: "Try it:",
+      nav: "Clone a full database instantly for a safe dev/test copy.",
+      code: `CREATE DATABASE AWS_INGEST_DB_DEV CLONE AWS_INGEST_DB;
+-- Instant, metadata-only operation — no data is physically copied until either side diverges (copy-on-write)`,
+      noteLabel: "Why it matters:",
+      note: "Cloning is metadata-only at creation time — copy-on-write means storage cost only accrues for the blocks that change afterward. This makes 'spin up a full-size dev copy of production to test a migration' something that takes seconds and costs almost nothing, instead of a multi-hour data copy job. Good answer to 'how do you test schema changes safely.'"
+    },
+    {
+      title: "Semi-structured data at scale: FLATTEN & lateral joins",
+      badge: "querying",
+      navLabel: "Try it:",
+      nav: "Unnest a JSON array field into rows.",
+      code: `SELECT
+  RAW_DATA:order_id::STRING AS order_id,
+  item.value:sku::STRING    AS sku,
+  item.value:qty::NUMBER    AS qty
+FROM AWS_INGEST_DB.RAW.LANDING,
+  LATERAL FLATTEN(input => RAW_DATA:line_items) AS item;`,
+      noteLabel: "Why it matters:",
+      note: "This project's examples only pull scalar fields out of VARIANT. Real source payloads nest arrays (line items, tags, event lists) — FLATTEN with a LATERAL join is the standard way to explode those into relational rows without a pre-processing step outside Snowflake. Expect at least one interview question that hands you a nested JSON sample and asks you to write this from scratch."
+    },
+    {
+      title: "Streams on views & Change Tracking",
+      badge: "concept",
+      navLabel: "Try it:",
+      nav: "Enable change tracking on a view built from a join, then stream it.",
+      code: `ALTER VIEW AWS_INGEST_DB.ANALYTICS.V_ORDERS_ENRICHED SET CHANGE_TRACKING = TRUE;
+CREATE STREAM AWS_INGEST_DB.ANALYTICS.V_ORDERS_ENRICHED_STREAM ON VIEW AWS_INGEST_DB.ANALYTICS.V_ORDERS_ENRICHED;`,
+      noteLabel: "Why it matters:",
+      note: "Streams aren't limited to base tables — you can track changes on a view (including joins across tables), which matters when the 'unit of change' your downstream consumer cares about is a joined/enriched shape, not a single raw table. Lets you avoid materializing an intermediate table purely to get a stream on it."
+    },
+    {
+      title: "Cost & usage observability views",
+      badge: "cost",
+      navLabel: "Try it:",
+      nav: "Query the account usage views that back Snowsight's cost dashboards directly.",
+      code: `SELECT WAREHOUSE_NAME, SUM(CREDITS_USED) AS credits
+FROM SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY
+WHERE START_TIME > DATEADD(DAY, -30, CURRENT_TIMESTAMP())
+GROUP BY 1 ORDER BY 2 DESC;
+
+SELECT QUERY_TEXT, WAREHOUSE_NAME, TOTAL_ELAPSED_TIME, BYTES_SCANNED
+FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY
+ORDER BY TOTAL_ELAPSED_TIME DESC LIMIT 20;`,
+      noteLabel: "Why it matters:",
+      note: "SNOWFLAKE.ACCOUNT_USAGE is the audit-grade source (up to 1-year retention, ~45min-3hr latency) behind every cost/usage dashboard; INFORMATION_SCHEMA equivalents are near-real-time but only cover the last 7-14 days. Knowing which schema to query, and the latency trade-off, is a concrete signal of operational maturity beyond 'I look at the Snowsight cost tab.'"
+    },
+    {
+      title: "CI/CD for Snowflake objects",
+      badge: "operations",
+      navLabel: "How to approach it:",
+      nav: "This is usually a discussion question, not a live-code one — have a clear opinion ready.",
+      code: null,
+      noteLabel: "Model answer:",
+      note: "Snowflake DDL/DML should live in version control like any other code, not be run ad hoc through Snowsight. Common approaches: dbt (already covers the ETL layer, and its `schema.yml`/tests double as light governance docs), the official Terraform provider for account-level objects (warehouses, roles, resource monitors, integrations) that don't fit dbt's model, or `schemachange` for pure versioned-migration-style DDL. The dividing line I'd draw: dbt owns transformation logic and tests; Terraform owns account/security-level objects that are provisioned once and rarely change; application/pipeline DDL that changes often belongs in dbt or a migration tool, not hand-run scripts."
+    },
+    {
+      title: "Replication & failover for DR",
+      badge: "resilience",
+      navLabel: "Try it:",
+      nav: "Set up database replication to a secondary account/region (requires Business Critical edition or above for failover).",
+      code: `CREATE DATABASE AWS_INGEST_DB_REPLICA AS REPLICA OF <primary_org>.<primary_account>.AWS_INGEST_DB;
+ALTER DATABASE AWS_INGEST_DB_REPLICA REFRESH;
+
+-- Business Critical+: promote the replica to primary during a regional outage
+ALTER DATABASE AWS_INGEST_DB_REPLICA ENABLE FAILOVER TO ACCOUNTS <secondary_account>;`,
+      noteLabel: "Why it matters:",
+      note: "Time Travel/Fail-safe protect against accidental data loss, not a regional outage taking your whole account offline. Cross-region/cross-cloud database replication (with failover on Business Critical+) is the actual DR story — worth knowing the distinction cold, since conflating 'Time Travel' with 'disaster recovery' is a common and easily-caught mistake in interviews."
+    },
+    {
+      title: "Snowpark & external functions",
+      badge: "advanced",
+      navLabel: "Try it:",
+      nav: "Write transformation logic in Python that runs inside Snowflake's compute, instead of pulling data out to a separate Python service.",
+      code: `# Snowpark Python (runs inside Snowflake's warehouse, not a separate cluster)
+from snowflake.snowpark.functions import col
+df = session.table("AWS_INGEST_DB.ANALYTICS.ORDERS")
+df.filter(col("ORDER_AMOUNT") > 100).group_by("ORDER_STATUS").count().show()`,
+      noteLabel: "Why it matters:",
+      note: "Snowpark (Python/Java/Scala) lets you write DataFrame-style or UDF/UDTF transformation logic that executes inside Snowflake's own compute — no data leaves the platform, unlike a separate Spark cluster reading via a connector. External Functions go the other direction: calling out to an external API (e.g. AWS Lambda) from within a SQL query, useful for enrichment logic that can't live in SQL. Increasingly common in interviews now that Snowpark ML and Cortex (Snowflake's managed LLM functions) are pushing more of the ML/AI workload directly into the warehouse."
+    }
+  ]
+},
+
 interview: {
   intro: {
     title: "Interview prep — talk through this project",
