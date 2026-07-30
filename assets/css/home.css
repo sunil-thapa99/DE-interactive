@@ -52,7 +52,7 @@ html, body {
 .section h2 { font-size: 1.15rem; margin: 0 0 1rem; }
 
 .tech-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;
 }
 
 .tech-card {

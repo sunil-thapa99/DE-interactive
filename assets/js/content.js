@@ -21,6 +21,15 @@ overview: {
   ],
   cards: [
     {
+      title: "What is Snowflake, and why use it?",
+      badge: "what & why",
+      concept: "Snowflake is a cloud-native data warehouse (available on AWS, Azure, and GCP) built around a core architectural idea: storage and compute are fully separated. Your data sits once in cloud object storage (S3 under the hood on AWS), while any number of independent 'virtual warehouses' (compute clusters) can read/write it concurrently without contending with each other — a BI team running dashboards doesn't slow down an ETL job loading fresh data, because they're on different warehouses hitting the same underlying storage. Compare that to a traditional on-prem or single-instance database where storage and compute are bolted together, so scaling one always means paying for (and often waiting on) the other.",
+      navLabel: "Why teams choose it:",
+      nav: "Near-zero infrastructure maintenance (no servers, indexes, or partitions to manage by hand), pay-per-second compute billing that can auto-suspend when idle, native handling of semi-structured data (JSON/Avro/Parquet as a first-class VARIANT type, not a bolted-on feature), and platform-native capabilities — Snowpipe, Streams, Dynamic Tables, Secure Data Sharing, Snowpark — that would otherwise require standing up separate tools (a CDC tool, an orchestrator, a data-sharing agreement process) to replicate.",
+      noteLabel: "Where it fits in this project:",
+      note: "This dashboard uses Snowflake as the warehouse and AWS S3 as the source system — a very common real-world pairing, since S3 is often where raw application/event data already lands regardless of which warehouse a company ultimately chooses."
+    },
+    {
       title: "Why this architecture",
       nav: "No console steps — this is background reading before you start building.",
       note: "Snowpipe is event-driven (near real-time) rather than polling, so new files land within seconds of arriving in S3. Everything downstream reads from RAW.LANDING, so all three ETL variants share the same ingestion foundation and only differ in how they transform + load."

@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>DE Interactive — Data Engineering Learning Dashboard</title>
-<link rel="stylesheet" href="assets/css/home.css?v=1" />
+<link rel="stylesheet" href="assets/css/home.css?v=2" />
 </head>
 <body>
 
@@ -25,28 +25,36 @@
     <a class="tech-card" href="technologies/snowflake/index.html">
       <span class="icon">&#10052;&#65039;</span>
       <h3>Snowflake + AWS</h3>
-      <p>S3 ingestion via Snowpipe, three ETL orchestration patterns (Tasks+Streams, Dynamic Tables, dbt+Airflow), architecture &amp; performance, governance, data modeling, and interview Q&amp;A.</p>
+      <p><strong>What it is:</strong> A cloud-native data warehouse (compute and storage scaled independently) commonly paired with AWS S3 as a raw data source for ingestion pipelines.</p>
+      <p><strong>Why use it:</strong> Near-zero-maintenance scaling, pay-per-second compute, native support for semi-structured data, and built-in features (Snowpipe, Streams, Dynamic Tables, secure data sharing) that replace a lot of infrastructure you'd otherwise have to build yourself.</p>
+      <p><strong>Covers:</strong> S3 ingestion via Snowpipe, three ETL orchestration patterns (Tasks+Streams, Dynamic Tables, dbt+Airflow), architecture &amp; performance, governance, data modeling, and interview Q&amp;A.</p>
       <span class="tag">Available now</span>
     </a>
 
     <div class="tech-card disabled">
       <span class="icon">&#128225;</span>
       <h3>Apache Kafka</h3>
-      <p>Streaming ingestion, topics/partitions, consumer groups, exactly-once semantics, and Kafka Connect.</p>
+      <p><strong>What it is:</strong> A distributed event streaming platform for publishing, storing, and processing continuous streams of records in real time.</p>
+      <p><strong>Why use it:</strong> Decouples producers from consumers at high throughput/low latency, and is the de facto backbone for real-time pipelines and event-driven architectures across most modern data stacks.</p>
+      <p><strong>Will cover:</strong> Topics/partitions, consumer groups, exactly-once semantics, and Kafka Connect.</p>
       <span class="tag soon">Coming soon</span>
     </div>
 
     <div class="tech-card disabled">
       <span class="icon">&#129449;</span>
       <h3>Databricks + Spark</h3>
-      <p>Delta Lake, Spark job tuning, Unity Catalog, medallion architecture, and cluster cost management.</p>
+      <p><strong>What it is:</strong> A unified platform for large-scale data processing and ML, built on Apache Spark, with Delta Lake as its storage layer.</p>
+      <p><strong>Why use it:</strong> Handles data volumes and transformations too large or too custom for pure SQL — arbitrary code transforms, ML pipelines, and lakehouse architecture spanning batch and streaming.</p>
+      <p><strong>Will cover:</strong> Delta Lake, Spark job tuning, Unity Catalog, medallion architecture, and cluster cost management.</p>
       <span class="tag soon">Coming soon</span>
     </div>
 
     <div class="tech-card disabled">
       <span class="icon">&#127939;</span>
       <h3>Airflow</h3>
-      <p>DAG design, sensors vs. operators, backfills, XComs, and production-grade orchestration patterns.</p>
+      <p><strong>What it is:</strong> A workflow orchestration platform for scheduling and monitoring pipelines defined as code (DAGs).</p>
+      <p><strong>Why use it:</strong> The standard choice when a pipeline needs to coordinate multiple systems (not just one warehouse), with retries, dependency management, and observability built in.</p>
+      <p><strong>Will cover:</strong> DAG design, sensors vs. operators, backfills, XComs, and production-grade orchestration patterns.</p>
       <span class="tag soon">Coming soon</span>
     </div>
   </div>
