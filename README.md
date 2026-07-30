@@ -1,8 +1,8 @@
-# Snowflake × AWS Ingestion Pipeline — Learning Dashboard
+# DE Interactive — Data Engineering Learning Dashboard
 
-An interactive, static web dashboard for learning how to build a Snowflake ingestion + ETL pipeline sourced from AWS S3. Covers three ETL orchestration patterns (Snowflake Tasks + Streams, Dynamic Tables, and an external dbt/Airflow orchestrator) built on a shared Snowpipe ingestion foundation.
+An interactive, static web dashboard for learning Data Engineering concepts and interview prep. Currently covers a full Snowflake + AWS ingestion/ETL pipeline in depth (Snowpipe ingestion, three ETL orchestration patterns, architecture/performance, governance, data modeling, and interview Q&A) — structured so other technologies can be added as additional tabs over time.
 
-**Live demo:** https://sunil-thapa99.github.io/snowflake-interactive/
+**Live demo:** https://sunil-thapa99.github.io/DE-interactive/
 
 ## Project structure
 
