@@ -456,6 +456,95 @@ models:
       note: "run_dbt >> dbt_test blocks bad data from being treated as 'done' — wire test failures to Airflow alerting."
     }
   ]
+},
+
+interview: {
+  intro: {
+    title: "Interview prep — talk through this project",
+    desc: "Each card is a question you're likely to get in a Data Engineer / Snowflake interview, framed around this project. Read the question, form your own answer out loud first, then expand for a model answer and the reasoning behind it."
+  },
+  cards: [
+    {
+      title: "\"Walk me through a Snowflake pipeline you've built.\"",
+      navLabel: "How to approach it:",
+      badge: "behavioral",
+      nav: "Use this project as your STAR narrative: Situation (need to ingest AWS S3 data into Snowflake for analytics), Task (build automated, low-latency ingestion + ETL), Action (Snowpipe + IAM role, then Streams/Tasks or Dynamic Tables), Result (near-real-time curated tables, cost-isolated warehouse). Keep it under 90 seconds, then let them drive follow-ups.",
+      noteLabel: "Model answer:",
+      note: "\"I set up event-driven ingestion from S3 into Snowflake using Snowpipe with auto-ingest — S3 event notifications push to an SQS queue Snowflake listens on, so new files land within seconds without polling. Files land as VARIANT in a RAW table with lineage columns. From there I built the transform layer two ways depending on need: Streams + Tasks for cases needing custom MERGE logic, and Dynamic Tables when the transform was a straightforward declarative query with a target staleness tolerance. I secured the S3 access with a storage integration and IAM role scoped by external ID — no static AWS keys anywhere.\""
+    },
+    {
+      title: "Why Snowpipe instead of a scheduled COPY INTO?",
+      navLabel: "How to approach it:",
+      badge: "concept",
+      nav: "Contrast latency, cost, and operational model.",
+      noteLabel: "Model answer:",
+      note: "Snowpipe is event-driven — an S3 event notification triggers ingestion via SQS within seconds of a file arriving, using serverless compute billed per-second. A scheduled COPY INTO on a Task means data waits for the next scheduled run (minutes of latency) and consumes a running warehouse whether or not new files exist. Snowpipe is the right choice when near-real-time matters and file arrival is unpredictable; a scheduled batch load is simpler and fine when latency doesn't matter and files arrive on a predictable cadence."
+    },
+    {
+      title: "How does the SQS-based auto-ingest mechanism actually work end to end?",
+      navLabel: "How to approach it:",
+      badge: "deep-dive",
+      nav: "Trace the event path precisely — interviewers use this to check you understand the mechanism, not just the buzzword.",
+      noteLabel: "Model answer:",
+      note: "S3 emits an ObjectCreated event on the configured prefix → the bucket's event notification is configured to publish that event to an SQS queue Snowflake owns (created automatically when the pipe is defined with AUTO_INGEST=TRUE) → Snowflake's pipe process consumes the SQS message, which just contains the S3 object key, not the data itself → the pipe issues a COPY INTO against the stage using that key → rows land in the target table with ON_ERROR behavior applied. SHOW PIPES exposes the SQS ARN as notification_channel; SYSTEM$PIPE_STATUS and COPY_HISTORY are the two things to check when files 'go missing'."
+    },
+    {
+      title: "Streams + Tasks vs. Dynamic Tables — when do you pick each?",
+      navLabel: "How to approach it:",
+      badge: "trade-off",
+      nav: "This is the most common follow-up after mentioning both patterns exist — have a clean one-liner plus a nuanced elaboration ready.",
+      noteLabel: "Model answer:",
+      note: "One-liner: 'Dynamic Tables when the transform is a plain declarative query and I want Snowflake to manage refresh; Streams + Tasks when I need custom branching, multi-statement logic, or non-SQL side effects.' Elaboration: Dynamic Tables reduce operational surface — no stream offsets, no task DAG to manage, target lag abstracts scheduling. But they're read-only (all writes go through the defining query), and some queries (certain window functions, non-deterministic functions) fall back to full refresh silently, which I always verify via DESC DYNAMIC TABLE. Streams + Tasks give full control — arbitrary SQL, procedural logic via stored procs, conditional branching — at the cost of managing stream consumption offsets and task DAG ordering myself."
+    },
+    {
+      title: "How do you guarantee idempotency if a file is processed twice?",
+      navLabel: "How to approach it:",
+      badge: "correctness",
+      nav: "This tests whether you understand exactly-once vs at-least-once semantics — a very common gotcha question.",
+      noteLabel: "Model answer:",
+      note: "Snowpipe gives at-least-once delivery, not exactly-once — the same file could theoretically be reprocessed (e.g. after a retry). I don't rely on the ingestion layer for idempotency; I push it downstream. The RAW landing table can have duplicate rows, which is fine because it's append-only and cheap. The transform layer is where I enforce correctness: MERGE on a business key (Streams+Tasks) or QUALIFY ROW_NUMBER() OVER (PARTITION BY key ORDER BY load_ts DESC) = 1 (Dynamic Tables) so duplicates collapse to the latest version regardless of how many times the same record landed."
+    },
+    {
+      title: "Why IAM role + external ID instead of an AWS access key on the stage?",
+      navLabel: "How to approach it:",
+      badge: "security",
+      nav: "Security questions in DE interviews are often just checking whether you default to least-privilege / no-static-credentials thinking.",
+      noteLabel: "Model answer:",
+      note: "Static access keys are a long-lived secret that has to be stored, rotated, and can leak. A storage integration lets Snowflake assume a role via STS instead — no credential to store at all. The external ID in the trust policy exists specifically to prevent the 'confused deputy' problem: without it, anyone who learned the role ARN (which isn't secret) could potentially get another AWS account to assume it on their behalf. The IAM policy attached to that role is also scoped to GetObject/ListBucket on a single prefix — least privilege, not account-wide S3 access."
+    },
+    {
+      title: "How would you control cost on this pipeline?",
+      navLabel: "How to approach it:",
+      badge: "cost",
+      nav: "List concrete levers, not just 'use a small warehouse' — show you understand the cost model.",
+      noteLabel: "Model answer:",
+      note: "Several levers: (1) dedicated XSMALL warehouse with AUTO_SUSPEND=60s so it's not billed while idle; (2) Snowpipe billing is per-second serverless compute, no warehouse needed for ingestion itself; (3) for Dynamic Tables, TARGET_LAG tuned to the loosest value the business actually needs — 5 minutes instead of 30 seconds can be an order-of-magnitude compute difference; (4) WHEN SYSTEM$STREAM_HAS_DATA(...) on tasks so scheduled runs skip entirely (and cost nothing) when there's no new data instead of running an empty MERGE every interval; (5) tagging the warehouse/database for cost attribution so ingestion spend is visible separately from BI/reporting."
+    },
+    {
+      title: "What happens to malformed or bad rows?",
+      navLabel: "How to approach it:",
+      badge: "reliability",
+      nav: "Good opportunity to be honest about a gap and show you know how to close it — this project uses ON_ERROR='CONTINUE' but doesn't build a full dead-letter pattern.",
+      noteLabel: "Model answer:",
+      note: "Currently ON_ERROR='CONTINUE' means a bad row is skipped rather than failing the whole file load, and COPY_HISTORY surfaces the error detail per file for investigation. What I'd add for production: a dead-letter table capturing the raw failed record plus the error reason, and an alert (e.g. a scheduled task checking COPY_HISTORY for errors in the last N minutes, or a Snowflake alert) so failures aren't just sitting silently in COPY_HISTORY waiting to be noticed."
+    },
+    {
+      title: "What's missing for this to be production-grade?",
+      navLabel: "How to approach it:",
+      badge: "maturity",
+      nav: "Interviewers love candidates who proactively name the gaps in their own design — it signals seniority. Have 3-4 ready, not a vague 'it would need more testing.'",
+      noteLabel: "Model answer:",
+      note: "Four concrete gaps I'd flag unprompted: (1) RBAC is collapsed into a single ETL role — production would split ingest/transform/read roles; (2) no dead-letter table or automated alerting wired to Slack/PagerDuty, just queryable history; (3) schema evolution isn't handled — a renamed source field silently casts to NULL rather than failing loud; (4) everything is set up via console/SQL rather than Terraform, so there's no repeatable, reviewable infra-as-code for a second environment."
+    },
+    {
+      title: "When would you reach for dbt + Airflow instead of native Snowflake orchestration?",
+      navLabel: "How to approach it:",
+      badge: "architecture",
+      nav: "Shows you can reason about organizational context, not just technical capability — an important senior-level signal.",
+      noteLabel: "Model answer:",
+      note: "When the transform needs to integrate with non-Snowflake systems in the same DAG (e.g. write to a data lake, trigger a downstream ML job, call an API), when the org already standardizes on dbt for transformation logic/lineage/testing across multiple warehouses, or when centralized company-wide scheduling/observability (one Airflow instance for everything) matters more than avoiding extra infrastructure. If everything lives and stays in Snowflake and the team is small, native Tasks/Dynamic Tables have less operational overhead — no separate service to run and monitor."
+    }
+  ]
 }
 };
 

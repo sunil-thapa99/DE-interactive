@@ -25,7 +25,7 @@ An interactive, static web dashboard for learning how to build a Snowflake inges
 └── README.md
 ```
 
-The dashboard includes: an architecture overview, step-by-step cards with copyable SQL and click-through navigation for Snowsight/AWS Console, a comparison table across the three ETL approaches, progress tracking (saved in your browser via `localStorage`), and a short quiz.
+The dashboard includes: an architecture overview, step-by-step cards with copyable SQL and click-through navigation for Snowsight/AWS Console, a comparison table across the three ETL approaches, an **Interview Prep** tab (common DE/Snowflake interview questions with model answers, framed around this project), progress tracking (saved in your browser via `localStorage`), and a short quiz.
 
 ## Run locally
 

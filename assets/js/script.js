@@ -35,17 +35,20 @@
       const codeBlock = c.code
         ? `<div class="pre-wrap"><button class="copy-btn" data-code-id="${id}">Copy</button><pre><code id="code-${id}">${escapeHtml(c.code)}</code></pre></div>`
         : "";
-      const noteBlock = c.note ? `<p class="note">${c.note}</p>` : "";
+      const noteBlock = c.note ? `<p class="note">${c.noteLabel ? `<strong>${c.noteLabel}</strong> ` : ""}${c.note}</p>` : "";
+      const navBlock = c.nav
+        ? `<div class="nav-box"><strong>${c.navLabel || "Navigation:"}</strong> ${c.nav}</div>`
+        : "";
       return `
         <div class="card" data-id="${id}">
           <div class="card-head" data-toggle="${id}">
             <div class="check ${isDone ? "done" : ""}" data-check="${id}">${isDone ? "&#10003;" : ""}</div>
             <div class="card-title">${c.title}</div>
-            <span class="card-nav-badge">steps</span>
+            <span class="card-nav-badge">${c.badge || "steps"}</span>
             <span class="chevron">&#9656;</span>
           </div>
           <div class="card-body">
-            <div class="nav-box"><strong>Navigation:</strong> ${c.nav}</div>
+            ${navBlock}
             ${codeBlock}
             ${noteBlock}
           </div>
@@ -145,7 +148,7 @@
 
   function allCardIds() {
     const ids = [];
-    ["overview", "ingestion", "tasks", "dynamic", "orchestrator"].forEach(k => {
+    ["overview", "ingestion", "tasks", "dynamic", "orchestrator", "interview"].forEach(k => {
       CONTENT[k].cards.forEach((_, i) => ids.push(cardId(k, i)));
     });
     return ids;
