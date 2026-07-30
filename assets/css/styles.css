@@ -124,6 +124,12 @@ main { max-width: 980px; margin: 0 auto; padding: 1.5rem; }
 }
 .nav-box strong { color: var(--text); }
 
+.concept-box {
+  background: var(--surface-2); border-left: 3px solid var(--accent-2); border-radius: 6px;
+  padding: 0.8rem 0.9rem; font-size: 0.87rem; color: var(--text); margin-bottom: 0.8rem; line-height: 1.6;
+}
+.concept-box strong { color: var(--accent-2); }
+
 pre {
   background: var(--code-bg); color: var(--code-text); padding: 0.9rem 1rem; border-radius: 8px;
   overflow-x: auto; font-size: 0.8rem; line-height: 1.5; margin: 0 0 0.6rem; position: relative;

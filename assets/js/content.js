@@ -184,6 +184,7 @@ tasks: {
   cards: [
     {
       title: "Create the internal target (curated) table",
+      concept: "This is the destination table your ETL merges into — the schema a BI tool or downstream consumer actually queries. Notice it has a real, typed schema (STRING, NUMBER(12,2), TIMESTAMP_NTZ) instead of the VARIANT column used in RAW.LANDING. That type promotion is the whole point of the transform layer: raw JSON is flexible but slow to query and easy to misuse (silent type coercion, no constraint enforcement); a curated table is fast to scan, self-documenting, and enforces expectations. UPDATED_AT is an audit column — without it, you can't answer 'when did this row last change' when debugging a stale-looking value downstream.",
       nav: "Snowsight → Worksheets → role = INGEST_ETL_ROLE, warehouse = INGEST_WH → run.",
       code: `CREATE TABLE IF NOT EXISTS AWS_INGEST_DB.ANALYTICS.ORDERS (
   ORDER_ID        STRING PRIMARY KEY,
@@ -196,6 +197,7 @@ tasks: {
     },
     {
       title: "Create a stream on the landing table",
+      concept: "A Stream doesn't store data — it's a pointer (an offset) into the table's underlying change log, tracking which rows are 'new since I was last read.' When you SELECT from a stream, you get an implicit METADATA$ACTION column (INSERT/DELETE/UPDATE) and metadata rows describing what changed. Critically, the offset only advances when the stream is consumed inside a DML statement (like the MERGE in the next step) that actually commits — a SELECT alone doesn't consume it. This is what makes Streams safe to poll repeatedly without losing data: if the task fails mid-run, the stream still has the un-consumed rows next time it runs. APPEND_ONLY=TRUE is a real optimization, not just documentation — it tells Snowflake it never needs to track deletes/updates on this stream, which is true here because Snowpipe only ever inserts into RAW.LANDING.",
       nav: "Same worksheet/role. Confirm afterward: Data → Databases → AWS_INGEST_DB → RAW → Streams.",
       code: `CREATE STREAM IF NOT EXISTS AWS_INGEST_DB.RAW.LANDING_STREAM
   ON TABLE AWS_INGEST_DB.RAW.LANDING
@@ -203,6 +205,7 @@ tasks: {
     },
     {
       title: "Create the transform task",
+      concept: "A Task is just a scheduled wrapper around a single SQL statement (or a call to a stored procedure) — it needs its own warehouse to run on, its own schedule, and an optional guard condition. The guard here, WHEN SYSTEM$STREAM_HAS_DATA(...), is evaluated by a lightweight background service before spinning up the warehouse at all, so an empty check costs effectively nothing — this is different from the task simply running the MERGE against an empty stream every minute, which would still burn a few seconds of warehouse time per run for nothing. The MERGE pattern itself matters: because it's keyed on ORDER_ID with explicit MATCHED/NOT MATCHED branches, running the exact same task execution twice (e.g. after a retry) produces the same end state — that's the idempotency property you want in any pipeline that might reprocess data.",
       nav: "Same worksheet/role. View later: Data → Databases → AWS_INGEST_DB → STAGING → Tasks, or Monitoring → Task History (left sidebar).",
       code: `CREATE TASK IF NOT EXISTS AWS_INGEST_DB.STAGING.TASK_LOAD_ORDERS
   WAREHOUSE = INGEST_WH
@@ -233,6 +236,7 @@ WHEN NOT MATCHED THEN INSERT (ORDER_ID, CUSTOMER_ID, ORDER_AMOUNT, ORDER_STATUS,
     },
     {
       title: "Chain tasks for multi-step pipelines (optional)",
+      concept: "AFTER creates a parent-child dependency: TASK_MERGE_ORDERS only fires once TASK_CLEANSE finishes successfully — Snowflake manages this as a DAG (directed acyclic graph), not two independently-scheduled tasks that happen to run near each other. This matters because it removes an entire class of race condition: without AFTER, you'd need the cleanse task's schedule and the merge task's schedule to never overlap badly, which is fragile as the pipeline grows. The trade-off is that if TASK_CLEANSE fails, TASK_MERGE_ORDERS simply never runs that cycle (visible in Task History as a skipped run) — you're not silently merging half-cleansed data, but you do need to monitor the whole DAG, not just the leaf.",
       nav: "Same worksheet/role. View the DAG: Monitoring → Task History → click task name → Graph tab.",
       code: `CREATE TASK AWS_INGEST_DB.STAGING.TASK_CLEANSE
   WAREHOUSE = INGEST_WH
@@ -250,6 +254,7 @@ MERGE INTO AWS_INGEST_DB.ANALYTICS.ORDERS ... ;`
     },
     {
       title: "Enable the tasks (resume, root last)",
+      concept: "The RESUME order (child/leaf tasks before the root) matters mechanically: Snowflake only actually triggers a task run for a resumed task if every task above it in the chain is also resumed — resuming the root while a child is still suspended results in the root running but the child silently never firing. Resuming leaf-to-root guarantees the whole chain is armed before the root's schedule can trigger anything, so you don't get a partial DAG execution on the very first run.",
       nav: "UI alternative: Data → Databases → AWS_INGEST_DB → ANALYTICS → Tasks → TASK_MERGE_ORDERS → Resume button (top right of detail panel). Repeat per task, child before root.",
       code: `ALTER TASK AWS_INGEST_DB.ANALYTICS.TASK_MERGE_ORDERS RESUME;  -- resume leaf tasks first if chained
 ALTER TASK AWS_INGEST_DB.STAGING.TASK_LOAD_ORDERS RESUME;     -- then the root`,
@@ -257,6 +262,7 @@ ALTER TASK AWS_INGEST_DB.STAGING.TASK_LOAD_ORDERS RESUME;     -- then the root`,
     },
     {
       title: "Monitor task runs",
+      concept: "TASK_HISTORY is a table function, not a static view — it takes parameters (task name, time window, result limit) because the underlying execution log can be large and you're expected to filter it rather than scan everything. The STATE column is the one that matters operationally: SUCCEEDED, FAILED, SKIPPED (guard condition was false — this is normal and expected most runs), and CANCELLED. A pipeline that looks 'broken' because no new rows are showing up is very often just a task stuck in SKIPPED because the stream never has data — which points back to the ingestion layer (Snowpipe), not the transform layer, being the actual problem.",
       nav: "UI alternative: Monitoring → Task History (left sidebar) — filter by task name/state/time range instead of writing SQL.",
       code: `SELECT * FROM TABLE(AWS_INGEST_DB.INFORMATION_SCHEMA.TASK_HISTORY(
   TASK_NAME => 'TASK_LOAD_ORDERS', RESULT_LIMIT => 20));
@@ -275,6 +281,7 @@ dynamic: {
   cards: [
     {
       title: "Create the dynamic table",
+      concept: "A Dynamic Table inverts the mental model from Streams+Tasks: instead of you writing 'read the delta, then MERGE it,' you write one query describing the desired end state, and Snowflake's refresh engine figures out how to get there incrementally. Internally, on each refresh it computes what changed in the source since the last refresh and applies only that delta to the target — conceptually similar to what you'd hand-write with a Stream+MERGE, but Snowflake manages the change-tracking metadata for you. TARGET_LAG is a service-level objective, not a cron schedule: you're telling Snowflake 'this table must never be more than 5 minutes stale,' and it decides how often to actually run a refresh (and how much compute to throw at it) to hit that target as cheaply as possible. The QUALIFY ROW_NUMBER() dedup exists because RAW.LANDING can contain the same order_id more than once (e.g. a corrected re-upload of a file) — a dynamic table has no MERGE-style upsert logic of its own, so dedup has to happen inside the SELECT itself.",
       nav: "Snowsight → Worksheets → role = INGEST_ETL_ROLE, warehouse = INGEST_WH → run. View: Data → Databases → AWS_INGEST_DB → ANALYTICS → Dynamic Tables → ORDERS.",
       code: `CREATE DYNAMIC TABLE AWS_INGEST_DB.ANALYTICS.ORDERS
   TARGET_LAG = '5 minutes'
@@ -294,6 +301,7 @@ QUALIFY ROW_NUMBER() OVER (PARTITION BY RAW_DATA:order_id ORDER BY LOAD_TS DESC)
     },
     {
       title: "Chain multiple dynamic tables",
+      concept: "Because a dynamic table's defining query can SELECT FROM another dynamic table, Snowflake automatically infers the dependency graph — there's no explicit AFTER clause to write like there is with Tasks. The interesting part is lag propagation: TARGET_LAG = 'DOWNSTREAM' on ORDERS_ENRICHED means 'don't set your own staleness target — instead, refresh often enough to satisfy whatever consumes you.' If nothing ever queries ORDERS_ENRICHED directly and only a final report table (with its own explicit TARGET_LAG) consumes it, Snowflake propagates that report table's lag requirement backward through the whole chain. This avoids the situation where every intermediate table in a 4-stage chain is independently configured for '1 minute' lag when only the final output actually needs to be fresh — that would mean 4x the refresh compute for staleness nobody asked for.",
       nav: "Same worksheet/role. View DAG: Data → Databases → AWS_INGEST_DB → ANALYTICS → Dynamic Tables → ORDERS_ENRICHED → Graph tab.",
       code: `CREATE DYNAMIC TABLE AWS_INGEST_DB.STAGING.ORDERS_CLEAN
   TARGET_LAG = '2 minutes'
@@ -313,6 +321,7 @@ JOIN AWS_INGEST_DB.ANALYTICS.CUSTOMERS c ON o.CUSTOMER_ID = c.CUSTOMER_ID;`,
     },
     {
       title: "Validate refresh behavior",
+      concept: "This step exists because 'incremental' isn't guaranteed just because you asked for it — REFRESH_MODE = INCREMENTAL is a request, and Snowflake silently substitutes FULL if your query isn't incrementally-refreshable (common causes: certain window functions, non-deterministic functions, some outer joins). A full refresh recomputes the entire table from scratch on every cycle, which on a large source table is a very different cost profile than a true incremental delta — and nothing in the CREATE statement itself will warn you if this happens. DESC DYNAMIC TABLE exposes the actual refresh_mode Snowflake settled on, and DYNAMIC_TABLE_REFRESH_HISTORY exposes REFRESH_ACTION per run (INCREMENTAL vs FULL) so you can catch a silent downgrade before it becomes a cost surprise.",
       nav: "UI alternative: Data → Databases → AWS_INGEST_DB → ANALYTICS → Dynamic Tables → ORDERS → Refresh History tab.",
       code: `DESC DYNAMIC TABLE AWS_INGEST_DB.ANALYTICS.ORDERS;
 
@@ -322,6 +331,7 @@ ORDER BY REFRESH_START_TIME DESC;`
     },
     {
       title: "Suspend / resume for maintenance",
+      concept: "SUSPEND stops the refresh scheduler from running against this table — the table's data stays exactly as it was at the last successful refresh (it doesn't clear or lock the table, it just freezes it). This is the safe way to pause a table while you're, say, altering an upstream table's schema, without dropping and recreating the dynamic table (which would lose its refresh history and briefly make it unavailable). RESUME picks refreshing back up, and because Dynamic Tables track their own change-tracking metadata, it resumes incrementally from where it left off rather than needing a full recompute — as long as the suspension wasn't so long that the underlying source table's own change history expired.",
       nav: "UI alternative: Data → Databases → AWS_INGEST_DB → ANALYTICS → Dynamic Tables → ORDERS → Suspend / Resume buttons (top right).",
       code: `ALTER DYNAMIC TABLE AWS_INGEST_DB.ANALYTICS.ORDERS SUSPEND;
 ALTER DYNAMIC TABLE AWS_INGEST_DB.ANALYTICS.ORDERS RESUME;`,
@@ -338,6 +348,7 @@ orchestrator: {
   cards: [
     {
       title: "Scaffold the dbt project",
+      concept: "dbt's core idea is that a 'transform' is just a SELECT statement saved as a version-controlled file (a model) — dbt compiles it, resolves dependencies between models via ref(), and issues the CREATE/INSERT/MERGE DDL to Snowflake for you. staging/ models typically do 1:1 cleansing of a single source (cast types, rename columns, filter obvious junk); marts/ models are the business-facing curated output, often joining multiple staging models together. This separation exists so a change to a source system only requires editing one staging model, not every downstream query that happens to reference that source.",
       nav: "Terminal (not Snowsight): dbt init aws_ingest_pipeline, or create the folders/files manually in your editor.",
       code: `models/
   staging/
@@ -350,6 +361,7 @@ profiles.yml`
     },
     {
       title: "Declare the Snowpipe-fed source",
+      concept: "sources.yml doesn't create anything in Snowflake — it's dbt's way of registering 'this table already exists and I don't manage it, but my models depend on it,' which is what makes source('raw','LANDING') resolvable in model SQL and what makes dbt docs able to draw the full lineage graph starting from a raw table it never touches. The freshness block is the more important part conceptually: it turns 'is Snowpipe still working' from a question you'd have to remember to check manually into an automated assertion dbt evaluates before running any downstream model — dbt source freshness effectively pings LOAD_TS's max value and compares it to the configured thresholds.",
       nav: "Create sources.yml at the project root in your editor — no Snowsight/AWS UI for this step.",
       code: `version: 2
 sources:
@@ -366,6 +378,7 @@ sources:
     },
     {
       title: "Incremental staging model",
+      concept: "materialized='incremental' tells dbt: on the first run, build this as a full CREATE TABLE AS SELECT; on every subsequent run, only process rows matching the is_incremental() branch and MERGE them into the existing table using unique_key. Without is_incremental(), dbt would recompute and rebuild the entire table from all of RAW.LANDING on every single run — fine for a small table, prohibitively expensive once RAW.LANDING is millions of rows. This is functionally the same delta-only philosophy as a Snowflake Stream, just expressed in dbt's Jinja templating instead of native Snowflake DDL — worth noticing that both native and external orchestration converge on the same underlying idea: don't reprocess data you've already processed.",
       nav: "Create/edit in your editor under models/staging/. Test locally: terminal → dbt run --select stg_orders.",
       code: `{{ config(materialized='incremental', unique_key='order_id') }}
 
@@ -383,6 +396,7 @@ FROM {{ source('raw', 'LANDING') }}
     },
     {
       title: "Curated mart model",
+      concept: "ref('stg_orders') is the mechanism that makes this a DAG instead of a pile of unrelated SQL files: dbt parses every model's ref()/source() calls at compile time to build the dependency graph, then runs models in the correct topological order automatically — you never have to manually sequence 'run staging first, then marts.' It also means dbt knows to resolve stg_orders to whatever schema/database that model actually landed in (which can differ between dev and prod targets in profiles.yml), so the SQL itself stays environment-agnostic.",
       nav: "Create/edit under models/marts/. Verify in Snowsight: Data → Databases → AWS_INGEST_DB → ANALYTICS → Tables → ORDERS.",
       code: `{{ config(materialized='incremental', unique_key='order_id') }}
 
@@ -393,6 +407,7 @@ SELECT * FROM {{ ref('stg_orders') }}
     },
     {
       title: "Connection profile — key-pair auth",
+      concept: "profiles.yml is deliberately kept separate from dbt_project.yml (which lives in the repo) — profiles.yml holds environment/credential specifics and is meant to live outside version control (in ~/.dbt/ locally, or injected as a secret in CI/Airflow). Key-pair auth works via asymmetric crypto: dbt signs its connection request with the private key, Snowflake verifies it against the public key registered on the user via ALTER USER — Snowflake never sees or stores the private key itself. This is why rotation is simple and low-risk: generate a new key pair, register the new public key alongside the old one (Snowflake supports two active RSA keys per user for exactly this reason), cut over, then remove the old one — no shared password to reset everywhere at once.",
       nav: "Generate keys in terminal: openssl genrsa 2048 | openssl pkcs8 -topk8 -inform PEM -out dbt_rsa_key.p8 -nocrypt, then openssl rsa -in dbt_rsa_key.p8 -pubout -out dbt_rsa_key.pub. Register in Snowsight (role=ACCOUNTADMIN): ALTER USER DBT_SERVICE_USER SET RSA_PUBLIC_KEY='...'; Place profiles.yml in ~/.dbt/.",
       code: `aws_ingest_pipeline:
   target: prod
@@ -411,6 +426,7 @@ SELECT * FROM {{ ref('stg_orders') }}
     },
     {
       title: "Airflow DAG to trigger dbt on schedule",
+      concept: "Airflow's job here is purely orchestration — deciding when to run dbt and what to do if it fails — not transformation logic, which stays entirely inside the dbt models. Running dbt via KubernetesPodOperator (a fresh container per run) rather than a long-lived worker with dbt pre-installed keeps the dbt version pinned per-DAG-run and avoids dependency drift between Airflow's environment and dbt's; is_delete_operator_pod=True means the pod is cleaned up automatically instead of accumulating. The retries/retry_delay in default_args exist because transient failures (a warehouse resume timeout, a momentary network blip) shouldn't require a human to notice and manually re-trigger — Airflow retries automatically before escalating to an actual alert.",
       nav: "Save as dags/aws_ingest_dbt_pipeline.py in your Airflow dags/ folder. In the Airflow UI: DAGs page → toggle it On → Graph tab to watch runs, or Trigger DAG (▶) to run manually.",
       code: `from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
@@ -443,6 +459,7 @@ with DAG(
     },
     {
       title: "dbt tests as a quality gate",
+      concept: "dbt tests compile down to a SELECT that should return zero rows if the assertion holds — unique/not_null are built-in generic tests, and dbt_utils.accepted_range is a package-provided one; you can also write fully custom SQL tests. The reason run_dbt >> dbt_test matters as a DAG ordering (rather than testing being optional/manual) is that it turns 'the pipeline ran' and 'the pipeline produced trustworthy data' into two separate, both-required conditions — a MERGE can succeed (no SQL error) while still producing duplicate order_ids or negative amounts if an upstream assumption silently broke, and only the test step would catch that.",
       nav: "Create/edit models/marts/schema.yml. Run manually: dbt test --select orders. In Airflow UI, failures show as a red dbt_test box on the Graph/Grid view → click → Logs tab.",
       code: `version: 2
 models:

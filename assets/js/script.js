@@ -39,6 +39,9 @@
       const navBlock = c.nav
         ? `<div class="nav-box"><strong>${c.navLabel || "Navigation:"}</strong> ${c.nav}</div>`
         : "";
+      const conceptBlock = c.concept
+        ? `<div class="concept-box"><strong>${c.conceptLabel || "Concept:"}</strong> ${c.concept}</div>`
+        : "";
       return `
         <div class="card" data-id="${id}">
           <div class="card-head" data-toggle="${id}">
@@ -48,6 +51,7 @@
             <span class="chevron">&#9656;</span>
           </div>
           <div class="card-body">
+            ${conceptBlock}
             ${navBlock}
             ${codeBlock}
             ${noteBlock}
