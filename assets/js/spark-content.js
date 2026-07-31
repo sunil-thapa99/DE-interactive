@@ -299,9 +299,84 @@ result.show()`,
   ]
 },
 
+execution: {
+  intro: {
+    title: "Stage 3 — Execution model: entities, scheduling, and deploy modes",
+    desc: "How a line of PySpark code actually turns into work running on a cluster — the entity hierarchy (Application → Job → Stage → Task), the two internal schedulers that make that happen, and where the Driver process itself physically runs. This is the internals layer that Databricks notebooks mostly hide from you, but interviewers expect you to know it anyway."
+  },
+  cards: [
+    {
+      title: "The entity hierarchy: Application → Job → Stage → Task",
+      badge: "entities",
+      concept: "A SparkSession (or the older SparkContext underneath it) represents one Application — the single process that runs for the life of your notebook or spark-submit run. Every time you call an action (.count(), .write(), .collect()), Spark creates one Job for that action. Spark then splits that Job into Stages, with a new stage boundary created at every wide dependency (anything requiring a shuffle — groupBy, join, repartition); narrow dependencies (filter, select, map) stay within the same stage since no data movement between partitions is needed. Finally, each Stage is split into Tasks — one Task per partition, since a Task is the smallest unit of work, executing that stage's transformations on exactly one partition of data on one executor core.",
+      navLabel: "See it live:",
+      nav: "Databricks: click into any completed cell's job link (or cluster → Spark UI) → Jobs tab shows one row per Job → click a Job to see its Stages → click a Stage to see its individual Tasks, their duration, and which executor ran each one.",
+      code: `# One action = one Job. This single write() triggers exactly one Job,
+# which gets split into however many Stages the shuffle boundaries require.
+df_clean.groupBy("state").agg(F.avg("median_price")).write.format("delta").saveAsTable("stats")
+# Job 1
+#   Stage 1 (narrow: read + filter + select)  -> N tasks, N = number of input partitions
+#   [shuffle boundary — groupBy]
+#   Stage 2 (wide: aggregate + write)          -> M tasks, M = number of shuffle partitions (default 200)`,
+      noteLabel: "Why this matters:",
+      note: "This hierarchy is the actual vocabulary the Spark UI, and every performance discussion, is built on — 'this job is slow' isn't specific enough to debug, but 'stage 2 has a 40-second task and the rest finish in 2 seconds' immediately points at skew in a specific stage."
+    },
+    {
+      title: "Narrow vs. wide dependencies — what actually creates a new stage",
+      badge: "internals",
+      concept: "A narrow dependency means each output partition depends on only one (or a small, fixed number of) input partitions — no data has to move between machines, so Spark can pipeline these operations together within a single stage (filter → select → withColumn all fuse into one stage's task). A wide dependency means an output partition can depend on many/all input partitions (groupBy, join, distinct, repartition, orderBy) — this requires a shuffle, and a shuffle boundary is exactly where the DAGScheduler cuts a new stage, because all of stage N's tasks must finish writing shuffle output before any of stage N+1's tasks can start reading it.",
+      navLabel: "Interview one-liner:",
+      nav: "'What determines where a stage boundary falls?' — a wide dependency (shuffle). Everything narrow between two shuffles gets pipelined into one stage.",
+      code: null,
+      note: null
+    },
+    {
+      title: "The DAG Scheduler",
+      badge: "internals",
+      concept: "The DAGScheduler is the component (running inside the Driver) responsible for taking the logical DAG of RDD/DataFrame operations built up by your lazy transformations and turning it into a physical execution plan of Stages — it walks the DAG backward from the action that triggered it, cutting a new stage at every wide-dependency (shuffle) boundary, and submits stages for execution in dependency order (a stage can't start until all stages it depends on have completed). It's also the layer responsible for fault tolerance at the stage level: if a stage fails (e.g. an executor holding its output dies), the DAGScheduler uses RDD lineage to know exactly how to recompute only the lost partitions, rather than the entire application failing.",
+      navLabel: "Interview framing:",
+      nav: "'What happens if a stage fails partway through?' — the DAGScheduler doesn't restart the whole Application; it resubmits just the failed stage (or the specific lost partitions within it), recomputed from lineage, and continues from there — this is the concrete mechanism behind Spark's fault tolerance.",
+      code: null,
+      note: null
+    },
+    {
+      title: "The Task Scheduler",
+      badge: "internals",
+      concept: "Once the DAGScheduler hands off a stage as a ready 'TaskSet' (one task per partition), the TaskScheduler is the component that actually assigns those individual tasks to specific executors, requesting resources from the cluster manager and respecting data locality (preferring to run a task on an executor that already has that partition's data in memory/local disk, to avoid an unnecessary network read). It also handles per-task retries: if one task fails (not the whole stage — e.g. a transient error on one executor), the TaskScheduler retries just that task, up to a configurable limit (spark.task.maxFailures, default 4), before escalating a stage-level failure to the DAGScheduler. It's also what implements speculative execution — optionally re-launching a copy of an unusually slow straggler task on a different executor and taking whichever copy finishes first.",
+      navLabel: "Interview framing:",
+      nav: "DAGScheduler = stage-level planning and fault tolerance ('what stages exist, in what order, and how do we recover a lost stage'). TaskScheduler = task-level execution and fault tolerance ('which executor runs this specific task, and what do we do if just this one task fails'). Keeping this division clean is exactly what a strong internals answer sounds like.",
+      code: null,
+      note: null
+    },
+    {
+      title: "Cluster mode vs. Client mode — where does the Driver actually run?",
+      badge: "deploy",
+      concept: "These are the two deploy modes for spark-submit (this distinction is invisible in a Databricks notebook, where Databricks manages it for you, but it's a real, common interview topic tied to plain/on-prem Spark or EMR). In Client mode, the Driver runs on the machine that launched the job — e.g. your laptop, or an edge/gateway node — while only the Executors run on the cluster; this is convenient for interactive work (you see logs/output locally in real time) but means the Driver process dies if that launching machine disconnects or is shut down, killing the whole Application. In Cluster mode, the Driver itself runs inside the cluster (on one of the cluster's own nodes, managed by the cluster manager) — better for unattended, long-running production jobs since the job's lifecycle isn't tied to your laptop staying connected, but you lose the convenience of local interactive output.",
+      navLabel: "Try it:",
+      nav: "The deploy mode is set via a spark-submit flag — this is what to reach for if asked to contrast the two concretely.",
+      code: `# Client mode: Driver runs on the machine issuing this command (e.g. an edge node)
+spark-submit --deploy-mode client --master yarn my_job.py
+
+# Cluster mode: Driver runs inside the cluster itself, managed by the cluster manager
+spark-submit --deploy-mode cluster --master yarn my_job.py`,
+      noteLabel: "Interview framing:",
+      note: "'Why would a production Spark job use cluster mode instead of client mode?' — so the Driver's lifecycle isn't tied to a single machine staying online; an unattended scheduled job (via Airflow, cron, or a job scheduler) should run in cluster mode so a disconnect on the submitting side doesn't kill a multi-hour job partway through. Databricks Jobs (as opposed to interactive notebooks) conceptually follow the same cluster-mode philosophy — the Driver's lifecycle is tied to the managed job run, not to your own machine."
+    },
+    {
+      title: "Tracing one action end-to-end",
+      badge: "scenario",
+      concept: "Putting the whole model together: when df.write.format('delta').saveAsTable(...) runs, the Driver's DAGScheduler examines the accumulated lazy plan, identifies the shuffle boundary at the earlier groupBy, and submits Stage 1 (read + filter + select — narrow, pipelined) as a TaskSet to the TaskScheduler, which assigns one task per input partition to available executors respecting data locality. Once every Stage 1 task finishes writing its shuffle output, the DAGScheduler submits Stage 2 (the aggregation + write — reading shuffled data, wide) as a new TaskSet, again handed to the TaskScheduler for per-partition task assignment. If any individual task fails transiently, the TaskScheduler retries just that task; if an entire executor is lost, the DAGScheduler recomputes the affected partitions from lineage rather than restarting the Application.",
+      navLabel: "Where to verify this:",
+      nav: "Spark UI → Jobs tab (one row per action/Job) → click into the Job → Stages (in execution order, with the shuffle boundary visible as the transition between them) → click a Stage → Tasks tab shows every individual task, its executor, duration, and any retries — this is the literal, visual confirmation of everything in this tab.",
+      code: null,
+      note: "Being able to narrate this whole chain — Job to Stage to Task, DAGScheduler to TaskScheduler, narrow vs. wide as the reason stages exist at all — in response to 'what happens when I call .write() on a DataFrame' is one of the strongest signals of genuine Spark depth in an interview, well beyond just knowing the DataFrame API."
+    }
+  ]
+},
+
 architecture: {
   intro: {
-    title: "Stage 3 — Architecture & performance tuning",
+    title: "Stage 4 — Architecture & performance tuning",
     desc: "The concepts that separate someone who's written PySpark code from someone who can diagnose and fix a slow, expensive, or failing Spark job in production."
   },
   cards: [
@@ -386,7 +461,7 @@ salted = df.withColumn("salted_key", F.concat(F.col("key"), F.lit("_"), (F.rand(
 
 streaming: {
   intro: {
-    title: "Stage 4 — Structured Streaming",
+    title: "Stage 5 — Structured Streaming",
     desc: "Real-time/near-real-time processing with the same DataFrame API used for batch — Spark unifies both under Structured Streaming rather than a separate streaming-only API."
   },
   cards: [
@@ -471,7 +546,7 @@ query.awaitTermination()`,
 
 delta: {
   intro: {
-    title: "Stage 5 — Delta Lake",
+    title: "Stage 6 — Delta Lake",
     desc: "Delta Lake is the storage layer that gives plain Parquet files ACID transactions, schema enforcement, and time travel — it's the reason Databricks pipelines default to Delta tables instead of raw Parquet, and it maps almost one-to-one onto Snowflake concepts covered elsewhere in this project."
   },
   cards: [
@@ -609,6 +684,14 @@ interview: {
       nav: "Give a concrete diagnostic order, not a vague 'I'd look at the logs.'",
       noteLabel: "Model answer:",
       note: "\"First, .explain() on the DataFrame to see the physical plan — am I getting a broadcast join where I expect one, is a filter actually pushed down to the source? Second, the Spark UI's Stages tab — looking for a stage with disproportionate shuffle read/write, or wildly uneven task durations, which usually means data skew. Third, checking partition count and size going into expensive stages — too few large partitions underutilizes the cluster, too many tiny ones adds scheduling overhead. From there it's usually one of: add a broadcast hint, repartition on a better key, salt a skewed key, or cache a DataFrame that's being recomputed multiple times.\""
+    },
+    {
+      title: "Walk me through what happens when I call .write() on a DataFrame.",
+      navLabel: "How to approach it:",
+      badge: "deep-dive",
+      nav: "This is the execution-model question, almost verbatim — narrate the full chain from the Execution Model tab rather than staying at the surface level of 'it writes the data.'",
+      noteLabel: "Model answer:",
+      note: "\"Calling .write() is the action that finally triggers the accumulated lazy plan. The Driver's DAGScheduler looks at that plan and creates one Job, then walks it backward, cutting a new Stage at every wide-dependency shuffle boundary — narrow operations like filter and select before the first shuffle stay pipelined into one stage. Each Stage becomes a TaskSet with one task per partition, which the TaskScheduler hands off to executors, respecting data locality where possible. Stage 2 can't start until every task in Stage 1 finishes writing its shuffle output. If a single task fails transiently, the TaskScheduler just retries that task; if a whole executor is lost, the DAGScheduler recomputes the lost partitions from lineage rather than restarting the Job. I'd verify all of this concretely in the Spark UI's Jobs → Stages → Tasks views rather than just asserting it.\""
     },
     {
       title: "What's the difference between cache() and checkpoint()?",
