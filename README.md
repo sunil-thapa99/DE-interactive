@@ -7,7 +7,7 @@ A hands-on, interview-focused learning platform for Data Engineering. The home p
 ## Technologies
 
 - **Snowflake + AWS** (`technologies/snowflake/`) — Snowpipe ingestion from S3, three ETL orchestration patterns (Tasks+Streams, Dynamic Tables, dbt+Airflow), architecture & performance, governance & advanced concepts, data modeling & loading, and interview Q&A.
-- **Apache Spark + PySpark + Databricks** (`technologies/spark/`) — a hands-on Databricks Community Edition pipeline, Python/PySpark fundamentals through the DataFrame API, architecture & performance tuning (shuffles, caching, AQE, skew), Structured Streaming, Delta Lake, Spark-vs-Snowflake trade-offs, and interview Q&A.
+- **Apache Spark + PySpark + Databricks** (`technologies/spark/`) — a hands-on Databricks Community Edition pipeline, Python/PySpark fundamentals through the DataFrame API, the execution model (Job/Stage/Task, DAG/Task schedulers, cluster vs. client deploy mode), architecture & performance tuning (shuffles, caching, AQE, skew, resource configs, serialization), Structured Streaming, Delta Lake, storage internals & testing (Parquet, Auto Loader, orchestration, bucketing, cost control), Spark-vs-Snowflake trade-offs, and interview Q&A.
 - More technologies (Kafka, Airflow) are planned — see the home page for the roadmap.
 
 ## Project structure

@@ -191,6 +191,50 @@ rdd.map(lambda x: bc.value.get(x))`,
       note: null
     },
     {
+      title: "Accumulators — write-only counters across executors",
+      badge: "python",
+      concept: "A Broadcast variable moves read-only data from the Driver out to every Executor. An Accumulator does the reverse: it lets every Executor add to a shared counter/aggregate, which the Driver can then read back after an action completes — used for things like counting malformed rows encountered during a transformation, without collecting all the data back to the Driver just to count it. Accumulators are write-only from the executors' side (you can .add() to them inside a transformation, but can't reliably .value read them from inside a transformation) and are only guaranteed accurate for actions, not transformations — because of lazy evaluation and potential task retries, an accumulator updated inside a transformation that gets recomputed (e.g. after a failed task retry, or reused across multiple actions) can double-count.",
+      navLabel: "Try it:",
+      nav: "Count malformed rows encountered during a filter, without a separate counting pass over the data.",
+      code: `bad_row_count = spark.sparkContext.accumulator(0)
+
+def check_row(row):
+    if row.population is None:
+        bad_row_count.add(1)
+        return False
+    return True
+
+filtered = df_raw.rdd.filter(check_row)
+filtered.count()  # action — forces evaluation, accumulator value is now reliable
+print(f"Bad rows encountered: {bad_row_count.value}")`,
+      noteLabel: "Interview framing:",
+      note: "'How would you count how many rows failed a validation check, without materializing them all to the Driver' is exactly the accumulator use case — and being able to name the reliability caveat (guaranteed accurate only within actions, not arbitrary transformations, due to potential task re-execution) shows you understand the mechanism, not just the API surface."
+    },
+    {
+      title: "Working with nested/complex data: explode, StructType, ArrayType, MapType",
+      badge: "api",
+      concept: "Real source data is rarely flat — a JSON payload with a line_items array or a nested customer object is the norm, not the exception (the exact same shape as the VARIANT/FLATTEN content in the Snowflake module, just expressed through PySpark's typed schema system instead). A DataFrame column can itself be typed as ArrayType, StructType, or MapType — struct fields are accessed with dot notation (col.field), and an array column needs explode() to turn each array element into its own row before you can work with it relationally, exactly mirroring what LATERAL FLATTEN does in Snowflake SQL.",
+      navLabel: "Try it:",
+      nav: "Explode a nested array column into rows, and pull fields out of a struct column.",
+      code: `from pyspark.sql import functions as F
+
+# Given a column "line_items": array<struct<sku:string, qty:int>>
+exploded = (
+    df_orders
+    .withColumn("item", F.explode("line_items"))   # one row per array element
+    .select(
+        "order_id",
+        F.col("item.sku").alias("sku"),             # dot notation into the struct
+        F.col("item.qty").alias("qty")
+    )
+)
+
+# posexplode gives you the array index too, when order/position matters
+with_position = df_orders.select("order_id", F.posexplode("line_items").alias("pos", "item"))`,
+      noteLabel: "Interview framing:",
+      note: "If handed a sample of nested JSON and asked to flatten it into rows on the spot, explode() plus dot notation into struct fields is the expected core answer — directly parallel to the FLATTEN/LATERAL JOIN pattern in the Snowflake module, just via PySpark's own schema-aware API instead of SQL."
+    },
+    {
       title: "Transformations vs. actions — the full taxonomy",
       badge: "concept",
       concept: "Transformations (select, filter, withColumn, groupBy, join, orderBy) are lazy — they build the plan. Actions (count, collect, show, write, take, first) trigger execution. Some transformations are 'narrow' (filter, select — each output partition depends on only one input partition, no data movement between machines) and some are 'wide' (groupBy, join, orderBy, distinct — require a shuffle, moving data across the network between partitions). This narrow/wide distinction is the single biggest performance lever in Spark: wide transformations are expensive, narrow ones are nearly free.",
@@ -455,6 +499,49 @@ salted = df.withColumn("salted_key", F.concat(F.col("key"), F.lit("_"), (F.rand(
       nav: "'My job is spilling to disk / OOMing, what do you check' — partition count and size (too few, too-large partitions per task), whether a broadcast join's 'small' side turned out to be bigger than expected after upstream filtering changed, and whether too much is being cached/persisted at once without unpersisting what's no longer needed.",
       code: null,
       note: null
+    },
+    {
+      title: "Resource tuning: spark-submit configs and dynamic allocation",
+      badge: "tuning",
+      concept: "These are the concrete knobs behind everything discussed so far. --num-executors / --executor-cores / --executor-memory (or their spark.executor.* config equivalents on Databricks) set how many executors run and how much CPU/RAM each gets — get executor-memory too small relative to partition size and you spill/OOM; too few executor-cores and you under-parallelize a stage with plenty of tasks waiting. spark.sql.shuffle.partitions sets how many partitions a shuffle produces (default 200) — too low under-parallelizes a large shuffle, too high creates excessive small-task scheduling overhead; with AQE enabled (the default since Spark 3.0), Spark auto-coalesces small shuffle partitions at runtime, which is why manually tuning this value matters far less than it did in Spark 2.x tutorials. Dynamic allocation (spark.dynamicAllocation.enabled) lets the number of executors scale up/down automatically based on pending task backlog, instead of a fixed executor count for the whole job's lifetime.",
+      navLabel: "Try it:",
+      nav: "Databricks: cluster configuration UI exposes autoscaling (dynamic allocation's cluster-level equivalent) directly, so you rarely set these flags by hand there — but on plain spark-submit/EMR you set them explicitly.",
+      code: `spark-submit \\
+  --num-executors 10 \\
+  --executor-cores 4 \\
+  --executor-memory 8g \\
+  --conf spark.sql.shuffle.partitions=400 \\
+  --conf spark.dynamicAllocation.enabled=true \\
+  my_job.py`,
+      noteLabel: "Interview framing:",
+      note: "'How would you size a Spark job's resources' — start from data volume and shuffle partition count, not a guessed cluster size: enough executor-cores in total to have meaningfully more tasks running in parallel than waiting, enough executor-memory per core to hold a partition's working set without spilling, and prefer dynamic allocation over a fixed executor count for variable workloads."
+    },
+    {
+      title: "Serialization: Java vs. Kryo",
+      badge: "tuning",
+      concept: "Whenever Spark moves data across the network (shuffles) or between memory and disk (caching, spilling), it has to serialize objects into bytes and back. The JVM's default Java serialization is general-purpose but slow and produces large serialized output. Kryo serialization (spark.serializer = org.apache.spark.serializer.KryoSerializer) is significantly faster and more compact for most object types, and is recommended for any performance-sensitive job — though it requires registering custom classes for best results, and DataFrame/Dataset operations already use Spark's own optimized encoders under the hood regardless of this setting (this config mainly matters for RDD-based workloads and cached objects).",
+      navLabel: "Try it:",
+      nav: "Set Kryo as the default serializer for an RDD-heavy or cache-heavy job.",
+      code: `spark-submit --conf spark.serializer=org.apache.spark.serializer.KryoSerializer my_job.py`,
+      noteLabel: "Interview framing:",
+      note: "A concrete, specific answer ('switch to Kryo via spark.serializer, since it's faster and more compact than Java serialization for shuffle/cache-heavy RDD workloads') signals real tuning experience — most candidates only know Spark 'does serialization' without knowing there's a choice or a config for it."
+    },
+    {
+      title: "partitionBy (physical, on write) vs. repartition (in-memory)",
+      badge: "gotcha",
+      concept: "These two easily get confused because they share the word 'partition' but solve completely different problems. repartition(n) (covered earlier in this tab) changes the number of in-memory partitions a DataFrame is split into during processing — it affects parallelism during computation, not the output file layout. partitionBy('year', 'month') is a write-time option that creates an actual physical directory structure on disk/object storage (.../year=2026/month=07/...) — it doesn't change in-memory processing at all; it changes how output files are organized so that a future read with a filter on that column can skip entire directories without reading their contents at all (partition pruning at the storage layer, conceptually similar to Snowflake's micro-partition pruning, just done via literal folder structure instead of internal metadata).",
+      navLabel: "Try it:",
+      nav: "Write output partitioned by a column commonly filtered on downstream.",
+      code: `(df_clean
+    .write
+    .partitionBy("state")
+    .format("delta")
+    .mode("overwrite")
+    .saveAsTable("city_price_stats_partitioned"))
+# Result: one subdirectory per distinct state value, e.g. state=CA/, state=TX/, ...
+# A later query filtering WHERE state = 'CA' skips reading every other directory entirely.`,
+      noteLabel: "Interview framing:",
+      note: "'What's the difference between repartition and partitionBy' is a near-guaranteed question specifically because they sound like the same concept — the clean answer is: repartition is about in-memory parallelism during processing, partitionBy is about physical file layout on write for future read pruning. Over-partitioning on write (too many distinct values, e.g. partitioning by a high-cardinality column like customer_id) creates the small-file problem at the storage layer — a real, common mistake worth naming unprompted."
     }
   ]
 },
@@ -624,6 +711,119 @@ spark.sql("VACUUM city_price_stats DRY RUN")
 
 spark.sql("VACUUM city_price_stats RETAIN 168 HOURS")  -- 7 days, the default`,
       note: "Running VACUUM with too short a retention window is a real, hard-to-reverse mistake — it can delete files a concurrent long-running read or an intended time-travel query still needed, directly paralleling why Snowflake's DATA_RETENTION_TIME_IN_DAYS is a deliberate per-table decision, not a default to leave unexamined."
+    }
+  ]
+},
+
+storage: {
+  intro: {
+    title: "Stage 7 — Storage internals, testing, and operations",
+    desc: "The file-format knowledge behind why Parquet is the default, how to actually test PySpark transformation logic, and the operational patterns (incremental ingestion, scheduling, cost control) that come up once a pipeline needs to run unattended in production."
+  },
+  cards: [
+    {
+      title: "Parquet internals: why it's the default file format",
+      badge: "storage",
+      concept: "Parquet is a columnar storage format — values from the same column are stored together on disk, rather than row-by-row like CSV/JSON. This matters for two reasons: a query that only needs 3 of a table's 40 columns only has to read those 3 columns' bytes off disk (column pruning), and each column chunk carries its own min/max statistics per row group (a row group is a horizontal slice of the file, typically ~128MB), so a filter can skip entire row groups whose min/max can't possibly match (predicate pushdown) — conceptually the same pruning idea as Snowflake's micro-partition metadata, just implemented at the file level instead of inside a managed warehouse. Parquet also supports per-column compression (snappy is the common default — fast, moderate ratio; gzip/zstd compress smaller but slower) and columnar encoding (dictionary/run-length encoding for repetitive values), which is why Parquet files are usually dramatically smaller than the equivalent CSV/JSON.",
+      navLabel: "Interview framing:",
+      nav: "'Why Parquet over CSV/JSON for large-scale data' — columnar storage enables column pruning and predicate pushdown that row-based formats structurally can't do, plus better compression from columnar encoding — not just 'it's faster,' but specifically why.",
+      code: null,
+      note: null
+    },
+    {
+      title: "Testing PySpark transformation logic",
+      badge: "testing",
+      concept: "Transformation logic (the kind built in the Setup tab's mini pipeline) is regular Python code operating on DataFrames, and it's testable the same way any Python code is — the key enabler is running Spark locally (master='local[*]') so tests don't need a real cluster, and comparing actual vs. expected DataFrames (by collecting small test DataFrames or using a comparison helper) rather than eyeballing .show() output.",
+      navLabel: "Try it:",
+      nav: "A minimal pytest-based unit test for a transformation function, run entirely locally.",
+      code: `# conftest.py
+import pytest
+from pyspark.sql import SparkSession
+
+@pytest.fixture(scope="session")
+def spark():
+    return SparkSession.builder.master("local[*]").appName("tests").getOrCreate()
+
+# test_transform.py
+def test_price_per_1000_pop(spark):
+    input_df = spark.createDataFrame(
+        [("Austin", "TX", 1000000, 300000.0)],
+        ["city", "state", "population", "median_price"]
+    )
+    result = clean_and_derive(input_df)  # the function under test, extracted from the notebook
+    row = result.collect()[0]
+    assert row.price_per_1000_pop == 300.0`,
+      noteLabel: "Interview framing:",
+      note: "'How do you test Spark code' is a real differentiator question — many candidates have only ever run transformations interactively in a notebook and never extracted them into testable functions at all. Mentioning local[*] mode, small hand-built input DataFrames instead of production-scale data, and asserting on collected output signals real engineering practice, not just notebook exploration."
+    },
+    {
+      title: "Databricks Auto Loader (cloudFiles) — Spark's answer to incremental ingestion",
+      badge: "ingestion",
+      concept: "Auto Loader is Databricks' mechanism for incrementally and efficiently ingesting new files as they land in cloud storage (S3/ADLS/GCS), without re-scanning the entire directory on every run — it tracks which files have already been processed (via either directory listing with checkpointing, or cloud-native file notifications, similarly to how Snowpipe listens on an SQS queue fed by S3 event notifications). This is the direct Spark/Databricks equivalent of the Snowpipe auto-ingest pattern covered in the Snowflake module's ingestion setup — same underlying goal (process only new files, near-real-time, without manual re-scans), different platform.",
+      navLabel: "Try it:",
+      nav: "Read incrementally from an S3 path with Auto Loader inside a streaming job.",
+      code: `df_stream = (
+    spark.readStream
+    .format("cloudFiles")
+    .option("cloudFiles.format", "json")
+    .option("cloudFiles.schemaLocation", "/mnt/schemas/orders/")
+    .load("s3://my-bucket/raw/orders/")
+)
+
+(df_stream.writeStream
+    .format("delta")
+    .option("checkpointLocation", "/mnt/checkpoints/orders/")
+    .trigger(availableNow=True)   # process what's currently available, then stop — good for scheduled batch-style runs
+    .start("/mnt/curated/orders/"))`,
+      noteLabel: "Interview framing:",
+      note: "'How would you incrementally ingest new files landing in S3 into a Spark/Databricks pipeline, without a full directory rescan each time' — Auto Loader, and being able to name that it can use cloud-native file notifications (not just directory listing) for efficiency at scale is the same maturity signal as knowing Snowpipe uses SQS rather than polling."
+    },
+    {
+      title: "Orchestrating Spark jobs: Databricks Jobs and Airflow",
+      badge: "ops",
+      concept: "A notebook run interactively is fine for development, but a production pipeline needs to run unattended, on a schedule, with retries and alerting — Databricks Jobs (schedule a notebook or JAR/wheel to run on its own job cluster, with retry policies and email/webhook alerts built in) is the platform-native way to do this. For pipelines that need to coordinate Spark alongside other systems (the same reasoning as the Snowflake module's dbt+Airflow tab), Airflow can trigger a Databricks job run via its Databricks provider operator instead.",
+      navLabel: "Try it:",
+      nav: "Trigger a Databricks Job run from an Airflow DAG rather than duplicating scheduling logic in two places.",
+      code: `from airflow.providers.databricks.operators.databricks import DatabricksRunNowOperator
+
+run_spark_job = DatabricksRunNowOperator(
+    task_id="run_pyspark_pipeline",
+    databricks_conn_id="databricks_default",
+    job_id=12345,   # the Databricks Job ID configured in the workspace UI
+)`,
+      noteLabel: "Interview framing:",
+      note: "'Notebook run manually' vs. 'Databricks Job' vs. 'Airflow triggering a Databricks Job' is a spectrum of production-readiness worth being able to place a given setup on — mirroring exactly the same 'native orchestration vs. external orchestrator' trade-off discussion already covered for Snowflake Tasks vs. dbt+Airflow."
+    },
+    {
+      title: "Bucketing (bucketBy) for repeated joins on the same key",
+      badge: "storage",
+      concept: "bucketBy pre-shuffles and pre-sorts data into a fixed number of buckets by a key at write time, and persists that bucketing as part of the table's metadata — when two tables are bucketed identically on the same join key and bucket count, a later join between them can skip the shuffle entirely (a sort-merge-bucket join), because matching keys are already guaranteed to live in the same bucket. This only pays off for a join pattern repeated often enough (e.g. a daily job joining the same two large tables) to amortize the one-time cost of bucketing the data.",
+      navLabel: "Try it:",
+      nav: "Bucket two tables identically before a repeated join.",
+      code: `df_orders.write.bucketBy(8, "customer_id").sortBy("customer_id").saveAsTable("orders_bucketed")
+df_customers.write.bucketBy(8, "customer_id").sortBy("customer_id").saveAsTable("customers_bucketed")
+# A later join on customer_id between these two tables can skip the shuffle entirely`,
+      noteLabel: "Interview framing:",
+      note: "Lower priority than broadcast joins for most interviews, but worth knowing exists — 'bucketing trades a one-time write-time cost for avoiding a shuffle on every future join,' as the concise answer if asked to go beyond broadcast joins."
+    },
+    {
+      title: "FAIR vs. FIFO scheduling within one Application",
+      badge: "internals",
+      concept: "This is a different scheduling concept from the DAGScheduler/TaskScheduler covered in the Execution Model tab — it's about how multiple concurrent Jobs within the same Application (e.g. two notebook cells running simultaneously, or multiple threads submitting jobs against the same SparkSession) share the Application's executors. FIFO (the default) runs Jobs in submission order — an early, long-running Job can starve later Jobs of resources until it finishes. The FAIR scheduler instead round-robins resources across concurrent Jobs so a long job doesn't block short ones behind it.",
+      navLabel: "Try it:",
+      nav: "Switch to FAIR scheduling for a workload with multiple concurrent, independent jobs sharing one Application.",
+      code: `spark.conf.set("spark.scheduler.mode", "FAIR")`,
+      noteLabel: "Interview framing:",
+      note: "This is a niche but real distinguishing question — most candidates only know about cluster-manager-level resource allocation and have never considered that jobs within a single Application also need a scheduling policy relative to each other."
+    },
+    {
+      title: "Cost control: autoscaling, spot instances, cluster pools",
+      badge: "ops",
+      concept: "Autoscaling (the cluster-level version of dynamic allocation covered in Architecture & Performance) lets a Databricks cluster grow/shrink its worker count based on load rather than running a fixed size for the job's entire duration. Spot instances (cheaper, reclaimable-on-short-notice cloud VMs) can cut compute cost substantially for fault-tolerant batch workloads — Spark's task-level retry behavior (covered in Execution Model) makes it naturally resilient to losing a spot-instance executor mid-job, unlike a stateful application that would need to handle that itself. Cluster pools keep a set of idle, pre-warmed instances ready so a new cluster attaches to them instantly instead of waiting several minutes for cloud VMs to provision from scratch — trading a small always-on idle cost for much faster cluster startup.",
+      navLabel: "Interview framing:",
+      nav: "'How would you control Databricks cluster costs' — autoscaling instead of fixed oversized clusters, spot instances for fault-tolerant batch jobs (not for jobs that can't tolerate an executor disappearing), and pools if fast job-start latency matters enough to justify a small idle-instance cost — directly parallel to the resource-monitor/warehouse-sizing cost conversation already covered in the Snowflake module.",
+      code: null,
+      note: null
     }
   ]
 },
