@@ -1,7 +1,9 @@
 (function () {
   const app = document.getElementById("app");
   const tabs = document.querySelectorAll(".tab");
-  const STORAGE_KEY = "sf-pipeline-progress-v1";
+  const STORAGE_KEY = (typeof MODULE_ID !== "undefined" && MODULE_ID === "snowflake")
+    ? "sf-pipeline-progress-v1"
+    : `de-interactive-progress-${(typeof MODULE_ID !== "undefined" ? MODULE_ID : "default")}`;
 
   function loadDone() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
@@ -69,8 +71,13 @@
   }
 
   function renderCompare() {
-    let html = `<div class="section-intro"><h2>Compare the three ETL variants</h2><p>Same ingestion foundation, different transform/orchestration approach.</p></div>`;
-    html += `<div style="overflow-x:auto"><table class="compare"><thead><tr><th>Dimension</th><th>Tasks + Streams</th><th>Dynamic Tables</th><th>External Orchestrator</th></tr></thead><tbody>`;
+    const meta = (typeof COMPARE_META !== "undefined") ? COMPARE_META : {
+      title: "Compare the three ETL variants",
+      desc: "Same ingestion foundation, different transform/orchestration approach.",
+      headers: ["Dimension", "Tasks + Streams", "Dynamic Tables", "External Orchestrator"]
+    };
+    let html = `<div class="section-intro"><h2>${meta.title}</h2><p>${meta.desc}</p></div>`;
+    html += `<div style="overflow-x:auto"><table class="compare"><thead><tr>${meta.headers.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>`;
     COMPARE_ROWS.forEach(row => {
       html += `<tr>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>`;
     });
@@ -152,7 +159,7 @@
 
   function allCardIds() {
     const ids = [];
-    ["overview", "ingestion", "tasks", "dynamic", "orchestrator", "architecture", "governance", "modeling", "interview"].forEach(k => {
+    Object.keys(CONTENT).forEach(k => {
       CONTENT[k].cards.forEach((_, i) => ids.push(cardId(k, i)));
     });
     return ids;

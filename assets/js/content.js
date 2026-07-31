@@ -1,4 +1,5 @@
-// Content data for the dashboard, distilled from the four markdown guides.
+// Content data for the Snowflake + AWS module.
+const MODULE_ID = "snowflake";
 const CONTENT = {
 
 overview: {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Snowflake + AWS — DE Interactive</title>
+<title>Apache Spark + PySpark + Databricks — DE Interactive</title>
 <link rel="stylesheet" href="../../assets/css/styles.css?v=8" />
 </head>
 <body>
@@ -11,10 +11,10 @@
 <header class="topbar">
   <div class="brand">
     <a class="home-link" href="../../index.html" title="Back to DE Interactive home">&#8592; Home</a>
-    <span class="logo">❄️</span>
+    <span class="logo">&#128293;</span>
     <div>
-      <h1>Snowflake + AWS</h1>
-      <p class="subtitle">Ingestion, ETL patterns, architecture, governance, data modeling &amp; interview prep</p>
+      <h1>Apache Spark + PySpark + Databricks</h1>
+      <p class="subtitle">Distributed compute, the DataFrame API, architecture &amp; performance, streaming, Delta Lake, and interview prep</p>
     </div>
   </div>
   <div class="progress-wrap" title="Steps completed across all sections">
@@ -25,14 +25,12 @@
 
 <nav class="tabs" id="tabs">
   <button class="tab active" data-tab="overview">Overview</button>
-  <button class="tab" data-tab="ingestion">1. Ingestion Setup</button>
-  <button class="tab" data-tab="tasks">2a. Tasks + Streams</button>
-  <button class="tab" data-tab="dynamic">2b. Dynamic Tables</button>
-  <button class="tab" data-tab="orchestrator">2c. External Orchestrator</button>
-  <button class="tab" data-tab="compare">Compare</button>
+  <button class="tab" data-tab="setup">1. Setup + Mini Pipeline</button>
+  <button class="tab" data-tab="pyspark">2. Python &amp; PySpark API</button>
   <button class="tab" data-tab="architecture">3. Architecture &amp; Performance</button>
-  <button class="tab" data-tab="governance">4. Governance &amp; Advanced</button>
-  <button class="tab" data-tab="modeling">5. Data Modeling &amp; Loading</button>
+  <button class="tab" data-tab="streaming">4. Structured Streaming</button>
+  <button class="tab" data-tab="delta">5. Delta Lake</button>
+  <button class="tab" data-tab="comparison">Compare</button>
   <button class="tab" data-tab="interview">Interview Prep</button>
   <button class="tab" data-tab="quiz">Quiz</button>
 </nav>
@@ -40,10 +38,10 @@
 <main id="app"></main>
 
 <footer>
-  <p>Built for learning purposes — fill in real account IDs, bucket names, and ARNs before running against a live environment.</p>
+  <p>Built for learning purposes — sample data/paths are for Databricks Community Edition; adapt paths/credentials for your own environment.</p>
 </footer>
 
-<script src="../../assets/js/content.js?v=8"></script>
+<script src="../../assets/js/spark-content.js?v=1"></script>
 <script src="../../assets/js/script.js?v=8"></script>
 </body>
 </html>

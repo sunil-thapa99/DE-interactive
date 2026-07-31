@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>DE Interactive — Data Engineering Learning Dashboard</title>
-<link rel="stylesheet" href="assets/css/home.css?v=2" />
+<link rel="stylesheet" href="assets/css/home.css?v=3" />
 </head>
 <body>
 
@@ -40,14 +40,14 @@
       <span class="tag soon">Coming soon</span>
     </div>
 
-    <div class="tech-card disabled">
-      <span class="icon">&#129449;</span>
-      <h3>Databricks + Spark</h3>
-      <p><strong>What it is:</strong> A unified platform for large-scale data processing and ML, built on Apache Spark, with Delta Lake as its storage layer.</p>
-      <p><strong>Why use it:</strong> Handles data volumes and transformations too large or too custom for pure SQL — arbitrary code transforms, ML pipelines, and lakehouse architecture spanning batch and streaming.</p>
-      <p><strong>Will cover:</strong> Delta Lake, Spark job tuning, Unity Catalog, medallion architecture, and cluster cost management.</p>
-      <span class="tag soon">Coming soon</span>
-    </div>
+    <a class="tech-card" href="technologies/spark/index.html">
+      <span class="icon">&#128293;</span>
+      <h3>Apache Spark + PySpark + Databricks</h3>
+      <p><strong>What it is:</strong> A distributed compute engine for processing large datasets across a cluster, programmed via the DataFrame API (PySpark/Scala/SQL), most commonly run on the Databricks platform with Delta Lake as its storage layer.</p>
+      <p><strong>Why use it:</strong> Handles data volumes and transformation logic too large or too custom for pure SQL — arbitrary code transforms, ML feature engineering, and a single unified engine spanning batch and streaming, unlike a single-node tool like pandas.</p>
+      <p><strong>Covers:</strong> A hands-on Databricks Community Edition pipeline, Python/PySpark fundamentals, the DataFrame API, architecture &amp; performance tuning (shuffles, caching, AQE, skew), Structured Streaming, Delta Lake, Spark-vs-Snowflake trade-offs, and interview Q&amp;A.</p>
+      <span class="tag">Available now</span>
+    </a>
 
     <div class="tech-card disabled">
       <span class="icon">&#127939;</span>
