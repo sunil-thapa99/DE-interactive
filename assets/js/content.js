@@ -921,6 +921,11 @@ interview: {
   cards: [
     {
       title: "\"Walk me through a Snowflake pipeline you've built.\"",
+      followups: [
+        "\"Where is the latency actually spent from the S3 PUT to a queryable row?\"",
+        "\"How would this behave if 10,000 tiny files landed in one minute instead of a few large ones?\"",
+        "\"What breaks first if the source doubles its volume overnight?\""
+      ],
       navLabel: "How to approach it:",
       badge: "behavioral",
       nav: "Use this project as your STAR narrative: Situation (need to ingest AWS S3 data into Snowflake for analytics), Task (build automated, low-latency ingestion + ETL), Action (Snowpipe + IAM role, then Streams/Tasks or Dynamic Tables), Result (near-real-time curated tables, cost-isolated warehouse). Keep it under 90 seconds, then let them drive follow-ups.",
@@ -929,6 +934,11 @@ interview: {
     },
     {
       title: "Why Snowpipe instead of a scheduled COPY INTO?",
+      followups: [
+        "\"At what file-arrival pattern does a scheduled COPY actually become the better choice?\"",
+        "\"How is Snowpipe billed, and how is that different from a warehouse running COPY on a schedule?\"",
+        "\"Snowpipe ingestion lag is spiking — where do you look first?\""
+      ],
       navLabel: "How to approach it:",
       badge: "concept",
       nav: "Contrast latency, cost, and operational model.",
@@ -937,6 +947,11 @@ interview: {
     },
     {
       title: "How does the SQS-based auto-ingest mechanism actually work end to end?",
+      followups: [
+        "\"A file landed in S3 but never showed up in the table — walk me through your debug steps.\"",
+        "\"Who owns the SQS queue, and what's actually inside the message?\"",
+        "\"Could two pipes on overlapping prefixes double-load the same file?\""
+      ],
       navLabel: "How to approach it:",
       badge: "deep-dive",
       nav: "Trace the event path precisely — interviewers use this to check you understand the mechanism, not just the buzzword.",
@@ -945,6 +960,11 @@ interview: {
     },
     {
       title: "Streams + Tasks vs. Dynamic Tables — when do you pick each?",
+      followups: [
+        "\"A Dynamic Table silently did a full refresh instead of incremental — how would you even know, and why did it happen?\"",
+        "\"You need multi-statement procedural logic in the transform — which one, and why not the other?\"",
+        "\"How does a Stream track what's new, and what happens if nothing consumes it for a while?\""
+      ],
       navLabel: "How to approach it:",
       badge: "trade-off",
       nav: "This is the most common follow-up after mentioning both patterns exist — have a clean one-liner plus a nuanced elaboration ready.",
@@ -953,6 +973,11 @@ interview: {
     },
     {
       title: "How do you guarantee idempotency if a file is processed twice?",
+      followups: [
+        "\"Snowpipe is at-least-once — where exactly does the duplicate get introduced?\"",
+        "\"Walk me through the MERGE vs QUALIFY ROW_NUMBER() approaches — when would you pick each?\"",
+        "\"Two versions of the same key arrive in one batch — which one wins, and how do you control that?\""
+      ],
       navLabel: "How to approach it:",
       badge: "correctness",
       nav: "This tests whether you understand exactly-once vs at-least-once semantics — a very common gotcha question.",
@@ -961,6 +986,11 @@ interview: {
     },
     {
       title: "Why IAM role + external ID instead of an AWS access key on the stage?",
+      followups: [
+        "\"Explain the confused-deputy problem the external ID prevents, concretely.\"",
+        "\"How is the trust actually established — what does Snowflake present to AWS to assume the role?\"",
+        "\"How would you scope that IAM policy to least privilege for this pipeline?\""
+      ],
       navLabel: "How to approach it:",
       badge: "security",
       nav: "Security questions in DE interviews are often just checking whether you default to least-privilege / no-static-credentials thinking.",
@@ -969,6 +999,11 @@ interview: {
     },
     {
       title: "How would you control cost on this pipeline?",
+      followups: [
+        "\"Which single lever usually gives the biggest saving on a mostly-idle pipeline?\"",
+        "\"How does TARGET_LAG on a Dynamic Table translate into dollars?\"",
+        "\"How do you attribute ingestion spend separately from BI/reporting spend?\""
+      ],
       navLabel: "How to approach it:",
       badge: "cost",
       nav: "List concrete levers, not just 'use a small warehouse' — show you understand the cost model.",
@@ -977,6 +1012,11 @@ interview: {
     },
     {
       title: "What happens to malformed or bad rows?",
+      followups: [
+        "\"ON_ERROR='CONTINUE' skips a bad row — how does anyone find out it was skipped?\"",
+        "\"Design the dead-letter pattern you'd actually build here.\"",
+        "\"One bad row vs an entire malformed file — is the behavior different?\""
+      ],
       navLabel: "How to approach it:",
       badge: "reliability",
       nav: "Good opportunity to be honest about a gap and show you know how to close it — this project uses ON_ERROR='CONTINUE' but doesn't build a full dead-letter pattern.",
@@ -985,6 +1025,11 @@ interview: {
     },
     {
       title: "What's missing for this to be production-grade?",
+      followups: [
+        "\"Pick one of those gaps and tell me how you'd close it this sprint.\"",
+        "\"How exactly would schema evolution silently corrupt data here?\"",
+        "\"Why does collapsing everything into one ETL role actually matter?\""
+      ],
       navLabel: "How to approach it:",
       badge: "maturity",
       nav: "Interviewers love candidates who proactively name the gaps in their own design — it signals seniority. Have 3-4 ready, not a vague 'it would need more testing.'",
@@ -993,6 +1038,11 @@ interview: {
     },
     {
       title: "When would you reach for dbt + Airflow instead of native Snowflake orchestration?",
+      followups: [
+        "\"What specifically can't native Tasks / Dynamic Tables do that pushes you to Airflow?\"",
+        "\"Team is 3 people, everything lives in Snowflake — does dbt + Airflow still make sense?\"",
+        "\"How does dbt change testing and lineage versus raw Tasks?\""
+      ],
       navLabel: "How to approach it:",
       badge: "architecture",
       nav: "Shows you can reason about organizational context, not just technical capability — an important senior-level signal.",

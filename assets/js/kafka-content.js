@@ -439,6 +439,11 @@ interview: {
   cards: [
     {
       title: "\"Explain Kafka's core architecture end to end.\"",
+      followups: [
+        "\"A partition's leader broker dies mid-write — walk me through exactly what the producer and the consumers see.\"",
+        "\"Why can't you safely just add partitions to a keyed topic to scale it?\"",
+        "\"What does the controller actually do, and how did that change moving from ZooKeeper to KRaft?\""
+      ],
       navLabel: "How to approach it:",
       badge: "fundamentals",
       nav: "Don't list features — tell the data's journey and name the primitives as you go. Producer → topic/partition (key→partition) → leader broker → replicated to ISR followers → consumers in groups reading by offset → retention. Land the 'it's a replayable log, not a queue' point.",
@@ -447,6 +452,11 @@ interview: {
     },
     {
       title: "\"How do you guarantee no data loss?\"",
+      followups: [
+        "\"You set min.insync.replicas=2 with RF=3, and now two of the three brokers are down — what happens to producer writes?\"",
+        "\"Everything upstream is acks=all — where can you STILL lose data on the consumer side?\"",
+        "\"How would you actually prove there's no loss in production — what test or metric?\""
+      ],
       navLabel: "How to approach it:",
       badge: "durability",
       nav: "The trap is answering 'acks=all' alone. State the full triple and explain WHY each piece is needed. Then extend to the consumer side.",
@@ -455,6 +465,11 @@ interview: {
     },
     {
       title: "\"At-least-once vs exactly-once — how do you actually achieve exactly-once?\"",
+      followups: [
+        "\"Concretely, what's the difference between the idempotent producer and transactions?\"",
+        "\"Your sink is Snowflake, not another Kafka topic — is exactly-once still possible? How?\"",
+        "\"What does a downstream consumer see if a transaction aborts, and which config controls that?\""
+      ],
       navLabel: "How to approach it:",
       badge: "deep-dive",
       nav: "Distinguish idempotence from transactions, describe the read-process-write loop, and — critically — name where the exactly-once boundary ends (external sinks).",
@@ -463,6 +478,11 @@ interview: {
     },
     {
       title: "\"Your consumer group keeps rebalancing / lag keeps growing. Debug it.\"",
+      followups: [
+        "\"How do session.timeout.ms and max.poll.interval.ms differ, and which one usually causes the eviction?\"",
+        "\"You have 6 partitions and 10 consumers in one group — what are the other 4 doing?\"",
+        "\"How would static membership or the cooperative-sticky assignor reduce the blast radius of a rolling deploy?\""
+      ],
       navLabel: "How to approach it:",
       badge: "troubleshooting",
       nav: "Give an ordered diagnostic, not 'I'd check the logs.' Show you know the two timers and the common root cause.",
@@ -471,6 +491,11 @@ interview: {
     },
     {
       title: "\"When would you use log compaction instead of time-based retention?\"",
+      followups: [
+        "\"A brand-new consumer joins a compacted topic — can it rebuild full current state? Why?\"",
+        "\"How do you fully delete a key from a compacted topic?\"",
+        "\"Someone set compaction on an event-stream topic by mistake — what breaks?\""
+      ],
       navLabel: "How to approach it:",
       badge: "concept",
       nav: "Contrast event streams vs. state, and give the concrete failure mode of getting it wrong.",
@@ -479,6 +504,11 @@ interview: {
     },
     {
       title: "\"How do you choose the number of partitions for a topic?\"",
+      followups: [
+        "\"You need to double partitions on a live keyed topic — what breaks and how do you handle it?\"",
+        "\"What's the downside of just setting 1000 partitions to be safe?\"",
+        "\"One key is 10x hotter than the rest — how do you deal with that hot partition without breaking ordering?\""
+      ],
       navLabel: "How to approach it:",
       badge: "design",
       nav: "Show you know it's a hard-to-reverse decision and that it trades throughput against overhead and ordering.",
@@ -487,6 +517,12 @@ interview: {
     },
     {
       title: "\"Design a real-time pipeline from an operational DB to the warehouse.\"",
+      followups: [
+        "\"Why CDC off the write-ahead log instead of a JDBC poll on an updated_at column?\"",
+        "\"If the source app publishes events itself, how do you avoid the dual-write problem?\" (transactional outbox)",
+        "\"The source table's schema changes — how does that not break every downstream consumer?\"",
+        "\"How do you make the warehouse load idempotent if a record is delivered twice?\""
+      ],
       navLabel: "How to approach it:",
       badge: "system design",
       nav: "Draw the canonical CDC pipeline and justify each hop and each ecosystem choice. This is where Connect + Schema Registry + a processor come together.",
@@ -495,6 +531,10 @@ interview: {
     },
     {
       title: "\"Does Kafka still need ZooKeeper?\"",
+      followups: [
+        "\"What specifically did KRaft improve besides removing a dependency?\"",
+        "\"You're on a ZooKeeper-based cluster today — how do you migrate to KRaft?\""
+      ],
       navLabel: "How to approach it:",
       badge: "modern context",
       nav: "A quick check that you're current. Short, correct, and note the migration reality.",

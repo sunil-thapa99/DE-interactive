@@ -863,6 +863,11 @@ interview: {
   cards: [
     {
       title: "\"Walk me through a Spark/PySpark pipeline you've built.\"",
+      followups: [
+        "\"Where in that pipeline is the first shuffle, and could you avoid it?\"",
+        "\"How did you decide the output partition count?\"",
+        "\"What did .explain() tell you that you actually acted on?\""
+      ],
       navLabel: "How to approach it:",
       badge: "behavioral",
       nav: "Use this project's shape as your STAR narrative: Situation (need to transform raw data at a scale/complexity SQL alone couldn't handle cleanly), Task (build a reliable, performant ETL job), Action (DataFrame API transformations, Delta for the output, attention to shuffles/partitioning), Result (a curated table ready for downstream consumption). Keep it under 90 seconds.",
@@ -871,6 +876,11 @@ interview: {
     },
     {
       title: "Why DataFrame API over RDDs for almost everything?",
+      followups: [
+        "\"Give a concrete case where you'd still drop down to an RDD.\"",
+        "\"What can Catalyst do with a DataFrame filter that it can't with an RDD's lambda?\"",
+        "\"Where does a Python UDF sit on this spectrum, and why is it a problem?\""
+      ],
       navLabel: "How to approach it:",
       badge: "concept",
       nav: "Tie the answer to Catalyst specifically, not just 'it's easier to write.'",
@@ -879,6 +889,11 @@ interview: {
     },
     {
       title: "How do you approach debugging a slow Spark job?",
+      followups: [
+        "\"The Spark UI shows one task taking 10x the others — what is that, and how do you fix it?\"",
+        "\"How do you tell a broadcast join from a shuffle join in the plan?\"",
+        "\"A filter isn't being pushed to the source — how would you notice, and why does it happen?\""
+      ],
       navLabel: "How to approach it:",
       badge: "deep-dive",
       nav: "Give a concrete diagnostic order, not a vague 'I'd look at the logs.'",
@@ -887,6 +902,11 @@ interview: {
     },
     {
       title: "Walk me through what happens when I call .write() on a DataFrame.",
+      followups: [
+        "\"Where exactly are the stage boundaries drawn, and why there?\"",
+        "\"An executor dies mid-write — what does Spark do? And what if the driver dies instead?\"",
+        "\"Why can't stage 2 start before every task in stage 1 finishes?\""
+      ],
       navLabel: "How to approach it:",
       badge: "deep-dive",
       nav: "This is the execution-model question, almost verbatim — narrate the full chain from the Execution Model tab rather than staying at the surface level of 'it writes the data.'",
@@ -895,6 +915,11 @@ interview: {
     },
     {
       title: "What's the difference between cache() and checkpoint()?",
+      followups: [
+        "\"cache() didn't speed anything up — when is it useless or even harmful?\"",
+        "\"Why does checkpoint() truncate lineage, and when do you actually need that?\"",
+        "\"How is this different from Structured Streaming's checkpointing?\""
+      ],
       navLabel: "How to approach it:",
       badge: "gotcha",
       nav: "A good one to have precise, since the two sound similar but solve different problems.",
@@ -903,6 +928,11 @@ interview: {
     },
     {
       title: "How would you handle a job that's failing with executor OOM errors?",
+      followups: [
+        "\"How would a 'small' broadcast side cause OOM after an upstream filter?\"",
+        "\"How do you confirm skew is the cause rather than just guessing?\"",
+        "\"Why is 'add more memory' usually the wrong first move?\""
+      ],
       navLabel: "How to approach it:",
       badge: "scenario",
       nav: "Walk through a real diagnostic/fix order rather than jumping straight to 'add more memory.'",
@@ -911,6 +941,11 @@ interview: {
     },
     {
       title: "When would you use Spark instead of Snowflake, or vice versa, in a real pipeline?",
+      followups: [
+        "\"Give an architecture where you use both — who does what?\"",
+        "\"What transformation would you refuse to do in Snowflake SQL and push to Spark?\"",
+        "\"Cost-wise, when does Spark actually lose to just running SQL in the warehouse?\""
+      ],
       navLabel: "How to approach it:",
       badge: "architecture",
       nav: "Shows you can reason about the two tools together rather than treating them as competitors in every scenario — often the strongest answer is 'both, at different stages.'",
