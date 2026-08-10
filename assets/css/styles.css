@@ -152,6 +152,15 @@ code { font-family: "SF Mono", Consolas, Menlo, monospace; }
 .note { font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; }
 .note strong { color: var(--text); }
 
+.followups {
+  margin-top: 0.8rem; background: var(--surface-2); border-left: 3px solid var(--warn, var(--accent));
+  border-radius: 6px; padding: 0.7rem 0.9rem 0.7rem; font-size: 0.83rem; color: var(--text-dim); line-height: 1.5;
+}
+.followups strong { color: var(--text); display: block; margin-bottom: 0.4rem; }
+.followups ul { margin: 0; padding-left: 1.1rem; }
+.followups li { margin-bottom: 0.35rem; }
+.followups li:last-child { margin-bottom: 0; }
+
 table.compare { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
 table.compare th, table.compare td { text-align: left; padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; vertical-align: top; }
 table.compare th { background: var(--surface-2); }

@@ -38,6 +38,9 @@
         ? `<div class="pre-wrap"><button class="copy-btn" data-code-id="${id}">Copy</button><pre><code id="code-${id}">${escapeHtml(c.code)}</code></pre></div>`
         : "";
       const noteBlock = c.note ? `<p class="note">${c.noteLabel ? `<strong>${c.noteLabel}</strong> ` : ""}${c.note}</p>` : "";
+      const followBlock = (c.followups && c.followups.length)
+        ? `<div class="followups"><strong>${c.followupsLabel || "Interviewer follow-ups they'll dig with:"}</strong><ul>${c.followups.map(f => `<li>${f}</li>`).join("")}</ul></div>`
+        : "";
       const navBlock = c.nav
         ? `<div class="nav-box"><strong>${c.navLabel || "Navigation:"}</strong> ${c.nav}</div>`
         : "";
@@ -57,6 +60,7 @@
             ${navBlock}
             ${codeBlock}
             ${noteBlock}
+            ${followBlock}
           </div>
         </div>`;
     }).join("");
