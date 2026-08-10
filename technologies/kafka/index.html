@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Apache Kafka — DE Interactive</title>
+<link rel="stylesheet" href="../../assets/css/styles.css?v=8" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <a class="home-link" href="../../index.html" title="Back to DE Interactive home">&#8592; Home</a>
+    <span class="logo">&#128225;</span>
+    <div>
+      <h1>Apache Kafka</h1>
+      <p class="subtitle">The distributed log, producers &amp; consumers, replication &amp; ISR, exactly-once, the ecosystem, production ops, and interview prep</p>
+    </div>
+  </div>
+  <div class="progress-wrap" title="Steps completed across all sections">
+    <div class="progress-label"><span id="progressCount">0</span>/<span id="progressTotal">0</span> steps done</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab active" data-tab="overview">Overview</button>
+  <button class="tab" data-tab="setup">1. Setup + Mini Pipeline</button>
+  <button class="tab" data-tab="producers">2. Producers</button>
+  <button class="tab" data-tab="consumers">3. Consumers &amp; Groups</button>
+  <button class="tab" data-tab="architecture">4. Internals &amp; Replication</button>
+  <button class="tab" data-tab="eos">5. Exactly-Once</button>
+  <button class="tab" data-tab="ecosystem">6. Connect &amp; Ecosystem</button>
+  <button class="tab" data-tab="ops">7. Production Ops</button>
+  <button class="tab" data-tab="comparison">Compare</button>
+  <button class="tab" data-tab="interview">Interview Prep</button>
+  <button class="tab" data-tab="quiz">Quiz</button>
+</nav>
+
+<main id="app"></main>
+
+<footer>
+  <p>Built for learning purposes — commands target a local single-broker KRaft cluster; adapt bootstrap servers, replication factor, and security configs for your own environment.</p>
+</footer>
+
+<script src="../../assets/js/kafka-content.js?v=1"></script>
+<script src="../../assets/js/script.js?v=8"></script>
+</body>
+</html>
