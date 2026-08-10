@@ -395,6 +395,63 @@ ops: {
   ]
 },
 
+patterns: {
+  intro: {
+    title: "Stage 8 — Multi-DC/DR, error handling, and stream-processing patterns",
+    desc: "The topics that separate 'operated Kafka' from 'architected an event platform': cross-region disaster recovery, robust error handling (retry topics + DLQ), the transactional outbox for reliable event publishing, Kafka Streams internals, and the storage/placement features (tiered storage, rack awareness) senior/staff loops probe."
+  },
+  cards: [
+    {
+      title: "Cross-region DR: MirrorMaker 2 vs. Cluster Linking",
+      badge: "disaster recovery",
+      concept: "Kafka doesn't stretch a single cluster across regions well (replication is synchronous within the ISR — high inter-region latency would cripple it). Instead you run a cluster per region and replicate BETWEEN them. MirrorMaker 2 (open-source, Connect-based) consumes from a source cluster and produces to a target, also replicating consumer offsets and topic configs; topics are prefixed (e.g. 'us-east.orders') so you can tell origin. Confluent Cluster Linking is a broker-native alternative that mirrors topics byte-for-byte and preserves offsets exactly (no translation needed), at the cost of being a Confluent feature.",
+      navLabel: "Active-passive vs. active-active:",
+      nav: "Active-passive: one region takes all traffic, the other is a warm standby you fail over to — simpler, no conflict handling, but you waste the standby and face offset-translation gotchas on failover. Active-active: both regions serve traffic and replicate to each other — better utilization and lower RTO, but you must prevent replication loops (MM2's topic prefixing handles this) and handle the fact that the same logical event may exist under two names. Most orgs start active-passive because it's far simpler to reason about.",
+      note: "The hard part of DR isn't replication — it's consumer failover. With MM2, offsets are TRANSLATED (source offset N ≠ target offset N), so on failover a consumer must resume via MM2's offset-sync/checkpoint topics, not by reusing raw offsets. Cluster Linking avoids this by preserving offsets. Always state RPO (how much data you can lose — bounded by replication lag) and RTO (how fast you fail over) explicitly."
+    },
+    {
+      title: "Error handling: retry topics and the dead-letter queue",
+      badge: "reliability pattern",
+      concept: "A consumer that fails on a bad ('poison pill') record has three bad options: crash-loop forever, skip silently (data loss), or block the whole partition retrying one record (head-of-line blocking — everything behind it stalls). The production pattern is non-blocking retries: on failure, publish the record to a RETRY topic and commit the original offset so the partition keeps moving. A separate consumer processes the retry topic (often with a delay), and after N attempts the record goes to a DEAD-LETTER TOPIC (DLQ) for manual/automated inspection instead of being lost or blocking forever.",
+      navLabel: "Why tiered retry topics (retry-5s, retry-1m, retry-10m):",
+      nav: "A single retry topic reprocessed immediately just crash-loops on genuinely-broken records. Tiered retry topics with increasing delays give transient failures (a downstream service is briefly down) time to recover, while permanent failures drain through the tiers into the DLQ without blocking live traffic. This is the Uber/Confluent-documented pattern. Kafka Connect has built-in DLQ support (errors.tolerance=all + errors.deadletterqueue.topic.name) for sink connectors, so you don't hand-build it there.",
+      note: "Trade-off to name: retry topics BREAK per-partition ordering for the retried records (they're reprocessed later, out of order relative to the original stream). If strict ordering matters more than throughput, you may instead have to block-and-retry in place. Know which your use case needs — it's a real interview follow-up."
+    },
+    {
+      title: "The transactional outbox — reliable event publishing without dual-write",
+      badge: "design pattern",
+      concept: "The dual-write problem: a service that must both update its own database AND publish a Kafka event can't do both atomically — if it commits the DB row then crashes before publishing (or vice versa), the two systems diverge, and there's no distributed transaction across Postgres and Kafka. The outbox pattern solves it: within the SAME local DB transaction, the service writes the business row AND inserts the event into an 'outbox' table. Because it's one transaction, they commit or roll back together. A separate process then reads the outbox and publishes to Kafka.",
+      navLabel: "How the outbox is drained — CDC, not polling:",
+      nav: "The clean implementation uses CDC (Debezium) to tail the outbox table's write-ahead log and publish each new outbox row to Kafka — no polling load on the DB, and Debezium's own at-least-once delivery means the event WILL eventually reach Kafka. Consumers dedupe by the event's unique ID (idempotent consumption), so at-least-once from the outbox is harmless. This is THE canonical answer to 'how do you reliably publish events from a service' and pairs directly with the CDC pipeline from the Ecosystem tab.",
+      note: "Why not just publish to Kafka inside the request and skip the DB? Because then a Kafka outage fails your business write, and a crash between the two writes silently drops events. The outbox makes the DB the single source of truth and Kafka delivery eventually-consistent but guaranteed."
+    },
+    {
+      title: "Kafka Streams internals: KStream vs. KTable and state stores",
+      badge: "stream processing",
+      concept: "Kafka Streams models a topic two ways. A KStream is an unbounded stream of independent events (each record is a fact: 'user clicked') — you process every record. A KTable is a changelog interpreted as a table: each record is an UPSERT for its key ('user's current plan = pro'), so only the latest value per key matters — it's the compacted-topic idea as a first-class abstraction. Stateful operations (aggregations, joins) keep their state in a local STATE STORE (RocksDB on disk per instance), and every update is also written to a compacted CHANGELOG topic in Kafka so the state can be rebuilt on another instance after a failure — that's how Streams gets fault-tolerant local state.",
+      navLabel: "Why the changelog is the key idea:",
+      nav: "The local RocksDB store is fast but ephemeral (tied to one instance). By mirroring every state change to a compacted Kafka topic, Streams makes state durable and relocatable: if an instance dies, another reads the changelog to restore the exact state before resuming. This is also why Streams' exactly-once must include the changelog writes in its transaction — state and output must commit atomically. Interactive Queries let you read these state stores directly, turning a Streams app into a queryable materialized view.",
+      note: "KStream-KTable is a common interview probe: use a KStream for events you act on individually (transactions, clicks), a KTable for current-state you enrich against (user profile, product catalog). A stream-table join enriches each event with the latest table value — the bread-and-butter of streaming enrichment."
+    },
+    {
+      title: "Windowing and joins in stream processing",
+      badge: "stream processing",
+      concept: "Aggregating an unbounded stream requires WINDOWS to bound the computation. Tumbling: fixed, non-overlapping (count per 1-min bucket). Hopping: fixed size, overlapping by a step (5-min window every 1 min). Sliding: window defined by the time between events. Session: dynamic windows that close after a gap of inactivity (a user's browsing session). Windows are driven by EVENT TIME (when it happened) not processing time, which is why watermarks/grace periods exist — to decide how long to wait for late-arriving events before finalizing a window.",
+      navLabel: "Join types and their constraints:",
+      nav: "Stream-stream joins require a window (you can't hold two unbounded streams in memory forever — you join events within N minutes of each other). Stream-table joins are unwindowed — each stream event looks up the current table value (enrichment). Table-table joins keep two changelogs joined as a materialized result. The recurring gotcha: joining two streams without thinking about the window means either missed matches (window too small) or unbounded state (window too large). Late data + watermarks is where correctness actually lives.",
+      note: "This maps directly onto Spark Structured Streaming's watermark/windowing model (see the Spark module) — the concepts transfer; the API differs. Being able to say 'event-time windowing with watermarks for late data' fluently is a senior streaming signal regardless of engine."
+    },
+    {
+      title: "Storage & placement: tiered storage and rack awareness",
+      badge: "scaling",
+      concept: "Tiered storage (KIP-405, GA in Kafka 3.6+): brokers keep only recent data on local disk and offload older log segments to cheap object storage (S3/GCS), while the topic still looks like one continuous log to clients. This decouples retention from local disk size — you can keep months of replayable history without giant broker disks, and scaling compute no longer means moving terabytes of data. Rack awareness (broker.rack): Kafka spreads a partition's replicas across racks/availability zones so a whole-rack/AZ failure never takes out all copies; follower fetching (KIP-392) then lets consumers read from a same-AZ replica to cut cross-AZ network cost.",
+      navLabel: "Why these matter at senior level:",
+      nav: "Tiered storage changes capacity planning: you size local disk for hot data + throughput, not total retention, and long-retention 'replay everything' use cases (reprocessing after a bug, bootstrapping a new consumer over months of history) become cheap. Rack awareness + follower fetching is the standard multi-AZ durability + cost setup on cloud — mentioning replica placement across AZs and same-AZ reads shows you've run Kafka on real cloud infrastructure, not just localhost.",
+      note: null
+    }
+  ]
+},
+
 comparison: {
   intro: {
     title: "Kafka vs. the alternatives — when NOT to reach for Kafka",
@@ -540,6 +597,58 @@ interview: {
       nav: "A quick check that you're current. Short, correct, and note the migration reality.",
       noteLabel: "Model answer:",
       note: "\"Not anymore. Modern Kafka runs in KRaft mode, where a built-in Raft quorum of controllers manages cluster metadata as a replicated log, replacing ZooKeeper entirely. It was GA from Kafka 3.3, and ZooKeeper mode is deprecated and removed in Kafka 4.0. Beyond dropping a whole system to operate, KRaft makes metadata operations and controller failover much faster and raises the partition ceiling dramatically. Plenty of existing clusters still run ZooKeeper and there's a supported migration path, but any new cluster should be KRaft.\""
+    },
+    {
+      title: "\"Design cross-region disaster recovery for a Kafka pipeline.\"",
+      navLabel: "How to approach it:",
+      badge: "system design",
+      nav: "Lead with 'a cluster per region, replicate between them' — never 'stretch one cluster.' Name the replication tool, the active-passive vs active-active choice, and — critically — the consumer-failover/offset-translation problem, which is the part people forget.",
+      noteLabel: "Model answer:",
+      note: "\"I'd run one cluster per region and replicate between them rather than stretching a single cluster across regions — synchronous ISR replication over inter-region latency would kill throughput. For replication I'd use MirrorMaker 2 (or Cluster Linking on Confluent), which mirrors topics plus consumer offsets and configs. I'd usually start active-passive: one region serves traffic, the other is a warm standby, which avoids conflict handling. The subtle part is consumer failover: MM2 translates offsets, so offset N on the source isn't offset N on the target — consumers must resume from MM2's offset-sync/checkpoint topics, not raw offsets. Cluster Linking preserves offsets exactly and avoids that. I'd state my RPO as bounded by replication lag and my RTO as how fast consumers cut over, and I'd actually rehearse the failover, because untested DR is theater.\"",
+      followups: [
+        "\"MirrorMaker translates offsets — what exactly does a consumer do on failover to resume correctly?\"",
+        "\"Active-active instead of passive — what new problem do you take on, and how does topic prefixing help?\"",
+        "\"What's your RPO here, and what physically determines it?\""
+      ]
+    },
+    {
+      title: "\"A consumer hits a record it can never successfully process. What happens, and what should happen?\"",
+      navLabel: "How to approach it:",
+      badge: "reliability",
+      nav: "Name the poison-pill / head-of-line-blocking failure first, then the non-blocking retry-topic + DLQ pattern, then the ordering trade-off it introduces.",
+      noteLabel: "Model answer:",
+      note: "\"That's a poison pill. The naive outcomes are all bad: crash-loop forever, skip it and lose data, or block the whole partition retrying one record so everything behind it stalls — head-of-line blocking. The production pattern is non-blocking retries: on failure I publish the record to a retry topic and commit the original offset so the partition keeps flowing. A separate consumer works the retry topic, ideally through tiered delays — retry-5s, retry-1m, retry-10m — so transient downstream outages get time to recover, and after N attempts the record lands in a dead-letter topic for inspection instead of being lost or blocking live traffic. For sink connectors, Kafka Connect gives this via errors.tolerance=all and a configured DLQ. The honest trade-off is that retried records are reprocessed out of order relative to the original stream, so if strict ordering matters more than throughput I'd instead block-and-retry in place and accept the stall.\"",
+      followups: [
+        "\"Why tiered retry topics with increasing delays instead of one retry topic?\"",
+        "\"What does this pattern cost you in terms of ordering, and when is that unacceptable?\"",
+        "\"How do you make sure the DLQ doesn't just become a place data goes to die?\""
+      ]
+    },
+    {
+      title: "\"Your service updates its database AND must publish a Kafka event. How do you keep them consistent?\"",
+      navLabel: "How to approach it:",
+      badge: "design pattern",
+      nav: "This is the dual-write problem — name it explicitly, then give the transactional outbox as the answer, drained by CDC. It's the single most common 'reliable event publishing' question.",
+      noteLabel: "Model answer:",
+      note: "\"This is the dual-write problem: I can't atomically write to Postgres and publish to Kafka — there's no distributed transaction across them, so a crash between the two writes leaves the systems diverged. The fix is the transactional outbox: inside the same local DB transaction that writes the business row, I also insert the event into an outbox table, so they commit or roll back together — the DB is the single source of truth. Then I drain the outbox to Kafka with CDC — Debezium tailing the outbox table's write-ahead log — rather than polling. Debezium's at-least-once delivery means the event is guaranteed to eventually reach Kafka, and consumers dedupe by the event's unique ID, so at-least-once is harmless. I specifically avoid publishing to Kafka inside the request path, because then a Kafka outage would fail my business write and a crash could silently drop the event.\"",
+      followups: [
+        "\"Why drain the outbox with CDC instead of a polling job?\"",
+        "\"Why not just publish straight to Kafka in the request and skip the outbox table?\"",
+        "\"The same event could reach Kafka twice — why is that fine here?\""
+      ]
+    },
+    {
+      title: "\"KStream vs KTable — when do you use each, and how does Kafka Streams keep state fault-tolerant?\"",
+      navLabel: "How to approach it:",
+      badge: "stream processing",
+      nav: "Give the fact-vs-current-state distinction, a concrete example of each, then explain the state store + changelog mechanism — that second half is what shows real depth.",
+      noteLabel: "Model answer:",
+      note: "\"A KStream is an unbounded stream of independent facts — every record matters ('user clicked', 'payment made') — so I use it for events I act on individually. A KTable is a changelog read as a table: each record is an upsert for its key, so only the latest value matters ('user's current plan'), which I use for current-state I enrich against. A stream-table join enriching each event with the latest table value is the bread-and-butter of streaming enrichment. For fault tolerance: stateful operators keep state in a local RocksDB state store, but every update is also written to a compacted changelog topic in Kafka. So if an instance dies, another restores the exact state by replaying the changelog before resuming — that's how local state survives failure and relocates. It's also why exactly-once in Streams has to commit the changelog writes inside the same transaction as the output.\"",
+      followups: [
+        "\"Where does the local state actually live, and what makes it durable?\"",
+        "\"A stream-stream join vs a stream-table join — why does one need a window and the other doesn't?\"",
+        "\"How do watermarks / grace periods fit into windowed aggregation here?\""
+      ]
     }
   ]
 }
