@@ -828,6 +828,64 @@ df_customers.write.bucketBy(8, "customer_id").sortBy("customer_id").saveAsTable(
   ]
 },
 
+advanced: {
+  intro: {
+    title: "Stage 8 — Join strategies, Photon, stragglers, stateful streaming & modern Delta",
+    desc: "The staff-level surface beyond core tuning: how Catalyst actually chooses a join, what Photon is, how Spark handles slow/lost tasks, real stateful streaming (stream-stream joins and arbitrary state), and the modern Delta/Databricks features (CDF, liquid clustering, deletion vectors, DLT, Unity Catalog) that come up for senior candidates."
+  },
+  cards: [
+    {
+      title: "Join strategies: how Catalyst picks, and how to override it",
+      badge: "deep-dive",
+      concept: "Spark has several physical join implementations and Catalyst chooses among them by cost. Broadcast Hash Join: ship the small side to every executor, build a hash table, no shuffle of the big side — the fastest, chosen when one side is under spark.sql.autoBroadcastJoinThreshold (default 10MB, raised by AQE at runtime). Sort-Merge Join: shuffle BOTH sides by the join key, sort, merge — the default for two large tables; robust but pays two shuffles + sorts. Shuffle Hash Join: shuffle both sides but build a hash table instead of sorting — used when one side is smallish but over the broadcast threshold and hashing is cheaper than sorting. Broadcast Nested Loop / Cartesian: the fallback for non-equi joins — usually a red flag.",
+      navLabel: "The practical levers:",
+      nav: "The most common performance fix is forcing or preventing a broadcast: broadcast(df) hint (or /*+ BROADCAST(t) */ in SQL) when Catalyst underestimates a small side after filtering, or RAISING autoBroadcastJoinThreshold. AQE also converts sort-merge to broadcast at runtime once it sees real post-filter sizes. Set it to -1 to disable broadcasting entirely when a 'small' side is actually large enough to OOM the executors building the hash table. The interview signal is knowing sort-merge is the large-table default and broadcast is the thing you reach for — and why an errant broadcast causes executor OOM.",
+      code: "from pyspark.sql.functions import broadcast\nbig.join(broadcast(small), \"key\")          # force broadcast hash join\n# SQL: SELECT /*+ BROADCAST(small) */ ...\nspark.conf.set(\"spark.sql.autoBroadcastJoinThreshold\", 50*1024*1024)",
+      note: "A join silently degrading to Sort-Merge (or worse, a Cartesian/BroadcastNestedLoop for a non-equi condition) is a top cause of slow jobs. .explain() literally names the join type in the physical plan — that's the first thing to check."
+    },
+    {
+      title: "Photon — the vectorized C++ engine",
+      badge: "databricks",
+      concept: "Photon is Databricks' native, vectorized query engine written in C++ that replaces parts of the JVM-based Spark execution for SQL and DataFrame operations. Instead of row-at-a-time JVM code, it processes data in columnar batches with SIMD vectorization, which speeds up scans, filters, joins, and aggregations — often 2-3x on SQL-heavy/analytical workloads — while being transparent (same DataFrame/SQL API, it just runs operators it supports and falls back to Spark for the rest). It's a Databricks feature, not open-source Spark.",
+      navLabel: "When it helps and when it doesn't:",
+      nav: "Photon shines on SQL/DataFrame analytical work — big scans, joins, aggregations on columnar (Delta/Parquet) data. It does NOT accelerate arbitrary Python UDFs or RDD code (those still run on the JVM/Python), so a job dominated by a Python UDF sees little benefit — another reason to prefer built-in functions. It also changes the cost equation: Photon clusters cost more per DBU but often finish faster, so the honest answer is 'benchmark total job cost, not just runtime.' Knowing Photon is columnar/vectorized and UDF-blind is the senior-level point.",
+      note: null
+    },
+    {
+      title: "Stragglers: speculative execution & the external shuffle service",
+      badge: "deep-dive",
+      concept: "A straggler is one task far slower than its peers (a slow disk, a noisy-neighbor node, mild skew). Speculative execution (spark.speculation=true) launches a duplicate copy of a task that's running much slower than the median; whichever finishes first wins, the other is killed — it hides transient slow nodes at the cost of some redundant work. Separately, the external shuffle service is a process that lives on each worker node and serves shuffle files independently of the executors — so an executor can be removed (dynamic allocation scaling down, or a spot-instance reclaim) WITHOUT losing the shuffle data other stages still need to read.",
+      navLabel: "Why they matter together at scale:",
+      nav: "Dynamic allocation (add/remove executors based on load) is only safe with the external shuffle service — otherwise scaling down or losing an executor would delete shuffle output and force expensive recomputation. Speculative execution is the mitigation for stragglers that aren't true data skew (which you fix with salting/AQE instead). The distinction interviewers probe: speculation helps with a slow NODE; salting/AQE skew-join helps with a slow PARTITION (uneven data). Using speculation to paper over real skew just wastes compute duplicating an inherently huge task.",
+      note: "On Databricks, decommissioning + the shuffle service is also what makes spot/preemptible instances viable — a reclaimed node's shuffle data is migrated rather than lost. This is a big cost lever tied directly to this machinery."
+    },
+    {
+      title: "Stateful Structured Streaming: stream-stream joins & arbitrary state",
+      badge: "streaming deep-dive",
+      concept: "Beyond stateless map/filter, Structured Streaming keeps STATE across micro-batches in a state store (backed by checkpointed files, RocksDB on Databricks). Stream-stream joins buffer both sides in state and require a watermark + time constraint on the join condition so state doesn't grow unbounded — you're joining events within a bounded time window of each other. For logic that windowing can't express, flatMapGroupsWithState / mapGroupsWithState (and the newer transformWithState) let you maintain arbitrary per-key state with your own timeout/eviction — e.g. sessionization, custom deduplication, or state machines over an event stream.",
+      navLabel: "The thing that bites people:",
+      nav: "Unbounded state growth. A stream-stream join or arbitrary-state operator without a watermark (or with too loose a one) accumulates state forever until the job OOMs or checkpoints balloon — the #1 stateful-streaming failure. The watermark is what tells Spark 'events older than this can't match anymore, evict their state.' The senior answer to any stateful-streaming design question always names the watermark and the state-eviction/timeout policy explicitly, and treats the state store size as a first-class metric to monitor.",
+      note: "RocksDB state store (vs the default in-memory + HDFS) is the standard choice for large state — it spills to local disk so state bigger than executor memory doesn't OOM, at the cost of some latency. Naming it signals you've run stateful streaming at real scale."
+    },
+    {
+      title: "Modern Delta: Change Data Feed, liquid clustering, deletion vectors",
+      badge: "delta advanced",
+      concept: "Change Data Feed (CDF, delta.enableChangeDataFeed=true) makes a Delta table emit row-level changes (insert/update/delete with _change_type) so downstream consumers can read just what changed — Delta's answer to CDC on the lake, powering incremental MERGE pipelines without diffing whole tables. Liquid clustering replaces both partitioning and Z-ordering with a single CLUSTER BY that adapts automatically as data and query patterns evolve — no more choosing partition columns up front or manual re-Z-ordering. Deletion vectors implement merge-on-read deletes/updates: instead of rewriting a whole Parquet file to delete a few rows, Delta records which rows are logically deleted in a side file, making DELETE/UPDATE/MERGE far cheaper (rewrite happens later during OPTIMIZE).",
+      navLabel: "Why each is a senior talking point:",
+      nav: "CDF is how you build efficient incremental downstream loads (read changes, MERGE them) instead of full recomputes. Liquid clustering is the current best-practice answer to 'how do you physically lay out a Delta table' — and 'don't over-partition into tiny files' is the classic mistake it prevents. Deletion vectors flip the cost of point deletes/updates from 'rewrite gigabytes' to 'write a tiny vector,' which matters enormously for GDPR-style row deletes and frequent MERGEs. Knowing these exist and what problem each solves separates current knowledge from Spark-2.x-era knowledge.",
+      note: null
+    },
+    {
+      title: "Declarative pipelines (DLT) & Unity Catalog governance",
+      badge: "platform",
+      concept: "Delta Live Tables / Lakeflow Declarative Pipelines let you define a pipeline as a set of declarative table definitions with built-in data-quality EXPECTATIONS (constraints that can drop, quarantine, or fail on bad rows), automatic dependency resolution, incremental processing, and managed orchestration — you declare the tables and the framework handles the DAG, retries, and streaming-vs-batch execution. Unity Catalog is Databricks' unified governance layer: a three-level namespace (catalog.schema.table), centralized access control, column/row-level security, data lineage, and audit across all workspaces — the equivalent of the RBAC + lineage story you'd expect from a warehouse, applied to the lakehouse.",
+      navLabel: "Where these come up:",
+      nav: "DLT answers 'how do you productionize and quality-gate a Spark pipeline without hand-writing all the orchestration and validation' — expectations are the headline feature (declarative data quality). Unity Catalog answers 'how do you govern data access and get lineage across a lakehouse' — it's the modern replacement for per-workspace hive metastore + ad-hoc ACLs. You don't need to have used them deeply, but naming DLT's expectations and Unity Catalog's centralized lineage/RBAC shows you understand the platform, not just the engine.",
+      note: null
+    }
+  ]
+},
+
 comparison: {
   intro: {
     title: "Spark vs. Snowflake, and RDD vs. DataFrame — when to use which",
@@ -951,6 +1009,44 @@ interview: {
       nav: "Shows you can reason about the two tools together rather than treating them as competitors in every scenario — often the strongest answer is 'both, at different stages.'",
       noteLabel: "Model answer:",
       note: "\"Snowflake for SQL-shaped analytics and BI serving where low operational overhead matters and the transformation logic fits naturally in SQL. Spark when I need custom code Snowflake SQL can't express cleanly, ML feature engineering, or processing that needs to happen before data lands in a warehouse at all — e.g. cleaning and joining large raw files from multiple systems. A lot of real architectures use Spark upstream for the heavy lifting and land clean, curated data into Snowflake for the serving layer, rather than picking one exclusively.\""
+    },
+    {
+      title: "\"How does Spark decide which join to use, and how would you change it?\"",
+      navLabel: "How to approach it:",
+      badge: "deep-dive",
+      nav: "Name the join taxonomy and the cost basis, then the concrete levers (broadcast hint, threshold, AQE). Land the 'sort-merge is the large-table default, broadcast is what you reach for' point.",
+      noteLabel: "Model answer:",
+      note: "\"Catalyst chooses by cost. If one side is under the autoBroadcastJoinThreshold — 10MB by default, and AQE raises this using real post-filter sizes — it does a broadcast hash join: ship the small side everywhere, no shuffle of the big side, the fastest option. For two large tables it defaults to sort-merge join, which shuffles and sorts both sides; shuffle-hash join is used when one side is smallish but over the broadcast threshold and hashing beats sorting. A non-equi condition falls back to broadcast-nested-loop or Cartesian, which is usually a red flag. To change it I'd add a broadcast() hint when Catalyst underestimates a small side after filtering, or raise the threshold; conversely I'd set it to -1 if a 'small' side is actually large enough to OOM executors building the hash table. I confirm the actual choice in .explain() — the physical plan names the join type.\"",
+      followups: [
+        "\"An errant broadcast is OOM-ing the executors — what happened and how do you fix it?\"",
+        "\"You see a BroadcastNestedLoopJoin in the plan — what does that usually mean?\"",
+        "\"How does AQE change the join choice at runtime versus what the static plan picked?\""
+      ]
+    },
+    {
+      title: "\"What is Photon, and when does it actually help?\"",
+      navLabel: "How to approach it:",
+      badge: "databricks",
+      nav: "Vectorized C++ engine, columnar batches, transparent — but UDF-blind. Close on 'benchmark total cost, not just runtime.'",
+      noteLabel: "Model answer:",
+      note: "\"Photon is Databricks' native vectorized engine written in C++ that replaces parts of JVM Spark execution for SQL and DataFrame operators. Instead of row-at-a-time JVM code it processes columnar batches with SIMD, so scans, filters, joins, and aggregations on Delta/Parquet often run 2-3x faster, transparently — same API, it runs the operators it supports and falls back to Spark for the rest. The key limitation is that it doesn't accelerate arbitrary Python UDFs or RDD code — those still run on the JVM/Python — so a UDF-dominated job barely benefits, which is one more reason to prefer built-in functions. And Photon clusters cost more per DBU but often finish faster, so I'd benchmark total job cost rather than assuming faster equals cheaper.\"",
+      followups: [
+        "\"Your job is dominated by a Python UDF — will Photon help? Why or why not?\"",
+        "\"Photon finished faster but the bill went up — how is that possible?\""
+      ]
+    },
+    {
+      title: "\"A streaming stream-stream join keeps growing state until the job dies. What's wrong?\"",
+      navLabel: "How to approach it:",
+      badge: "streaming",
+      nav: "This is the watermark question in disguise. Explain unbounded state, the watermark's role in eviction, and the RocksDB state store for large state.",
+      noteLabel: "Model answer:",
+      note: "\"That's unbounded state growth — the classic stateful-streaming failure. A stream-stream join buffers both sides in the state store to match late-arriving events, and without a watermark plus a time constraint on the join condition, Spark can never conclude that old events won't match anymore, so state grows forever until it OOMs or checkpoints balloon. The fix is a watermark on both streams and a time-bounded join condition, so Spark knows 'events older than this can be evicted.' For genuinely large state I'd use the RocksDB state store, which spills to local disk instead of holding everything in executor memory, and I'd monitor state store size as a first-class metric. The same watermark/eviction thinking applies to arbitrary state via flatMapGroupsWithState — you must define a timeout, or state leaks.\"",
+      followups: [
+        "\"What exactly does the watermark let Spark do to the state store?\"",
+        "\"When would you use flatMapGroupsWithState instead of a windowed aggregation?\"",
+        "\"Why RocksDB state store instead of the default, and what does it cost you?\""
+      ]
     }
   ]
 }
