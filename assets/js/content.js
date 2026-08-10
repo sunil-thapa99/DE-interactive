@@ -913,6 +913,75 @@ GROUP BY 1, 2 ORDER BY 3 DESC LIMIT 20;`,
   ]
 },
 
+advanced: {
+  intro: {
+    title: "Advanced performance & scaling — Search Optimization, QAS, concurrency, Snowpipe Streaming",
+    desc: "The staff-level performance/cost surface beyond micro-partitions and warehouse sizing: point-lookup acceleration, offloading scan-heavy queries, multi-cluster concurrency, low-latency streaming ingestion, clustering internals, and debugging the two profile patterns (exploding joins, spilling) that actually cause slow queries."
+  },
+  cards: [
+    {
+      title: "Search Optimization Service — point lookups on huge tables",
+      badge: "performance",
+      conceptLabel: "Concept:",
+      concept: "Micro-partition pruning works great when your filter correlates with load order or clustering, but a selective point lookup on a high-cardinality column that ISN'T the clustering key (e.g. find one email in a billion-row table) still scans most partitions, because that column's min/max ranges overlap across nearly all partitions. Search Optimization Service (SOS) builds a persistent search-access-path structure (a per-column index of which micro-partitions contain which values) so equality and IN lookups — and, more recently, substring/geospatial searches — prune to just the relevant partitions.",
+      navLabel: "When to use it vs. clustering:",
+      nav: "Clustering physically co-locates data by a key — good for range scans on ONE key. SOS is for selective point/equality lookups on columns you can't all cluster by (you can only cluster by one key/expression effectively). Add SOS with ALTER TABLE ... ADD SEARCH OPTIMIZATION ON EQUALITY(col). It costs storage for the index plus serverless maintenance compute as data changes, so it's worth it for lookup-heavy tables where selective queries scan too much — not for tables only queried with big aggregations. The interview signal: knowing pruning fails on non-clustered high-cardinality equality filters and that SOS, not clustering, is the fix.",
+      code: "ALTER TABLE events ADD SEARCH OPTIMIZATION ON EQUALITY(user_email);\n-- verify it's used: Query Profile shows fewer partitions scanned\nSELECT SYSTEM$ESTIMATE_SEARCH_OPTIMIZATION_COSTS('events');",
+      note: null
+    },
+    {
+      title: "Query Acceleration Service — offloading scan-heavy bursts",
+      badge: "performance",
+      conceptLabel: "Concept:",
+      concept: "Query Acceleration Service (QAS) lets a warehouse temporarily borrow serverless compute to parallelize the scan-and-filter portion of large, unpredictable queries (big table scans, ad-hoc analytics) instead of forcing you to size the whole warehouse up for the occasional heavy query. Snowflake offloads eligible portions to transient serverless resources, so a single outlier query doesn't monopolize the warehouse or require running a permanently larger (more expensive) one.",
+      navLabel: "The right use case:",
+      nav: "QAS targets warehouses with SKEWED query profiles — mostly small queries plus occasional huge scans — where sizing up for the outliers wastes money the rest of the time. You enable it per-warehouse with a scale factor that caps how much extra serverless compute a query can pull. It helps scan-heavy work with selective filters/aggregation; it does NOT help queries bottlenecked on things other than scan (e.g. a massive join explosion or heavy spilling). SYSTEM$ESTIMATE_QUERY_ACCELERATION tells you which past queries would have benefited. Pairing 'skewed workload → QAS instead of a bigger warehouse' is the cost-aware senior answer.",
+      code: "ALTER WAREHOUSE analytics SET\n  ENABLE_QUERY_ACCELERATION = TRUE\n  QUERY_ACCELERATION_MAX_SCALE_FACTOR = 8;",
+      note: null
+    },
+    {
+      title: "Multi-cluster warehouses: concurrency, queuing & scaling policy",
+      badge: "scaling",
+      conceptLabel: "Concept:",
+      concept: "A single warehouse of a given size has finite concurrency — once enough queries run at once, new ones QUEUE. Scaling UP (bigger warehouse) makes each query faster but doesn't add concurrency slots proportionally; the fix for CONCURRENCY (many users hitting queues) is scaling OUT: a multi-cluster warehouse spins up additional same-size clusters as load rises and shuts them down as it falls, spreading queries across clusters. This is the difference between 'my query is slow' (size up) and 'my queries are waiting in line' (scale out).",
+      navLabel: "Scaling policy and the levers:",
+      nav: "Set MIN_CLUSTER_COUNT / MAX_CLUSTER_COUNT to bound elasticity. SCALING_POLICY = STANDARD adds clusters aggressively to minimize queuing (favor performance); ECONOMY waits until there's enough queued work to justify a full cluster (favor cost, tolerates some queuing). Diagnose concurrency problems by looking at queued time in QUERY_HISTORY / the warehouse load chart, not query runtime. The staff-level distinction: multi-cluster is horizontal scaling for CONCURRENCY; warehouse size is vertical scaling for a single query's speed/memory. Conflating them is the classic mistake.",
+      code: "ALTER WAREHOUSE bi_wh SET\n  MIN_CLUSTER_COUNT = 1 MAX_CLUSTER_COUNT = 4\n  SCALING_POLICY = 'STANDARD';",
+      note: "Queuing shows up as high 'queued_overload_time' in QUERY_HISTORY. If you see that, you have a concurrency problem (scale out), not a slow-query problem (scale up) — check which before touching either."
+    },
+    {
+      title: "Snowpipe Streaming — sub-second row-level ingestion",
+      badge: "ingestion",
+      conceptLabel: "Concept:",
+      concept: "Classic Snowpipe ingests FILES — you land a file in a stage and it loads within seconds to a minute, which is great for near-real-time but still file-oriented and has per-file overhead. Snowpipe Streaming uses a client SDK (or Kafka connector in streaming mode) to write ROWS directly into Snowflake tables with much lower latency and no intermediate file staging — rows are available in seconds, billed by streaming throughput rather than per-file. It's the right tool when a producer (a Kafka topic, an app) emits a continuous row stream and you want it queryable almost immediately without batching into files first.",
+      navLabel: "Where it fits vs. classic Snowpipe:",
+      nav: "Use classic file-based Snowpipe when data naturally arrives as files in S3 (exports, batch dumps) — it's simpler and you already have files. Use Snowpipe Streaming when the source is a row stream (Kafka via the Snowflake connector's streaming mode, or a custom app) and you want the lowest latency without the file round-trip. The common modern pattern: Kafka → Snowflake Kafka connector in Snowpipe Streaming mode → landing table, then Streams/Tasks or Dynamic Tables downstream — this is the real-time analog of the batch S3→Snowpipe pipeline from the Ingestion tab.",
+      code: null,
+      note: null
+    },
+    {
+      title: "Clustering internals: depth, reclustering cost, when NOT to cluster",
+      badge: "deep-dive",
+      conceptLabel: "Concept:",
+      concept: "Snowflake keeps table data in immutable micro-partitions with per-column min/max metadata. 'Clustering' means the data is physically sorted so a given key's values sit in few partitions (good pruning). CLUSTERING DEPTH measures average overlap of partitions for the clustering key — lower is better (1 = perfectly pruned). SYSTEM$CLUSTERING_INFORMATION reports depth and histogram so you can see if a table has degraded. Automatic Clustering is a serverless background service that reclusters as DML disorders the table — you don't run it manually, but you DO pay for the compute it uses.",
+      navLabel: "The cost trade-off seniors must weigh:",
+      nav: "Reclustering rewrites micro-partitions, so a table with heavy random DML on the clustering key can incur continuous, expensive automatic-clustering compute — sometimes more than the query savings justify. Cluster on the column you actually filter/join on most, with the right cardinality (very high cardinality like a UUID clusters poorly and reclusters constantly; moderate cardinality date/region keys work well). Don't cluster small tables (pruning barely matters), tables queried mostly with full scans, or tables churned constantly on the key. 'When would you NOT add a clustering key' is a favorite question — the answer is exactly these cases, plus 'measure with clustering_information first.'",
+      code: "SELECT SYSTEM$CLUSTERING_INFORMATION('sales', '(sale_date)');\n-- look at average_depth; rising over time = reclustering can't keep up / bad key",
+      note: null
+    },
+    {
+      title: "Debugging the two profile patterns: exploding joins & spilling",
+      badge: "troubleshooting",
+      conceptLabel: "Concept:",
+      concept: "Most slow Snowflake queries reduce to two patterns visible in the Query Profile. (1) An exploding / row-multiplying join: a join produces far more rows than either input (bad join key granularity, an unintended many-to-many, a missing predicate) — the profile shows a join operator whose output row count balloons versus its inputs. (2) Spilling: an operator needs more memory than the warehouse has, so it spills to local disk ('bytes spilled to local storage') or worse to remote storage ('bytes spilled to remote storage') — remote spill is a big red flag and tanks performance.",
+      navLabel: "How to read and fix each:",
+      nav: "Open the Query Profile and look at (a) the most expensive operator by % of execution time, (b) per-operator input vs output row counts (a huge jump = exploding join → fix the join key/predicate or dedupe first), and (c) the Spilling stats. Fixes: for spilling, size the warehouse UP (more memory per node) or reduce data scanned earlier (better pruning/filtering, SOS); for exploding joins, correct the join grain, add the missing predicate, or aggregate before joining. Also check the 'partitions scanned vs total' ratio — a low pruning ratio means your filter isn't pruning and clustering/SOS is the lever. Being able to name 'exploding join' and 'remote spill' from a profile is a strong senior signal.",
+      code: null,
+      note: "Remote spill specifically means the query blew past local SSD too — almost always fix by sizing the warehouse up (or cutting the data volume feeding that operator), not by adding clusters."
+    }
+  ]
+},
+
 interview: {
   intro: {
     title: "Interview prep — talk through this project",
@@ -1048,6 +1117,45 @@ interview: {
       nav: "Shows you can reason about organizational context, not just technical capability — an important senior-level signal.",
       noteLabel: "Model answer:",
       note: "When the transform needs to integrate with non-Snowflake systems in the same DAG (e.g. write to a data lake, trigger a downstream ML job, call an API), when the org already standardizes on dbt for transformation logic/lineage/testing across multiple warehouses, or when centralized company-wide scheduling/observability (one Airflow instance for everything) matters more than avoiding extra infrastructure. If everything lives and stays in Snowflake and the team is small, native Tasks/Dynamic Tables have less operational overhead — no separate service to run and monitor."
+    },
+    {
+      title: "\"A selective lookup on a billion-row table is slow even with a WHERE on a high-cardinality column. Fix it.\"",
+      followups: [
+        "\"Why doesn't normal micro-partition pruning already handle this?\"",
+        "\"Why not just add a clustering key on that column instead?\"",
+        "\"What does SOS cost you, and when is it not worth it?\""
+      ],
+      navLabel: "How to approach it:",
+      badge: "performance",
+      nav: "The point is that pruning fails on a non-clustered high-cardinality equality filter — name that, then Search Optimization Service as the right tool, and contrast it with clustering.",
+      noteLabel: "Model answer:",
+      note: "\"The problem is that micro-partition pruning relies on the filter column's min/max ranges being narrow per partition, but a high-cardinality column that isn't the clustering key has overlapping ranges across nearly every partition, so a selective equality lookup still scans almost the whole table. I'd add the Search Optimization Service on equality for that column — it builds a persistent per-value search access path so equality/IN lookups prune to just the partitions containing the value. I'd reach for SOS rather than clustering because you can only effectively cluster by one key, and this is a point lookup, not a range scan. The trade-off is SOS costs index storage plus serverless maintenance compute as the table changes, so it's worth it on lookup-heavy tables and not on tables only hit with big aggregations — I'd confirm the win by checking partitions-scanned in the Query Profile before and after.\""
+    },
+    {
+      title: "\"Users complain queries are slow at peak. The Query Profile shows lots of queued time. What now?\"",
+      followups: [
+        "\"Would sizing the warehouse up fix this? Why or why not?\"",
+        "\"STANDARD vs ECONOMY scaling policy — which do you pick here and what's the trade-off?\"",
+        "\"How do you tell a concurrency problem from a slow-query problem in the first place?\""
+      ],
+      navLabel: "How to approach it:",
+      badge: "scaling",
+      nav: "The trap is answering 'size up.' Queued time means a CONCURRENCY problem — scale out with multi-cluster, not up.",
+      noteLabel: "Model answer:",
+      note: "\"Queued time means queries are waiting for a slot, not running slowly — that's a concurrency problem, and sizing the warehouse UP wouldn't help because a bigger warehouse makes each query faster and gives it more memory, but doesn't proportionally add concurrency slots. The fix is scaling OUT: make it a multi-cluster warehouse with a max cluster count above 1, so Snowflake spins up additional same-size clusters as load rises and spreads queries across them, then shuts them down when demand falls. I'd set the scaling policy to STANDARD to minimize queuing if latency matters most, or ECONOMY to favor cost by tolerating some queuing before adding a cluster. I diagnose it from queued_overload_time in QUERY_HISTORY and the warehouse load chart — I always confirm it's queuing versus a genuinely slow query before deciding between scale-out and scale-up.\""
+    },
+    {
+      title: "\"How would you cut cost on a warehouse that runs mostly small queries plus occasional huge scans?\"",
+      followups: [
+        "\"Why is permanently sizing up the wrong answer for this profile?\"",
+        "\"What kind of query does QAS NOT help with?\"",
+        "\"How would you find out which past queries would have benefited?\""
+      ],
+      navLabel: "How to approach it:",
+      badge: "cost",
+      nav: "Skewed workload → Query Acceleration Service instead of a permanently larger warehouse. Name the eligibility limits.",
+      noteLabel: "Model answer:",
+      note: "\"That's a skewed workload — mostly small queries with occasional heavy scans — and permanently sizing the warehouse up to handle the outliers wastes credits the rest of the time. I'd enable Query Acceleration Service on the warehouse, which lets eligible large scan-and-filter queries temporarily borrow serverless compute to parallelize, so a single outlier doesn't force a bigger always-on warehouse. I'd cap it with a max scale factor so a runaway query can't pull unlimited compute. QAS helps scan-heavy work with selective filters and aggregation; it does NOT help queries bottlenecked elsewhere, like an exploding join or heavy spilling, so I'd first confirm the outliers are scan-bound. SYSTEM$ESTIMATE_QUERY_ACCELERATION on recent history tells me which queries would actually have benefited, so I'm making the call on data, not a guess. Pair that with AUTO_SUSPEND tuned tight so the warehouse isn't billed while idle.\""
     }
   ]
 }
