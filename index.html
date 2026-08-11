@@ -61,18 +61,33 @@
 </div>
 
 <div class="section">
-  <h2>Interview practice</h2>
-  <p style="color:var(--muted,#8a94a6);max-width:70ch;margin:-.4rem 0 1.2rem">Cross-cutting rounds that aren't tied to one technology &mdash; structured basic&rarr;advanced, every question hides its model answer until you expand (form your own answer first), and each ends with the follow-up cross-questions a real interviewer digs with.</p>
+  <h2>Databases</h2>
+  <p style="color:var(--muted,#8a94a6);max-width:70ch;margin:-.4rem 0 1.2rem">The two data stores a DE is expected to reason about &mdash; the relational/SQL world and the document/NoSQL world &mdash; each with when-to-use judgment, modeling, query &amp; performance tuning, and interview Q&amp;A.</p>
   <div class="tech-grid">
     <a class="tech-card" href="technologies/sql/index.html">
       <span class="icon">&#128202;</span>
       <h3>SQL &amp; Python Coding</h3>
-      <p><strong>What it is:</strong> The live-coding round &mdash; SQL and PySpark/Python problems you solve at the keyboard while thinking aloud.</p>
+      <p><strong>What it is:</strong> The relational/SQL side &mdash; the live-coding round where you solve SQL (and PySpark/Python) problems at the keyboard while thinking aloud.</p>
       <p><strong>Why practice it:</strong> Almost every DE loop has a coding screen; the difference between mid and senior is naming the tradeoff and the failure mode, not just producing a passing query.</p>
       <p><strong>Covers:</strong> Window functions, dedup, gaps-and-islands, top-N per group, query optimization; PySpark transforms, joins/broadcast, skew/salting, UDF-vs-native; plus live-coding Q&amp;A.</p>
       <span class="tag">Available now</span>
     </a>
 
+    <a class="tech-card" href="technologies/mongodb/index.html">
+      <span class="icon">&#127811;</span>
+      <h3>MongoDB &amp; NoSQL</h3>
+      <p><strong>What it is:</strong> The document/NoSQL side &mdash; when to choose MongoDB over a relational DB, how to model documents, and how it scales.</p>
+      <p><strong>Why practice it:</strong> The trap interviewers set is treating Mongo like a relational DB; senior answers turn on embedding-vs-referencing, shard-key choice, and knowing when NOT to use it.</p>
+      <p><strong>Covers:</strong> NoSQL taxonomy &amp; when-to-use, document modeling patterns &amp; anti-patterns, the aggregation pipeline &amp; $lookup, indexing (ESR rule, explain), replica sets &amp; sharding, and interview Q&amp;A.</p>
+      <span class="tag">Available now</span>
+    </a>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Interview practice</h2>
+  <p style="color:var(--muted,#8a94a6);max-width:70ch;margin:-.4rem 0 1.2rem">Cross-cutting rounds that aren't tied to one technology &mdash; structured basic&rarr;advanced, every question hides its model answer until you expand (form your own answer first), and each ends with the follow-up cross-questions a real interviewer digs with.</p>
+  <div class="tech-grid">
     <a class="tech-card" href="technologies/sysdesign/index.html">
       <span class="icon">&#127959;&#65039;</span>
       <h3>DE System Design</h3>
