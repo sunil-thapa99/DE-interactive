@@ -49,14 +49,62 @@
       <span class="tag">Available now</span>
     </a>
 
-    <div class="tech-card disabled">
+    <a class="tech-card" href="technologies/airflow/index.html">
       <span class="icon">&#127939;</span>
-      <h3>Airflow</h3>
+      <h3>Apache Airflow</h3>
       <p><strong>What it is:</strong> A workflow orchestration platform for scheduling and monitoring pipelines defined as code (DAGs).</p>
       <p><strong>Why use it:</strong> The standard choice when a pipeline needs to coordinate multiple systems (not just one warehouse), with retries, dependency management, and observability built in.</p>
-      <p><strong>Will cover:</strong> DAG design, sensors vs. operators, backfills, XComs, and production-grade orchestration patterns.</p>
-      <span class="tag soon">Coming soon</span>
-    </div>
+      <p><strong>Covers:</strong> DAG authoring (TaskFlow, dynamic mapping), scheduling &amp; the execution_date gotcha, backfills &amp; idempotency, sensors vs. deferrable operators, XComs, executors &amp; concurrency, and interview Q&amp;A with follow-ups.</p>
+      <span class="tag">Available now</span>
+    </a>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Databases</h2>
+  <p style="color:var(--muted,#8a94a6);max-width:70ch;margin:-.4rem 0 1.2rem">The two data stores a DE is expected to reason about &mdash; the relational/SQL world and the document/NoSQL world &mdash; each with when-to-use judgment, modeling, query &amp; performance tuning, and interview Q&amp;A.</p>
+  <div class="tech-grid">
+    <a class="tech-card" href="technologies/sql/index.html">
+      <span class="icon">&#128202;</span>
+      <h3>SQL &amp; Python Coding</h3>
+      <p><strong>What it is:</strong> The relational/SQL side &mdash; the live-coding round where you solve SQL (and PySpark/Python) problems at the keyboard while thinking aloud.</p>
+      <p><strong>Why practice it:</strong> Almost every DE loop has a coding screen; the difference between mid and senior is naming the tradeoff and the failure mode, not just producing a passing query.</p>
+      <p><strong>Covers:</strong> Window functions, dedup, gaps-and-islands, top-N per group, query optimization; PySpark transforms, joins/broadcast, skew/salting, UDF-vs-native; plus live-coding Q&amp;A.</p>
+      <span class="tag">Available now</span>
+    </a>
+
+    <a class="tech-card" href="technologies/mongodb/index.html">
+      <span class="icon">&#127811;</span>
+      <h3>MongoDB &amp; NoSQL</h3>
+      <p><strong>What it is:</strong> The document/NoSQL side &mdash; when to choose MongoDB over a relational DB, how to model documents, and how it scales.</p>
+      <p><strong>Why practice it:</strong> The trap interviewers set is treating Mongo like a relational DB; senior answers turn on embedding-vs-referencing, shard-key choice, and knowing when NOT to use it.</p>
+      <p><strong>Covers:</strong> NoSQL taxonomy &amp; when-to-use, document modeling patterns &amp; anti-patterns, the aggregation pipeline &amp; $lookup, indexing (ESR rule, explain), replica sets &amp; sharding, and interview Q&amp;A.</p>
+      <span class="tag">Available now</span>
+    </a>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Interview practice</h2>
+  <p style="color:var(--muted,#8a94a6);max-width:70ch;margin:-.4rem 0 1.2rem">Cross-cutting rounds that aren't tied to one technology &mdash; structured basic&rarr;advanced, every question hides its model answer until you expand (form your own answer first), and each ends with the follow-up cross-questions a real interviewer digs with.</p>
+  <div class="tech-grid">
+    <a class="tech-card" href="technologies/sysdesign/index.html">
+      <span class="icon">&#127959;&#65039;</span>
+      <h3>DE System Design</h3>
+      <p><strong>What it is:</strong> The open-ended "design a pipeline for X" round where you drive the whiteboard.</p>
+      <p><strong>Why practice it:</strong> Senior/staff loops hinge on this &mdash; it tests whether you can clarify requirements, choose batch vs. streaming, and reason about scale, failure, and cost out loud.</p>
+      <p><strong>Covers:</strong> A repeatable framework, building blocks (lakehouse/medallion, CDC, idempotency, data contracts), and full case studies (fraud/risk, HL7/FHIR claims, CDC sync, DWH modeling) with scaling &amp; cost follow-ups.</p>
+      <span class="tag">Available now</span>
+    </a>
+
+    <a class="tech-card" href="technologies/behavioral/index.html">
+      <span class="icon">&#128172;</span>
+      <h3>Behavioral &amp; Resume Deep-Dive</h3>
+      <p><strong>What it is:</strong> STAR-format behavioral questions plus the technical cross-questions interviewers ask about your actual resume bullets.</p>
+      <p><strong>Why practice it:</strong> The hiring-manager round is won or lost on specific, quantified stories &mdash; and every impressive bullet invites a "how exactly did you do that?" you need a crisp answer for.</p>
+      <p><strong>Covers:</strong> The STAR method, project deep-dives (the batch&rarr;Airflow migration, HIPAA/PHI, on-call RCA, cost right-sizing), leadership &amp; conflict, and classic questions with a ready 60-second pitch.</p>
+      <span class="tag">Available now</span>
+    </a>
   </div>
 </div>
 

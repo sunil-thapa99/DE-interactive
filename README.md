@@ -8,7 +8,20 @@ A hands-on, interview-focused learning platform for Data Engineering. The home p
 
 - **Snowflake + AWS** (`technologies/snowflake/`) — Snowpipe ingestion from S3, three ETL orchestration patterns (Tasks+Streams, Dynamic Tables, dbt+Airflow), architecture & performance, governance & advanced concepts, data modeling & loading, and interview Q&A.
 - **Apache Spark + PySpark + Databricks** (`technologies/spark/`) — a hands-on Databricks Community Edition pipeline, Python/PySpark fundamentals through the DataFrame API, the execution model (Job/Stage/Task, DAG/Task schedulers, cluster vs. client deploy mode), architecture & performance tuning (shuffles, caching, AQE, skew, resource configs, serialization), Structured Streaming, Delta Lake, storage internals & testing (Parquet, Auto Loader, orchestration, bucketing, cost control), Spark-vs-Snowflake trade-offs, and interview Q&A.
-- More technologies (Kafka, Airflow) are planned — see the home page for the roadmap.
+- **Apache Kafka** (`technologies/kafka/`) — the distributed log, producers/consumers & groups, replication & ISR, exactly-once & transactions, Connect/Schema Registry/Streams, production ops, patterns/DR/errors, and interview Q&A.
+
+### Databases
+
+- **SQL & Python Coding** (`technologies/sql/`) — the relational/SQL side: 16 SQL pattern cards (window functions, dedup-latest, gaps-and-islands, sessionization, top-N per group, anti/semi-joins, query optimization) and 10 PySpark/Python cards (joins+broadcast, skew salting, UDF-vs-native, Parquet partitioning), each with runnable code, plus coding Q&A.
+- **MongoDB & NoSQL** (`technologies/mongodb/`) — the document/NoSQL side: NoSQL taxonomy & when-to-use vs relational, document modeling (embed-vs-reference, bucket/subset/extended-reference patterns, anti-patterns), the aggregation pipeline & $lookup, indexing (ESR rule, explain, covered queries), scaling (replica sets, write/read concern, sharding & shard-key choice), and interview Q&A.
+
+### Interview practice (cross-cutting, not tied to one technology)
+
+Active-recall modules: every question hides its model answer until you expand it, and each ends with the follow-up cross-questions a real interviewer digs with. Structured basic→advanced.
+
+- **DE System Design** (`technologies/sysdesign/`) — a repeatable design framework, 12 building-block cards (medallion, CDC, idempotency, data contracts, DR, cost levers), and 5 full case studies (fraud/risk, HL7/FHIR claims, DWH modeling, events pipeline, CDC sync) with scale/failure/cost follow-ups.
+- **Apache Airflow** (`technologies/airflow/`) — DAG authoring (TaskFlow, dynamic mapping, task groups, idempotency), scheduling & the execution_date end-of-interval trap, catchup/backfills, sensors vs. deferrable operators, internals (executors, XCom limits, concurrency, retries), and interview Q&A.
+- **Behavioral & Resume Deep-Dive** (`technologies/behavioral/`) — the STAR method, resume-tailored project deep-dives with the technical cross-questions interviewers ask, leadership/conflict scenarios, and classic questions with a ready 60-second pitch.
 
 ## Project structure
 
