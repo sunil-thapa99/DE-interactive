@@ -423,6 +423,157 @@ pyspark: {
   ]
 },
 
+python: {
+  intro: {
+    title: "Python fundamentals & testing — the non-Spark coding screen",
+    desc: "Plenty of DE loops include a plain-Python screen (data structures, a transform, a bit of design) plus a 'how do you test this pipeline' conversation. These cards drill the fundamentals that actually come up — the right container, generators for big files, the stdlib toolkit, decorators/context managers — and then pytest: fixtures, parametrize, mocking, and a testing strategy for pipelines. Runnable, with asserts you can paste into a REPL."
+  },
+  cards: [
+    {
+      title: "Picking the right data structure — list, dict, set, tuple",
+      badge: "fundamentals",
+      conceptLabel: "Concept:",
+      concept: "The single most common Python-screen tell: do you reach for the container whose complexity fits the operation? dict/set membership and lookup are O(1) average; list membership (x in list) is O(n). Use a set for dedup and 'have I seen this key', a dict for grouping/counting and keyed lookup, a list for ordered sequences you iterate, a tuple for a fixed, hashable record (so it can be a dict key or set member). Turning an O(n^2) nested loop into an O(n) set/dict lookup is the fix interviewers are fishing for.",
+      code: "# O(n^2): 'which txn_ids are also in the blocklist?' with a list\ndef flagged_slow(txns, blocklist):\n    return [t for t in txns if t in blocklist]        # t in list == O(n)\n\n# O(n): hash the blocklist once, then O(1) lookups\ndef flagged(txns, blocklist):\n    block = set(blocklist)\n    return [t for t in txns if t in block]\n\nassert flagged([1, 2, 3, 4], [2, 4]) == [2, 4]\n# tuple as a composite key — (account, day) grouping\nassert hash((\"ACC-1\", \"2026-08-11\"))  # tuples are hashable; lists are not",
+      noteLabel: "Model answer:",
+      note: "\"I match the container to the operation's complexity. Membership or lookup by key → set/dict for O(1); if I catch myself writing `x in some_list` inside a loop I hoist it to a set. Grouping/counting → dict (or defaultdict/Counter). Fixed record that needs to be a key → tuple, because it's hashable and immutable. The classic red flag is a nested loop doing list membership — that's an O(n^2) that a set turns into O(n).\"",
+      followups: [
+        "\"You wrote `if id in seen_list` inside a loop over a million rows. What's the complexity and the fix?\"",
+        "\"When would you use a tuple over a list — give a concrete DE example.\"",
+        "\"dict vs set for deduping records by a business key — which, and why?\""
+      ]
+    },
+    {
+      title: "Comprehensions and generators — and why generators matter for big files",
+      badge: "fundamentals",
+      conceptLabel: "Concept:",
+      concept: "A list comprehension builds the whole result in memory; a generator (parentheses instead of brackets, or `yield`) produces items lazily, one at a time. For a 50GB file or a streamed API you do NOT want the whole thing materialized — a generator pipeline keeps memory flat and starts producing before the input is exhausted. This is the difference between an ETL step that OOMs and one that streams. Comprehensions win for small, reusable results; generators win for large or one-pass streams.",
+      code: "# Materializes every line -> memory blows up on a huge file\n# total = sum([parse(line).amount for line in open(\"claims.csv\")])\n\n# Generator pipeline: constant memory, one pass, lazy\ndef amounts(path):\n    with open(path) as f:\n        for line in f:\n            yield parse(line).amount        # produced on demand\n\n# total = sum(amounts(\"claims.csv\"))        # streams, never holds all rows\n\ngen = (x * 2 for x in range(3))\nassert next(gen) == 0 and list(gen) == [2, 4]   # lazy; consumed once",
+      navLabel: "The gotcha interviewers plant:",
+      nav: "A generator is single-use — once exhausted it's empty. If you iterate it twice (e.g. to count then to sum) the second pass sees nothing. Either materialize with list() when you genuinely need it twice, or restructure to one pass. Candidates who reuse an exhausted generator and get zero are the ones who haven't used them for real.",
+      noteLabel: "Model answer:",
+      note: "\"For large or streamed inputs I use generators so memory stays flat and work starts before the input's fully read — a `yield` pipeline over a file instead of reading it all into a list. For small results I'll reuse, a list comprehension is fine. The trap is that generators are one-shot: if I need two passes I materialize once with list() or redesign to a single pass.\"",
+      followups: [
+        "\"You count a generator's items then try to sum it and get 0. Why?\"",
+        "\"How would you process a file too big to fit in memory in pure Python?\"",
+        "\"What does `yield` actually return the first time you call the function?\""
+      ]
+    },
+    {
+      title: "The stdlib DE toolkit — collections & itertools",
+      badge: "intermediate",
+      conceptLabel: "Concept:",
+      concept: "Most Python data-wrangling screens are solved cleanly with the standard library — reaching for pandas or hand-rolled loops is the wrong instinct on a small screen. defaultdict avoids the 'key exists?' dance when grouping; Counter counts and gives most_common in one line; itertools.groupby collapses consecutive runs (remember: it needs sorted input); itertools.islice batches a stream without materializing it. Knowing these signals fluency and writes less code.",
+      code: "from collections import defaultdict, Counter\nfrom itertools import islice\n\n# group transactions by account -> {acct: [amounts]}\ndef by_account(rows):\n    g = defaultdict(list)\n    for acct, amt in rows:\n        g[acct].append(amt)          # no 'if acct in g' needed\n    return dict(g)\n\nassert by_account([(\"A\", 10), (\"B\", 5), (\"A\", 2)]) == {\"A\": [10, 2], \"B\": [5]}\nassert Counter(\"abbccc\").most_common(1) == [(\"c\", 3)]\n\n# batch an iterable into chunks of n (bulk-load friendly), lazily\ndef batched(it, n):\n    it = iter(it)\n    while (chunk := list(islice(it, n))):\n        yield chunk\n\nassert list(batched(range(5), 2)) == [[0, 1], [2, 3], [4]]",
+      noteLabel: "Model answer:",
+      note: "\"For grouping I use defaultdict(list) so I don't write the key-existence check; for counting, Counter with most_common. For batching a stream into bulk-insert chunks I use islice so I never materialize the whole thing. itertools.groupby is handy but only collapses CONSECUTIVE equal keys, so I sort first or it won't group what I expect — that's the one people trip on.\"",
+      followups: [
+        "\"itertools.groupby returned more groups than you expected. Why?\"",
+        "\"Batch a stream of records into groups of 1000 for a bulk insert — write it.\"",
+        "\"defaultdict(int) vs Counter for frequency counting — any real difference?\""
+      ]
+    },
+    {
+      title: "Context managers — deterministic cleanup for files, connections, transactions",
+      badge: "intermediate",
+      conceptLabel: "Concept:",
+      concept: "A `with` block guarantees teardown runs even if the body raises — the reason you never leak a file handle, DB connection, or open transaction. In DE this is how you make a load step safe: acquire the connection, do the work, and have the context manager commit on success / roll back on exception, then always close. You can write your own with @contextmanager: everything before `yield` is setup, everything after is guaranteed cleanup.",
+      code: "from contextlib import contextmanager\n\n@contextmanager\ndef transaction(conn):\n    tx = conn.begin()\n    try:\n        yield conn            # body runs here\n        tx.commit()           # only on clean exit\n    except Exception:\n        tx.rollback()         # guaranteed on any error\n        raise\n    finally:\n        conn.close()          # always\n\n# with transaction(conn) as c:\n#     c.execute(insert_claims)      # commit on success, rollback on raise, always closed\n\n# proof the cleanup path runs even on error:\nlog = []\n@contextmanager\ndef traced():\n    log.append(\"open\")\n    try: yield\n    finally: log.append(\"close\")\ntry:\n    with traced(): raise ValueError\nexcept ValueError: pass\nassert log == [\"open\", \"close\"]",
+      noteLabel: "Model answer:",
+      note: "\"Anything with acquire/release semantics goes in a `with` block so cleanup is guaranteed on the error path, not just the happy path — files, connections, and especially a load transaction that must commit on success and roll back on failure. I write custom ones with @contextmanager: pre-yield is setup, the finally after yield is the cleanup that always runs. It's how a partially-failed batch doesn't leave a half-applied transaction.\"",
+      followups: [
+        "\"A pipeline step raises mid-insert. How do you guarantee the transaction rolls back and the connection closes?\"",
+        "\"What runs before vs after the `yield` in a @contextmanager, and when does the after-part run?\""
+      ]
+    },
+    {
+      title: "Decorators — retry, timing, and caching without touching business logic",
+      badge: "intermediate",
+      conceptLabel: "Concept:",
+      concept: "A decorator wraps a function to add behavior around it — the DE staples are retry (flaky API/DB call), timing/logging (observability), and caching. You rarely hand-roll caching: functools.lru_cache memoizes a pure function in one line. A retry decorator with backoff is the one you'll actually write in an interview — the signal is that you make the retry idempotent-aware and cap the attempts, not retry forever.",
+      code: "import functools\n\ndef retry(times=3):\n    def deco(fn):\n        @functools.wraps(fn)               # preserve name/docstring\n        def wrapper(*a, **k):\n            last = None\n            for attempt in range(times):\n                try:\n                    return fn(*a, **k)\n                except Exception as e:\n                    last = e               # backoff: sleep 2**attempt in real code\n            raise last                      # exhausted -> surface the real error\n        return wrapper\n    return deco\n\ncalls = []\n@retry(times=3)\ndef flaky():\n    calls.append(1)\n    if len(calls) < 2: raise ConnectionError\n    return \"ok\"\nassert flaky() == \"ok\" and len(calls) == 2   # failed once, succeeded on retry\n\n@functools.lru_cache(maxsize=1000)           # memoize a pure lookup in one line\ndef fx_rate(day, ccy): ...",
+      noteLabel: "Model answer:",
+      note: "\"Cross-cutting concerns — retry, timing, caching — go in a decorator so the business logic stays clean. For caching a pure function I use functools.lru_cache rather than a custom cache. For retry I write a small decorator with capped attempts and exponential backoff, and I only auto-retry operations that are idempotent — retrying a non-idempotent write can double-apply. I use functools.wraps so the wrapped function keeps its name for logging/traceback.\"",
+      followups: [
+        "\"Which operations are safe to auto-retry, and which will corrupt data if you do?\"",
+        "\"Why wrap with functools.wraps — what breaks without it?\"",
+        "\"When is lru_cache the wrong choice? (hint: unbounded keys, mutable args, freshness)\""
+      ]
+    },
+    {
+      title: "Type hints & dataclasses — data contracts you can test",
+      badge: "intermediate",
+      conceptLabel: "Concept:",
+      concept: "Type hints don't run at runtime, but they turn a dict-of-unknown-shape into a documented, IDE-checkable, mypy-verifiable contract — which matters when a record passes through five pipeline stages. A @dataclass gives you a typed record with __init__, __eq__, and __repr__ for free, so tests can assert equality on whole records instead of field-by-field. For real validation (not just hints), pydantic enforces the types at parse time — the honest distinction to draw is hints = static/dev-time, pydantic = runtime enforcement.",
+      code: "from dataclasses import dataclass\n\n@dataclass(frozen=True)          # frozen -> hashable, usable as a dict key / set member\nclass Claim:\n    claim_id: str\n    amount: float\n    provider_id: str\n\ndef normalize(raw: dict) -> Claim:\n    return Claim(raw[\"id\"], float(raw[\"amt\"]), raw[\"prov\"])\n\n# whole-record equality in tests, free from @dataclass:\nassert normalize({\"id\": \"C-1\", \"amt\": \"12.5\", \"prov\": \"P-9\"}) == \\\n       Claim(\"C-1\", 12.5, \"P-9\")",
+      noteLabel: "Model answer:",
+      note: "\"I type the boundaries — function signatures and the record shapes that cross pipeline stages — so mypy and the IDE catch mismatches before runtime and the contract is self-documenting. For records I use @dataclass: typed fields plus free __eq__ so tests assert on whole objects, and frozen=True when I need it hashable. But I'm clear that hints aren't enforcement — if I need to reject bad data at ingest I reach for pydantic, which validates at parse time.\"",
+      followups: [
+        "\"Do type hints do anything at runtime? What actually enforces them?\"",
+        "\"dataclass vs a plain dict for a record passing through several stages — trade-offs?\"",
+        "\"When would you reach for pydantic over a dataclass?\""
+      ]
+    },
+    {
+      title: "pytest fundamentals — assert, fixtures, parametrize",
+      badge: "fundamentals",
+      conceptLabel: "Concept:",
+      concept: "pytest needs no boilerplate: a function named test_* with a plain `assert` is a test, and pytest rewrites the assert to show you the actual values on failure. The two features that carry real suites: fixtures (reusable setup — a sample DataFrame, a temp DB, a spark session — injected by naming them as arguments) and @parametrize (run the same test over many input/expected pairs instead of copy-pasting). tmp_path is a built-in fixture for a real temp directory, so you test file I/O without touching the repo.",
+      code: "import pytest\n\ndef net_amount(gross, refund):\n    return round(gross - refund, 2)\n\n@pytest.fixture\ndef sample_txns():\n    return [(\"A\", 10.0, 1.0), (\"B\", 5.0, 0.0)]\n\n@pytest.mark.parametrize(\"gross,refund,expected\", [\n    (10.0, 1.0, 9.0),\n    (5.0,  0.0, 5.0),\n    (0.0,  0.0, 0.0),          # edge: zero\n    (10.0, 10.0, 0.0),         # edge: full refund\n])\ndef test_net_amount(gross, refund, expected):\n    assert net_amount(gross, refund) == expected\n\ndef test_uses_fixture(sample_txns):\n    assert sum(g - r for _, g, r in sample_txns) == 14.0",
+      noteLabel: "Model answer:",
+      note: "\"A test is a test_* function with a bare assert — pytest shows the real values on failure, so I don't need assertEqual. I push shared setup into fixtures (sample data, a temp dir via tmp_path, a spark session) and inject them by parameter name, and I use @parametrize to cover the edge cases — zero, nulls, boundaries — as data instead of copy-pasted tests. That keeps the suite readable and makes the edge coverage obvious to a reviewer.\"",
+      followups: [
+        "\"How do you test a function that reads/writes files without polluting the repo?\"",
+        "\"You have one test copy-pasted five times with different inputs. What do you use?\"",
+        "\"What's the difference between a fixture and just calling a setup function?\""
+      ]
+    },
+    {
+      title: "Unit-testing a data transformation (and comparing DataFrames)",
+      badge: "intermediate",
+      conceptLabel: "Concept:",
+      concept: "The most testable pipeline is one where the transform is a pure function: (input DataFrame/rows) -> (output), no I/O inside. Then a unit test builds a tiny input with the tricky cases baked in (a null, a duplicate key, a tie), runs the transform, and asserts on the output. The catch with Spark/pandas is equality: you can't use ==. Compare with a helper that ignores row order and checks schema + values (chispa's assert_df_equality for Spark, pandas.testing.assert_frame_equal for pandas). Separate the transform from the read/write and 90% of your logic becomes trivially testable.",
+      code: "# transform is PURE: takes rows, returns rows — no file/db access inside\ndef dedup_latest(rows):\n    latest = {}\n    for r in sorted(rows, key=lambda r: r[\"updated_at\"]):\n        latest[r[\"id\"]] = r        # later row wins per id\n    return sorted(latest.values(), key=lambda r: r[\"id\"])\n\ndef test_dedup_keeps_latest_per_key():\n    rows = [\n        {\"id\": \"A\", \"updated_at\": 1, \"v\": \"old\"},\n        {\"id\": \"A\", \"updated_at\": 2, \"v\": \"new\"},   # should win\n        {\"id\": \"B\", \"updated_at\": 1, \"v\": \"only\"},\n    ]\n    out = dedup_latest(rows)\n    assert [(r[\"id\"], r[\"v\"]) for r in out] == [(\"A\", \"new\"), (\"B\", \"only\")]\n\n# Spark:  from chispa import assert_df_equality; assert_df_equality(actual, expected, ignore_row_order=True)\n# pandas: from pandas.testing import assert_frame_equal; assert_frame_equal(actual, expected)",
+      noteLabel: "Model answer:",
+      note: "\"I structure transforms as pure functions — data in, data out, no I/O — so the read and write are the only parts that touch the outside world. Then a unit test feeds a handful of rows with the nasty cases baked in (a null, a duplicate key, a tie) and asserts on the output. For DataFrames I never use ==; I use chispa's assert_df_equality for Spark (ignoring row order) or pandas.testing.assert_frame_equal, because they compare schema and values and give a readable diff. Keeping I/O at the edges is what makes the core logic testable at all.\"",
+      followups: [
+        "\"Why can't you assert `df1 == df2` for a Spark/pandas DataFrame?\"",
+        "\"What input rows would you put in the test for a dedup-latest transform?\"",
+        "\"Your transform reads from S3 inside the function. Why is that hard to test, and how do you fix it?\""
+      ]
+    },
+    {
+      title: "Mocking external systems & integration tests",
+      badge: "advanced",
+      conceptLabel: "Concept:",
+      concept: "Unit tests shouldn't hit S3, an API, or a warehouse — they'd be slow, flaky, and non-deterministic. You mock the boundary: patch the client so it returns canned data (or asserts it was called correctly), and test YOUR logic in isolation. unittest.mock.patch (or pytest's monkeypatch) swaps the real object for a fake. The complement is a small number of integration tests that DO run against a real (often containerized, e.g. testcontainers/localstack) dependency to catch what mocks can't — schema drift, real SQL dialect, auth. The senior framing: mock to test logic, integration-test to test the seams.",
+      code: "from unittest.mock import patch, MagicMock\n\ndef load_provider(client, pid):\n    resp = client.get(f\"/providers/{pid}\")     # external call\n    return {\"id\": pid, \"name\": resp[\"name\"].strip().upper()}\n\ndef test_load_provider_normalizes_name():\n    client = MagicMock()\n    client.get.return_value = {\"name\": \"  mercy cardiology \"}\n    out = load_provider(client, \"P-42\")\n    assert out == {\"id\": \"P-42\", \"name\": \"MERCY CARDIOLOGY\"}\n    client.get.assert_called_once_with(\"/providers/P-42\")   # verify the call too\n\n# patch a module-level dependency:\n# with patch(\"mypkg.jobs.boto3.client\") as m:\n#     m.return_value.get_object.return_value = {\"Body\": fake_bytes}\n#     run_job()",
+      noteLabel: "Model answer:",
+      note: "\"I mock at the boundary — the S3/API/warehouse client — so unit tests are fast and deterministic and only exercise my logic; I both stub the return value AND assert the call was made correctly (right path, right args), because a transform that silently stops calling the API is a real bug. Then I keep a thin layer of integration tests against a real or containerized dependency (localstack, testcontainers) to catch what mocks hide: schema drift, the actual SQL dialect, auth. Mocks test my code; integration tests test the seams.\"",
+      followups: [
+        "\"What class of bug does a mock-only suite completely miss?\"",
+        "\"How do you decide what to mock vs what to hit for real?\"",
+        "\"patch the wrong import path and the mock doesn't take effect — why does 'where you patch' matter?\""
+      ]
+    },
+    {
+      title: "A testing strategy for data pipelines — unit vs integration vs data checks",
+      badge: "advanced",
+      conceptLabel: "Concept:",
+      concept: "Code tests aren't enough for data — a pipeline can be bug-free and still load garbage because the SOURCE changed. Three layers: (1) unit tests on pure transforms (fast, most of them); (2) integration tests on the wiring — read, transform, write against a real/containerized store (few, slower); (3) DATA-quality tests that run in production on every load — not-null, uniqueness, row-count/volume, referential integrity, freshness — via dbt tests or Great Expectations. The distinction interviewers want: code tests catch YOUR bugs at deploy time; data tests catch the WORLD's changes at run time, and they gate the load so bad data never reaches downstream.",
+      code: "# LAYER 1 (unit): tiny input, pure transform, assert output — shown in earlier cards.\n\n# LAYER 3 (data quality) — assertions that run on real data every load.\ndef check_load(df):\n    assert df.filter(\"claim_id IS NULL\").count() == 0,        \"null primary key\"\n    assert df.count() == df.select(\"claim_id\").distinct().count(), \"duplicate claim_id\"\n    n = df.count()\n    assert 900 <= n <= 1100, f\"row-count anomaly: {n} (expected ~1000)\"  # volume drift\n    # in dbt: tests: [not_null, unique] on claim_id; a dbt test for accepted range.\n    return df   # only returns (proceeds) if every gate passes\n\n# The gate pattern: fail the pipeline BEFORE the write, so bad data never lands.",
+      noteLabel: "Model answer:",
+      note: "\"I test in three layers. Most tests are unit tests on pure transforms — fast, run in CI on every commit. A few integration tests exercise the read/transform/write wiring against a containerized store. Then, distinct from code tests, I run data-quality checks in production on every load — not-null and unique on keys, referential integrity, and a row-count/volume band to catch a source that silently halved or doubled — using dbt tests or Great Expectations, and I fail the pipeline BEFORE the write so bad data never reaches downstream. Code tests catch my bugs at deploy; data tests catch upstream changes at runtime. That's exactly the validation-and-reconciliation framing that cut claim denials at Cedar Gate.\"",
+      followups: [
+        "\"A pipeline passes all its unit tests but still loads bad data. How is that possible, and what layer catches it?\"",
+        "\"Which data-quality checks would you gate a claims load on, and would you fail the run or quarantine the rows?\"",
+        "\"Where do dbt tests / Great Expectations fit relative to your pytest suite?\"",
+        "\"How do you detect that an upstream source silently changed (schema or volume)?\""
+      ]
+    }
+  ]
+},
+
 interview: {
   intro: {
     title: "Interview prep — coding-round Q&A and tradeoffs",
@@ -624,5 +775,25 @@ const QUIZ = [
       "Rewrite the INNER JOIN as a LEFT JOIN"
     ],
     correct: 1
+  },
+  {
+    q: "You need to sum amounts from a 50GB file in pure Python without blowing up memory. Which approach?",
+    options: [
+      "Read all lines into a list, then sum a list comprehension over them",
+      "A generator that yields one parsed amount per line, passed to sum() — constant memory, one pass",
+      "Load it into a pandas DataFrame and call .sum()",
+      "Read the file twice: once to count, once to sum"
+    ],
+    correct: 1
+  },
+  {
+    q: "A data pipeline passes 100% of its pytest unit tests but still loads corrupt data into the warehouse. What most likely caught nothing, and what would?",
+    options: [
+      "The code was fine; unit tests can't catch upstream source changes — data-quality checks (not-null/unique/volume) gated on the load do",
+      "The unit tests were written wrong; rewrite them",
+      "Add more mocks to the unit tests",
+      "Nothing can catch this; it's unavoidable"
+    ],
+    correct: 0
   }
 ];
