@@ -147,6 +147,56 @@ overview: {
       nav: "Use the waiting period productively: review your score report's per-domain performance breakdown to identify exactly which domains were weakest, then focus re-study on this module's corresponding tabs before retaking.",
       noteLabel: "Remember:",
       note: "A per-domain breakdown, not just a pass/fail flag, is provided in the official score report — use it to target study rather than re-reading everything equally."
+    },
+    {
+      title: "Verify These Numbers Right Before You Book",
+      badge: "logistics",
+      conceptLabel: "What to know:",
+      concept: "A handful of facts in this module are explicitly called out as 'verify before scheduling' rather than hardcoded, because AWS updates them periodically: current exam price, available exam languages, the exact discount percentage and validity period on the post-pass certification voucher, and the precise Free Tier quotas (e.g. which instance types and how many hours/GB are included this year).",
+      navLabel: "Why it matters:",
+      nav: "These are logistics facts, not exam content — getting them wrong doesn't cost you exam points, but it can cost you money or a scheduling surprise (e.g. assuming a discount that's since changed, or a Free Tier limit that's been revised).",
+      noteLabel: "Remember:",
+      note: "Check the official AWS Certification exam guide and the AWS Free Tier page for current figures in the week you actually book, not from memory of an older number."
+    },
+    {
+      title: "Well-Architected Framework Lenses (Out of Scope, but Know the Name)",
+      badge: "strategy",
+      conceptLabel: "What to know:",
+      concept: "Beyond the six core pillars (covered in depth on the Cloud Concepts tab), AWS publishes 'Lenses' that apply the framework to specific workload types — e.g. the Serverless Lens, SaaS Lens, Machine Learning Lens, and others. These add workload-specific guidance on top of the six pillars.",
+      navLabel: "Why it matters:",
+      nav: "Lenses are NOT part of the CLF-C02 exam guide and are very unlikely to be tested directly — this card exists so you recognize the term if you see it in AWS documentation and don't mistake it for a required exam topic.",
+      noteLabel: "Remember:",
+      note: "You do not need to study individual Lenses for this exam — know the six pillars cold, and know 'Lens' just means a specialized application of them."
+    },
+    {
+      title: "Get Hands-On Before the Exam, Even Briefly",
+      badge: "strategy",
+      conceptLabel: "What to know:",
+      concept: "This module is intentionally conceptual, matching how CLF-C02 itself is tested — but spending even 20-30 minutes clicking through the real AWS Console (using the Free Tier) on EC2, S3, IAM, and the Billing Dashboard turns abstract vocabulary into something you've actually seen.",
+      navLabel: "Why it matters:",
+      nav: "Scenario questions read faster and feel more concrete once you've seen the actual EC2 launch wizard, an S3 bucket's storage-class dropdown, or the IAM policy JSON editor with your own eyes — it's a small time investment with an outsized confidence payoff.",
+      noteLabel: "Remember:",
+      note: "You don't need a real project — 20 minutes of curious clicking in the Free Tier console is enough exposure for this exam's level."
+    },
+    {
+      title: "Exam Languages and Accessibility Accommodations",
+      badge: "logistics",
+      conceptLabel: "What to know:",
+      concept: "AWS offers CLF-C02 in multiple languages beyond English (availability varies and changes over time), and Pearson VUE supports accessibility accommodations (e.g. extended time, sign language interpreters, assistive technology) for candidates who request them in advance through the AWS Certification account.",
+      navLabel: "Why it matters:",
+      nav: "If either applies to you, request it well before your target exam date — accommodation requests and non-English language selection both go through a review/setup process that isn't instant.",
+      noteLabel: "Remember:",
+      note: "This only matters if you need a non-English exam or an accommodation — verify current language availability and the accommodation request process on AWS's official certification accessibility page."
+    },
+    {
+      title: "Supplement With Official AWS Practice Resources",
+      badge: "strategy",
+      conceptLabel: "What to know:",
+      concept: "This module's Mock Exam tab is one practice source among several worth using. AWS Skill Builder offers an official practice exam (paid) written by AWS's own exam team, and AWS re:Post has community-driven Q&A and discussion threads on CLF-C02 topics.",
+      navLabel: "Why it matters:",
+      nav: "AWS's own practice exam is the closest available proxy for the real question-writing style and phrasing quirks — doing at least one official practice exam in addition to this module's mock exam reduces the chance of being surprised by phrasing on test day.",
+      noteLabel: "Remember:",
+      note: "Use this module to build and check your knowledge first; use AWS Skill Builder's official practice exam as a final calibration check closer to your test date."
     }
   ]
 },
