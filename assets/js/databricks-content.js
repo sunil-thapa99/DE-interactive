@@ -289,6 +289,20 @@ ingestion: {
       ]
     },
     {
+      title: "Stateful streaming — aggregations, stream-stream joins, and bounding state",
+      badge: "advanced",
+      conceptLabel: "Concept:",
+      concept: "Stateless streaming (map/filter, then write) is easy; STATEFUL streaming is where seniors are tested. Windowed aggregations, deduplication, and stream-stream joins all keep STATE in the stream between micro-batches, and that state must be bounded or it grows forever. The tool is the WATERMARK: it tells the engine how late data can arrive, so it can finalize windows and evict old state. Stream-stream joins need a watermark on both sides plus a time constraint so the engine knows when it can stop buffering unmatched rows. For arbitrary custom state (sessionization, state machines) you use flatMapGroupsWithState / applyInPandasWithState. Databricks backs this with a RocksDB state store so state can exceed executor memory.",
+      code: "from pyspark.sql import functions as F\n# Windowed count with a watermark so old state is evicted (bounded)\n(events.withWatermark(\"event_ts\", \"10 minutes\")\n   .groupBy(F.window(\"event_ts\", \"5 minutes\"), \"provider_id\")\n   .count())\n\n# Stream-stream join: watermark BOTH sides + a time bound so buffers drain\nclaims.withWatermark(\"claim_ts\", \"1 hour\").join(\n  payments.withWatermark(\"pay_ts\", \"2 hours\"),\n  F.expr(\"claim_id = ref_claim_id AND pay_ts BETWEEN claim_ts AND claim_ts + interval 1 hour\"))",
+      noteLabel: "Model answer:",
+      note: "\"Stateless streams are trivial; the senior questions are about state. Windowed aggregations, dedup, and stream-stream joins all hold state across micro-batches, and unbounded state is the classic production failure — OOM or ever-growing checkpoints. So I set a watermark on the event-time column to declare how late data can be, which lets Spark finalize windows and evict expired state. A stream-stream join needs watermarks on both sides plus a time-bounded join condition so the engine knows when to stop buffering unmatched rows. For custom stateful logic like sessionization I use applyInPandasWithState, and on Databricks the RocksDB state store lets that state spill beyond memory. The interview tell is naming the watermark as the thing that bounds state.\"",
+      followups: [
+        { q: "A windowed streaming aggregation's state keeps growing until it OOMs. Cause and fix?", a: "No watermark (or one too loose), so the engine never finalizes windows and evicts old state. Add withWatermark on the event-time column with a tolerance matching real lateness, so completed windows and their state are dropped." },
+        { q: "Why does a stream-stream join need a watermark on both streams?", a: "Each side buffers rows waiting for a match on the other. Without watermarks plus a time-bounded join condition, the engine can never decide a row will get no future match, so buffers grow unbounded. Watermarks + a time range let it drop rows past the join window." },
+        { q: "When do you reach for applyInPandasWithState instead of built-in windows?", a: "When the state logic isn't a standard window/aggregation — sessionization with custom gap logic, a per-key state machine, or custom timeout handling. It gives you arbitrary per-group state with explicit timeout control, at the cost of writing and managing that state yourself." }
+      ]
+    },
+    {
       title: "COPY INTO & batch idempotency",
       badge: "intermediate",
       conceptLabel: "Concept:",
@@ -336,6 +350,20 @@ dlt: {
         "\"Which expectation action for a null primary key vs a slightly-off reference value?\"",
         "\"How do you see whether data quality is degrading over time?\"",
         "\"Where do dropped/quarantined rows go and how do you reprocess them?\""
+      ]
+    },
+    {
+      title: "APPLY CHANGES INTO — declarative CDC & SCD in DLT",
+      badge: "advanced",
+      conceptLabel: "Concept:",
+      concept: "DLT's native CDC: APPLY CHANGES INTO takes a change feed and maintains the target table for you — you declare the key, the sequencing column (to order out-of-order changes), and whether you want SCD Type 1 (overwrite, current state) or Type 2 (full history with __START_AT/__END_AT). DLT handles the MERGE mechanics, ordering, and deletes. So instead of hand-writing foreachBatch + MERGE + tie-break logic, you declare intent and DLT does the idempotent upsert. It's the DLT answer to everything the Delta MERGE card does manually, and the reason a DLT shop rarely hand-rolls SCD.",
+      code: "import dlt\ndlt.create_streaming_table(\"silver_claims\")\ndlt.apply_changes(\n  target = \"silver_claims\",\n  source = \"bronze_claims_cdc\",\n  keys = [\"claim_id\"],\n  sequence_by = \"commit_ts\",          # orders out-of-order changes\n  apply_as_deletes = \"op = 'D'\",       # handle deletes\n  stored_as_scd_type = 2)              # 2 = full history; 1 = current state only",
+      noteLabel: "Model answer:",
+      note: "\"APPLY CHANGES INTO is DLT's declarative CDC — I give it the key, a sequence_by column so late/out-of-order changes apply in the right order, a delete condition, and SCD type 1 or 2, and DLT maintains the target: the MERGE, the ordering, the delete handling, the Type-2 __START_AT/__END_AT bookkeeping. It's the managed version of the hand-rolled foreachBatch-plus-MERGE pattern — same idempotency and ordering guarantees, far less code. In a DLT shop this is how CDC into silver and SCD dimensions are actually built; I only drop to manual MERGE when I need logic APPLY CHANGES can't express.\"",
+      followups: [
+        { q: "How does APPLY CHANGES handle changes that arrive out of order?", a: "The sequence_by column defines event order, so DLT applies the latest by sequence and won't let a stale update overwrite a newer one — the same regression protection you'd hand-code with a sequence/LSN in a manual MERGE." },
+        { q: "SCD Type 1 vs Type 2 here — what changes in the output?", a: "Type 1 keeps only current state (overwrites in place). Type 2 keeps full history, adding __START_AT/__END_AT (and a current flag) so you can query the row as-of any time — DLT manages the version chaining for you." },
+        { q: "When would you still hand-roll a MERGE instead of using APPLY CHANGES?", a: "When the upsert logic is non-standard — multi-table transactional writes, custom conflict resolution, or transformations that don't fit the key+sequence+SCD model. For plain CDC/SCD, APPLY CHANGES is less code and less risk." }
       ]
     },
     {
@@ -419,6 +447,20 @@ unity: {
         "\"What did the old hive_metastore make painful that UC fixes?\"",
         "\"How would you lay out catalogs and schemas for prod/dev across two domains?\"",
         "\"Besides tables, what else does Unity Catalog govern?\""
+      ]
+    },
+    {
+      title: "Managed vs external tables, external locations & storage credentials",
+      badge: "intermediate",
+      conceptLabel: "Concept:",
+      concept: "How UC actually reaches storage. A STORAGE CREDENTIAL is a UC object wrapping a cloud IAM role/identity; an EXTERNAL LOCATION binds that credential to a specific storage path (s3://.../claims) and is what you GRANT access on — so nobody uses raw keys. On top of that, tables are MANAGED (UC owns the data lifecycle and storage location; DROP TABLE deletes the data, and UC can auto-optimize/vacuum) or EXTERNAL (you point at data in a path you manage; DROP removes only the metadata, the files stay). Rule of thumb: prefer managed tables so UC governs the full lifecycle and can run predictive optimization; use external when the data is shared with non-Databricks tools or you must control the physical layout.",
+      code: "-- Credential + external location = governed path access, no raw keys\nCREATE STORAGE CREDENTIAL claims_cred\n  WITH (IAM_ROLE 'arn:aws:iam::123:role/uc-claims');\nCREATE EXTERNAL LOCATION claims_loc\n  URL 's3://acme-lake/claims/' WITH (STORAGE CREDENTIAL claims_cred);\nGRANT READ FILES ON EXTERNAL LOCATION claims_loc TO `data_eng`;\n\n-- Managed: UC owns storage + lifecycle (DROP deletes data)\nCREATE TABLE main.silver.claims (...);\n-- External: you own the path (DROP keeps the files)\nCREATE TABLE main.silver.claims_ext (...) LOCATION 's3://acme-lake/claims/ext/';",
+      noteLabel: "Model answer:",
+      note: "\"UC reaches storage through a storage credential — a wrapped cloud IAM role — bound to an external location on a specific path, and you grant on that location, so there are no raw keys floating in notebooks. Then tables are managed or external: managed means UC owns the data and lifecycle, so DROP deletes the files and UC can auto-optimize and vacuum — I default to managed so governance and optimization are automatic. External means I point at a path I control and DROP only removes metadata — I use it when the data is shared with tools outside Databricks or I need to own the physical layout. Knowing that distinction is also a safety thing: DROP on a managed table deletes data, on external it doesn't.\"",
+      followups: [
+        { q: "You DROP a table and the files vanish. Was it managed or external, and why?", a: "Managed — UC owns the data lifecycle, so DROP deletes the underlying files. On an external table DROP removes only the metadata and the files remain, which is exactly why external is safer for data shared with other tools." },
+        { q: "Why use external locations + storage credentials instead of mounting with keys?", a: "They're governed UC objects: access is granted and audited per location, credentials are centrally managed (no keys in notebooks), and it integrates with lineage — the modern replacement for /mnt mounts with embedded keys." },
+        { q: "When would you deliberately choose external tables over managed?", a: "When non-Databricks tools read the same files, when you need explicit control of the physical path/layout (e.g. a fixed partition scheme other systems expect), or during a migration where the data already lives in a path you don't want UC to own yet." }
       ]
     },
     {
@@ -542,6 +584,173 @@ performance: {
         "\"A large-table join is shuffling everything. First thing you try?\"",
         "\"AQE is on but one task still runs 20x longer. What's left to do?\"",
         "\"When does caching help and when is it just wasted memory?\""
+      ]
+    }
+  ]
+},
+
+cicd: {
+  intro: {
+    title: "CI/CD & deployment — shipping Databricks code like software",
+    desc: "The senior differentiator: you don't click-deploy notebooks, you version, test, and promote pipelines through environments with CI. This tab covers Asset Bundles, testing, environment promotion/Terraform, and the automation surface — the 'how does this get to prod safely' questions a 6+ YOE DE must answer."
+  },
+  cards: [
+    {
+      title: "Databricks Asset Bundles (DABs) — deploy pipelines as code",
+      badge: "advanced",
+      conceptLabel: "Concept:",
+      concept: "A Databricks Asset Bundle is the current standard way to package a project — notebooks/wheels, job & DLT pipeline definitions, cluster config — as a YAML-defined unit you deploy from CI. One databricks.yml declares your resources (jobs, pipelines) and per-target overrides (dev/staging/prod: different catalogs, cluster sizes, schedules). `databricks bundle deploy -t prod` then creates/updates everything idempotently. It replaces the older dbx and hand-clicking jobs in the UI, and it's what makes a Databricks project reproducible, reviewable, and promotable instead of drifting between environments.",
+      code: "# databricks.yml — one source of truth, per-env targets\nbundle: { name: claims_pipeline }\nresources:\n  jobs:\n    claims_etl:\n      tasks:\n        - task_key: silver\n          notebook_task: { notebook_path: ./src/silver.py }\ntargets:\n  dev:  { default: true, variables: { catalog: dev } }\n  prod: { variables: { catalog: prod },\n          resources: { jobs: { claims_etl: { schedule: { quartz_cron_expression: \"0 0 * * * ?\" } } } } }\n# CI runs:  databricks bundle validate && databricks bundle deploy -t prod",
+      noteLabel: "Model answer:",
+      note: "\"I ship with Asset Bundles. The whole project — job and DLT definitions, notebooks/wheels, cluster config — is declared in databricks.yml with per-target overrides so dev points at a dev catalog and small clusters while prod points at prod catalog, real schedules, and prod sizing. CI validates then runs `bundle deploy -t <env>`, which reconciles the resources idempotently, so there's no click-ops and no drift between environments. It replaced dbx as the standard. The point I'd make in an interview: my pipelines are Git-backed, PR-reviewed, and promoted by a command, not edited live in the prod workspace.\"",
+      followups: [
+        { q: "How do dev and prod differ in a bundle without duplicating the whole config?", a: "Targets: a shared resource definition plus per-target overrides (variables and resource patches). dev might use a dev catalog and no schedule; prod overrides the catalog, adds the cron schedule, and bumps cluster size — same base definition, environment-specific deltas." },
+        { q: "What did Asset Bundles replace, and why move off it?", a: "dbx (and hand-configuring jobs in the UI). DABs are first-party, declarative, and cover jobs + DLT + config in one deploy unit with environment targets, so they're more complete and better supported than dbx." },
+        { q: "How is a bundle deploy idempotent?", a: "It reconciles declared state against the workspace — creating what's missing, updating what changed, leaving matching resources alone — so re-deploying the same bundle is a no-op rather than creating duplicate jobs." }
+      ]
+    },
+    {
+      title: "Testing Databricks code — unit, integration & Databricks Connect",
+      badge: "advanced",
+      conceptLabel: "Concept:",
+      concept: "Testable Databricks code means factoring transformation logic into pure functions in Python modules/wheels (not buried in notebook cells), so you can unit-test them with pytest — often against a local Spark session or with chispa for DataFrame equality — in CI, off-cluster. Databricks Connect lets you run code from your IDE/CI against a real Databricks cluster for integration tests that need actual Delta/UC behavior. The layering mirrors any pipeline: many fast unit tests on pure transforms, a few integration tests on the real platform, and DLT expectations as runtime data-quality gates. The anti-pattern is 'test by running the notebook and eyeballing output'.",
+      code: "# transform lives in a module, imported by both the job and the test\ndef dedup_latest(df):\n    from pyspark.sql import Window, functions as F\n    w = Window.partitionBy(\"claim_id\").orderBy(F.col(\"updated_at\").desc())\n    return df.withColumn(\"rn\", F.row_number().over(w)).filter(\"rn = 1\").drop(\"rn\")\n\n# test_transforms.py (pytest, runs in CI)\ndef test_dedup_keeps_latest(spark):\n    src = spark.createDataFrame([(\"A\",1,\"old\"),(\"A\",2,\"new\")], \"claim_id string, updated_at int, v string\")\n    assert [r.v for r in dedup_latest(src).collect()] == [\"new\"]",
+      noteLabel: "Model answer:",
+      note: "\"I make logic testable by keeping transforms as pure functions in importable modules, not notebook cells — then pytest unit-tests them in CI against a local Spark session, using chispa for DataFrame equality, all off-cluster and fast. For the parts that need real platform behavior — Delta MERGE semantics, Unity Catalog permissions — I use Databricks Connect to run integration tests from CI against an actual cluster. Then DLT expectations are the runtime data-quality layer on top. So it's the same three tiers as any pipeline: lots of fast unit tests, a few integration tests on the real thing, and data-quality gates in production — never 'run the notebook and look at it'.\"",
+      followups: [
+        { q: "How do you unit-test transformation logic that normally runs in a notebook?", a: "Move the logic into a pure function in a Python module the notebook/job imports, then pytest it against a local SparkSession (asserting with chispa or by collecting rows). The notebook becomes a thin caller, and the logic is tested in CI without a cluster." },
+        { q: "What does Databricks Connect give you that a local Spark session can't?", a: "Execution against a real Databricks cluster from your IDE/CI — so integration tests exercise actual Delta, Unity Catalog, Photon, and workspace behavior that a local Spark session can't reproduce." },
+        { q: "Where do DLT expectations fit relative to pytest?", a: "They're complementary: pytest catches code bugs at deploy time; expectations catch bad data at runtime on every load. Code tests test your logic, expectations test the world's data." }
+      ]
+    },
+    {
+      title: "Environments, promotion & Terraform",
+      badge: "advanced",
+      conceptLabel: "Concept:",
+      concept: "Two layers of infrastructure-as-code. Asset Bundles deploy the DATA project (jobs, pipelines, notebooks). The Databricks TERRAFORM PROVIDER manages the PLATFORM: workspaces, Unity Catalog metastores/catalogs/schemas, permissions/grants, clusters/policies, secret scopes — the governed foundation that rarely changes. Promotion flow: code lands via PR → CI runs tests → merge deploys the bundle to staging → after validation, promote to prod (a tagged release or manual approval gate). Environments are isolated by UC catalog (dev/staging/prod) and separate workspaces, so a dev job can't touch prod data. The senior signal is separating slow-moving platform IaC (Terraform) from fast-moving pipeline deploys (bundles).",
+      noteLabel: "Model answer:",
+      note: "\"I split IaC in two. Terraform's Databricks provider manages the platform foundation — workspaces, Unity Catalog catalogs/schemas, grants, cluster policies, secret scopes — the slow-moving governed layer. Asset Bundles deploy the fast-moving data project on top. Promotion is Git-driven: PR triggers CI tests, merge deploys the bundle to staging, and prod is gated behind validation or an approval. Environments are isolated by UC catalog and separate workspaces so dev compute physically can't read prod PHI. Keeping platform-as-Terraform separate from pipeline-as-bundle is what stops a routine pipeline change from accidentally re-provisioning governance.\"",
+      followups: [
+        { q: "What do you manage with Terraform vs with Asset Bundles?", a: "Terraform for the platform/governance foundation (workspaces, UC metastore/catalogs, grants, cluster policies, secret scopes) that changes rarely; bundles for the data project (jobs, DLT pipelines, notebooks) that changes constantly. Different cadence, different tool." },
+        { q: "How do you isolate dev from prod so a dev job can't read prod PHI?", a: "Separate Unity Catalog catalogs per environment (and often separate workspaces), with grants scoped per catalog. Dev compute has no permission on the prod catalog, so it physically can't read prod data even by mistake." },
+        { q: "Describe a safe promotion path from a code change to prod.", a: "PR → CI runs unit/integration tests → merge deploys the bundle to staging → validate against staging data → promote to prod via a tagged release or manual approval gate, deploying the same bundle with the prod target. No manual edits in the prod workspace." }
+      ]
+    },
+    {
+      title: "The automation surface — CLI, Jobs REST API & Git folders",
+      badge: "intermediate",
+      conceptLabel: "Concept:",
+      concept: "Underneath bundles sits an automation surface worth knowing: the Databricks CLI (drives bundles, jobs, secrets, fs from scripts/CI); the REST API (Jobs, Clusters, Repos, SQL) for programmatic control and for external orchestrators — Airflow's Databricks operator calls the Jobs API under the hood; and Git folders (Repos) that connect the workspace to your Git provider so notebooks are versioned and pulled by CI, not authored loose. Together they're why everything on Databricks can be scripted and put under source control — the foundation the higher-level tools (bundles, Terraform) build on.",
+      noteLabel: "Model answer:",
+      note: "\"Everything on Databricks is scriptable, which is what makes real CI/CD possible. The CLI drives bundles, jobs, secrets, and files from CI. The REST API gives programmatic control of jobs, clusters, and repos — it's also what external orchestrators use, since Airflow's Databricks operator just calls the Jobs API. Git folders connect the workspace to the repo so notebooks are versioned and CI pulls a known commit rather than someone's edited copy. I rarely call these raw day to day — bundles and Terraform sit on top — but knowing the surface is why I can automate anything and why nothing needs to be done by hand in the UI.\"",
+      followups: [
+        { q: "How does Airflow actually trigger a Databricks job?", a: "Through the Databricks operator, which calls the Jobs REST API to submit/run a job and poll its status — so Airflow orchestrates cross-system while Databricks does the compute." },
+        { q: "Why use Git folders/Repos instead of importing notebooks into the workspace?", a: "They bind the workspace to a Git provider, so notebooks are version-controlled with branches/PRs and CI can check out a specific commit — reproducible and reviewable, versus loose notebooks that drift and can't be diffed." },
+        { q: "When would you call the REST API directly rather than use a bundle?", a: "For dynamic, runtime operations a static bundle can't express — programmatically launching parameterized runs, integrating Databricks into a custom control plane, or one-off automation — where you need imperative control, not declarative deployment." }
+      ]
+    }
+  ]
+},
+
+mlai: {
+  intro: {
+    title: "ML & AI on Databricks — and the DE's day-to-day role in it",
+    desc: "Databricks is now as much an ML/AI platform (MLflow, Feature Store, Model Serving, Mosaic AI / GenAI, Vector Search, AI-in-SQL, Genie) as a data platform. You won't be asked to train models as a DE — you'll be asked how you FEED and PRODUCTIONIZE them. Each card covers the capability plus exactly what you own as the data engineer, so you can answer any ML/AI-adjacent question."
+  },
+  cards: [
+    {
+      title: "MLflow — experiment tracking & the model lifecycle",
+      badge: "intermediate",
+      conceptLabel: "Concept:",
+      concept: "MLflow is the open-source ML lifecycle tool baked into Databricks: TRACKING logs experiments (params, metrics, artifacts) so runs are reproducible; the MODEL REGISTRY (now in Unity Catalog) versions models and moves them through stages/aliases (e.g. @champion, @challenger) with governance and lineage like any UC asset; MLflow packaging standardizes how a model is saved and loaded. As a DE you rarely train, but you consume the registry: your batch/streaming pipeline loads a registered model by name+alias to score data, and you want the reproducibility and versioning MLflow gives so a model swap is controlled, not a copy-pasted pickle file.",
+      code: "import mlflow\n# DE side: load a governed, versioned model from the UC registry and score a batch\nmodel = mlflow.pyfunc.load_model(\"models:/main.ml.fraud_scorer@champion\")\nscored = batch_df.withColumn(\"risk_score\", model(*feature_cols))",
+      noteLabel: "Model answer:",
+      note: "\"MLflow is the ML lifecycle layer: tracking for reproducible experiments, and a model registry — now in Unity Catalog — that versions models and promotes them via aliases like @champion with full lineage and access control, same as any governed asset. As a DE I'm on the consuming end: my scoring pipeline loads a model by name and alias from the registry rather than a loose pickle, so upgrading the model is flipping the alias, not editing my pipeline. That gives me reproducibility, rollback, and governance on the model exactly like I have on the data — which is the answer to 'how do models get into your pipeline safely'.\"",
+      followups: [
+        { q: "As a DE, do you train models? What's your actual MLflow touchpoint?", a: "Rarely training. My touchpoint is the registry: I load registered, versioned models by name+alias to score data in batch/streaming pipelines, and I care that promotion is governed so a model change doesn't silently alter my pipeline's output." },
+        { q: "Why load a model by alias (@champion) instead of a specific version number?", a: "Indirection: the pipeline references @champion and the ML team repoints that alias to a new version after validation. The pipeline code doesn't change, promotion/rollback is a controlled registry action, and you avoid hardcoded version drift." },
+        { q: "What does the registry being in Unity Catalog give you?", a: "Models get the same governance as tables — grants, lineage, and audit — so you can see which data trained a model and which pipelines consume it, and control who can promote to production." }
+      ]
+    },
+    {
+      title: "Feature engineering & the Feature Store in Unity Catalog",
+      badge: "advanced",
+      conceptLabel: "Concept:",
+      concept: "This is the DE's biggest ML touchpoint. Features are the model's inputs, computed from raw data — and the classic failure is TRAIN/SERVE SKEW: the feature computed in the training pipeline differs from the one computed at inference. Databricks Feature Engineering in Unity Catalog solves it: you publish feature tables (just governed Delta tables keyed by an entity), and both training and inference read the SAME feature definitions — offline for batch training, and an online store for low-latency real-time serving. As a DE you own the feature PIPELINES: the medallion jobs that compute and refresh feature tables reliably, on time, with quality — that's your day-to-day contribution to ML.",
+      code: "from databricks.feature_engineering import FeatureEngineeringClient\nfe = FeatureEngineeringClient()\n# DE owns this: compute + publish a governed feature table (a Delta table under UC)\nfe.create_table(name=\"main.ml.provider_features\", primary_keys=[\"provider_id\"],\n                df=provider_agg_df, description=\"Rolling 30d claim stats per provider\")\n# Training & inference both look features up here -> no train/serve skew",
+      noteLabel: "Model answer:",
+      note: "\"Features are where I add the most ML value as a DE. The risk is train/serve skew — the feature computed at training time not matching what's computed at inference. Databricks Feature Engineering in Unity Catalog fixes that: I publish feature tables as governed Delta tables keyed by an entity, and both the training job and the serving path read the same definitions — offline for batch, an online store for real-time lookups. What I own is the feature pipelines: the medallion jobs that compute rolling aggregates — say 30-day claim stats per provider — refreshed on schedule with expectations for quality and freshness. So my answer to 'what's your role in ML' is: I build and operate the reliable, governed feature pipelines the models depend on.\"",
+      followups: [
+        { q: "What is train/serve skew and how does a feature store prevent it?", a: "It's when the feature value used to train differs from the one at inference (different code/timing), silently degrading the model. A feature store gives one governed definition both paths read, so training and serving use identical features." },
+        { q: "As a DE, what part of the ML feature workflow do you own?", a: "The feature pipelines — the jobs that compute and refresh feature tables from raw/silver data on schedule, with quality and freshness checks. Data scientists define what features they want; you make them reliable, timely, and governed." },
+        { q: "Why do you need an online store in addition to the offline feature table?", a: "Batch training reads the offline Delta table, but real-time inference needs millisecond lookups per request — the online store serves the same features at low latency, keeping real-time scoring consistent with training." }
+      ]
+    },
+    {
+      title: "Model serving & inference in your pipelines",
+      badge: "intermediate",
+      conceptLabel: "Concept:",
+      concept: "Models produce value three ways, and the DE wires all three. BATCH inference: a scheduled job loads a registered model and scores a table (fraud scores on last night's transactions) — pure data-pipeline work. STREAMING inference: score records as they flow through a Structured Streaming pipeline. REAL-TIME: Databricks Model Serving exposes a model behind a low-latency REST endpoint (serverless, autoscaling) for apps that need per-request scoring, backed by the online feature store. The DE's day-to-day is mostly batch/streaming scoring inside medallion pipelines, plus supplying the online features that real-time endpoints depend on.",
+      noteLabel: "Model answer:",
+      note: "\"Three inference modes and I build the data path for each. Batch is the common one — a scheduled job loads the registered model and scores a Delta table, e.g. risk scores on the overnight transaction batch; that's just a pipeline step. Streaming scores records inline in a Structured Streaming job for near-real-time. Real-time uses Model Serving — a serverless autoscaling REST endpoint the application calls per request, fed by the online feature store. My day-to-day is overwhelmingly the batch and streaming scoring inside medallion pipelines, plus keeping the online features fresh so the real-time endpoint stays consistent with training. I don't build the model; I build everything that gets data to and from it.\"",
+      followups: [
+        { q: "Fraud scores on last night's transactions — batch, streaming, or real-time serving?", a: "Batch: a scheduled job loads the model and scores the overnight table. No endpoint needed — it's a data-pipeline step writing scores to a Delta table for downstream use." },
+        { q: "When do you actually need a real-time Model Serving endpoint?", a: "When an application must score per request with low latency — e.g. approve/deny a transaction at swipe time. Batch/streaming can't meet per-request latency, so you expose the model as a serving endpoint backed by online features." },
+        { q: "What does the DE supply for a real-time endpoint to work correctly?", a: "The online feature store data — fresh, low-latency feature lookups that match training features — plus the pipelines that keep them updated. If features go stale, the endpoint scores on bad inputs even though the model is fine." }
+      ]
+    },
+    {
+      title: "Mosaic AI & GenAI — Vector Search, RAG & foundation models",
+      badge: "advanced",
+      conceptLabel: "Concept:",
+      concept: "Databricks' GenAI stack (Mosaic AI): Foundation Model APIs give pay-per-token access to LLMs (and hosting of open models) inside the platform; VECTOR SEARCH is a managed vector database that indexes embeddings of your text for semantic retrieval; together they enable RAG (Retrieval-Augmented Generation) — answer questions grounded in your own documents. The DE owns the RAG DATA PIPELINE: ingest documents, chunk them, generate embeddings, and load them into a Vector Search index kept in sync as source docs change (often via Delta + a sync job). It's a new kind of ETL — 'document → chunk → embed → index' — but it's fundamentally a data pipeline, which is why it lands on the DE.",
+      code: "# DE-owned RAG prep: chunk + embed clinical docs into a Vector Search index\nfrom databricks.vector_search.client import VectorSearchClient\n# 1) chunk docs -> Delta table  2) index it (embeddings computed by an endpoint)\nVectorSearchClient().create_delta_sync_index(\n  endpoint_name=\"vs\", index_name=\"main.ml.policy_docs_idx\",\n  source_table_name=\"main.silver.policy_chunks\",   # Delta table of chunks\n  pipeline_type=\"TRIGGERED\", primary_key=\"chunk_id\",\n  embedding_source_column=\"text\", embedding_model_endpoint_name=\"bge-large\")",
+      noteLabel: "Model answer:",
+      note: "\"The GenAI stack is Foundation Model APIs for LLM access, Vector Search as a managed vector index, and RAG to ground an LLM in our own data. My role as a DE is the RAG data pipeline, which is really just a new ETL shape: ingest the documents, chunk them sensibly, generate embeddings, and load them into a Vector Search index that stays in sync as source docs change — Databricks can do that as a Delta-sync index off a chunks table I maintain. So when a team wants a chatbot over our claims policies, I don't build the model — I build and keep fresh the chunk-and-embed pipeline and the index behind it, with the same reliability and governance discipline as any pipeline. 'Document → chunk → embed → index' is ETL, so it's mine.\"",
+      followups: [
+        { q: "A team wants an LLM chatbot over internal claims policies. What do you, the DE, build?", a: "The RAG data pipeline: ingest the policy docs, chunk them, embed the chunks, and load them into a Vector Search index that re-syncs when docs change. You own retrieval-data freshness and governance; the ML/app team wires the LLM and prompt." },
+        { q: "Why is RAG prep considered data engineering rather than ML?", a: "It's an ETL pipeline — extract documents, transform (chunk + embed), load into an index — with the usual concerns: incremental sync, freshness, quality, and governance. The embedding model is a called service; the pipeline around it is standard DE work." },
+        { q: "How do you keep the vector index fresh as source documents change?", a: "Maintain the chunks as a Delta table and use a Delta-sync Vector Search index (triggered or continuous) so inserts/updates to the chunk table propagate to the index — the same CDC/incremental thinking as any Delta pipeline." }
+      ]
+    },
+    {
+      title: "AI functions in SQL — ai_query, ai_classify, ai_gen",
+      badge: "intermediate",
+      conceptLabel: "Concept:",
+      concept: "Databricks exposes LLMs as SQL functions so analysts and DEs can apply AI inside a query — ai_query() to call a served/foundation model, plus task functions like ai_classify(), ai_extract(), ai_gen(), ai_summarize(), ai_translate(). This means bulk AI transformations become a SQL/pipeline step: classify support tickets, extract fields from free-text claim notes, summarize documents — over millions of rows, governed and scalable. As a DE you use these to build enrichment pipelines (turn unstructured text into structured columns) without standing up a separate ML service — it's LLM inference as a set-based transform.",
+      code: "-- Enrich free-text claim notes into structured columns, in a pipeline step\nSELECT claim_id, note,\n       ai_classify(note, ARRAY('billing', 'clinical', 'eligibility')) AS category,\n       ai_extract(note, ARRAY('denial_reason', 'cpt_code'))          AS extracted\nFROM   main.silver.claim_notes;",
+      noteLabel: "Model answer:",
+      note: "\"AI functions put LLM inference into SQL — ai_query for a general model call, and task functions like ai_classify, ai_extract, ai_summarize. For me that turns AI into a set-based transform in a pipeline: I can take free-text claim notes and, in one SQL step over millions of rows, classify them and extract denial reasons or CPT codes into structured columns — governed by Unity Catalog, no separate ML service to operate. It's the pragmatic way to add AI enrichment to a bronze→silver step. I'd flag cost and rate limits on large volumes, but for structuring unstructured text at scale it's exactly the DE's tool.\"",
+      followups: [
+        { q: "You need to extract denial reasons from millions of free-text claim notes. Approach?", a: "ai_extract() (or ai_query with a prompt) as a SQL transform in the silver step, writing structured columns back to a Delta table. It's set-based LLM inference over the whole table — no separate service — governed by UC." },
+        { q: "What are the practical concerns using AI functions at scale?", a: "Cost per token and rate/throughput limits on large volumes, plus non-determinism — so you batch sensibly, monitor spend, and validate outputs (and often cache/store results in Delta so you don't re-infer unchanged rows)." },
+        { q: "Why is this attractive versus a standalone ML inference service?", a: "No separate service to build or operate — it runs inside the SQL/pipeline you already have, governed by Unity Catalog, and scales as a normal query. For text enrichment it collapses an ML deployment into a transform." }
+      ]
+    },
+    {
+      title: "Genie / AI-BI — natural-language analytics",
+      badge: "intermediate",
+      conceptLabel: "Concept:",
+      concept: "AI/BI Genie lets business users ask questions of their data in natural language and get SQL-generated answers over Databricks tables — a 'chat with your data' layer on the Lakehouse. It's a consumption tool, not something the DE operates directly, but its quality depends entirely on DE work: well-modeled, well-named gold tables, good column comments/metadata, and curated 'Genie spaces' with example queries and definitions. The DE relevance: garbage or ambiguous models produce wrong NL answers, so clean semantics and metadata in the gold layer are what make AI-BI trustworthy. It's another reason gold-layer modeling and documentation matter.",
+      noteLabel: "Model answer:",
+      note: "\"Genie is AI-BI — business users ask questions in plain language and it generates SQL over our tables. I don't operate it, but its accuracy is downstream of my work: it reasons over the gold layer, so if my tables are well-modeled, clearly named, and have good column comments and defined metrics in a curated Genie space, it answers correctly; if the model is ambiguous or poorly named, it confidently answers wrong. So the DE relevance is that clean semantics and documentation in gold aren't just nice-to-have — they're what makes natural-language analytics trustworthy. It raises the bar on modeling and metadata rather than replacing it.\"",
+      followups: [
+        { q: "Genie gives users wrong answers. As the DE, where do you look?", a: "The gold model and its metadata: ambiguous/duplicated column names, missing comments, undefined metrics, or a grain that's easy to misread. Improve naming, add column descriptions, and curate a Genie space with example queries and metric definitions." },
+        { q: "Does AI-BI reduce the need for good data modeling?", a: "The opposite — it raises it. NL-to-SQL is only as good as the semantics it reasons over, so clear naming, comments, and well-defined gold tables become more important, not less." },
+        { q: "What's the DE's contribution to making Genie reliable?", a: "Clean, well-named, documented gold tables; defined metrics; and curated Genie spaces with sample questions and business definitions so the model has unambiguous semantics to translate against." }
+      ]
+    },
+    {
+      title: "The DE's role across ML/AI — what you actually own",
+      badge: "advanced",
+      conceptLabel: "The synthesis:",
+      concept: "Across all of the above, the through-line is that a DE doesn't build models — the DE builds and operates the DATA around them. Concretely you own: feature pipelines (compute/refresh governed feature tables, kill train/serve skew), the data path for inference (batch/streaming scoring steps, fresh online features for real-time), RAG data pipelines (chunk/embed/index and keep it synced), AI-enrichment transforms (AI functions turning text into structure), and the governance/lineage of ML assets in Unity Catalog (models, features, and their source data all governed and auditable). ML/AI on Databricks is mostly reliable, governed, timely data — which is the DE job.",
+      noteLabel: "Model answer:",
+      note: "\"My one-line answer to 'what's your role in ML/AI as a DE': I don't train models, I build and operate everything the models depend on — and on Databricks that's a lot of the value. Feature pipelines that produce governed, skew-free feature tables. The inference data path: batch and streaming scoring steps, and fresh online features when there's a real-time endpoint. RAG pipelines that chunk, embed, and keep a Vector Search index in sync. AI-function enrichment that structures unstructured text at scale. And governance — models, features, and their lineage all live in Unity Catalog, so I can prove what data trained a model and what consumes it. ML/AI success comes down to reliable, timely, governed data, and that's exactly what I own.\"",
+      followups: [
+        { q: "Summarize a DE's ML/AI responsibilities in one sentence.", a: "Build and operate the data around models — feature pipelines, inference data paths, RAG indexes, AI-enrichment transforms — all reliable, timely, and governed in Unity Catalog; the data scientists build the models." },
+        { q: "An interviewer asks 'you're a DE, why should you know ML/AI on Databricks?'", a: "Because on Databricks ML/AI runs on the same platform and its outcomes depend on data engineering — feature freshness, no train/serve skew, RAG index sync, governed lineage. The model is a small piece; the reliable data pipeline around it is the DE's job and the usual point of failure." },
+        { q: "Which ML/AI area is the single biggest DE contribution?", a: "Feature engineering pipelines — computing and refreshing governed feature tables with quality/freshness guarantees and preventing train/serve skew. It's the highest-leverage, most DE-owned part of the ML lifecycle." }
       ]
     }
   ]
@@ -815,6 +1024,56 @@ const QUIZ = [
       "Reading only the row-level changes from an upstream Delta table so downstream layers update incrementally instead of full recompute",
       "Encrypting PHI at rest",
       "Converting Parquet to CSV"
+    ],
+    correct: 1
+  },
+  {
+    q: "What is the current standard way to package and deploy a Databricks project (jobs, DLT pipelines, config) across dev/staging/prod?",
+    options: [
+      "Manually import notebooks and click 'Create Job' in each workspace",
+      "Databricks Asset Bundles (databricks.yml with per-target overrides), deployed from CI",
+      "Email a .dbc archive to each environment owner",
+      "Copy-paste cells between workspaces"
+    ],
+    correct: 1
+  },
+  {
+    q: "In DLT, what's the declarative way to apply CDC changes and maintain SCD Type 2 history?",
+    options: [
+      "Write a foreachBatch MERGE by hand for every table",
+      "APPLY CHANGES INTO with keys, sequence_by, and stored_as_scd_type = 2",
+      "TRUNCATE and reload each run",
+      "Use a crawler"
+    ],
+    correct: 1
+  },
+  {
+    q: "A model scores worse in production than in training even though the model is unchanged. Most likely data-engineering cause?",
+    options: [
+      "The cluster is too small",
+      "Train/serve skew — features computed differently at inference than at training; a feature store with one shared definition prevents it",
+      "Photon is disabled",
+      "The model needs more epochs"
+    ],
+    correct: 1
+  },
+  {
+    q: "A team wants an LLM chatbot over internal policy documents. What does the DE own?",
+    options: [
+      "Training the LLM from scratch",
+      "The RAG data pipeline — ingest, chunk, embed, and keep a Vector Search index in sync as docs change",
+      "Writing the chatbot UI",
+      "Nothing; it's entirely the ML team's job"
+    ],
+    correct: 1
+  },
+  {
+    q: "You must extract structured fields (denial reason, CPT code) from millions of free-text claim notes inside a pipeline. Idiomatic Databricks approach?",
+    options: [
+      "Stand up a separate microservice and call it row by row",
+      "Use AI functions in SQL (ai_extract / ai_query) as a set-based transform in the silver step, governed by Unity Catalog",
+      "Export to CSV and process on a laptop",
+      "Manually label them"
     ],
     correct: 1
   }
