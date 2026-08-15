@@ -18,9 +18,9 @@ overview: {
       noteLabel: "Model answer:",
       note: "\"The Lakehouse is the lake and the warehouse merged into one tier. Traditionally you had a data lake for cheap, flexible storage and a separate warehouse for fast governed SQL, with ETL copying data between them — so you paid twice, kept two copies, and reconciled two governance models. Databricks puts ACID, schema enforcement, governance, and warehouse-grade performance directly on open Delta tables in object storage, so one copy serves ML, streaming, and BI under one governance model via Unity Catalog. That's the pitch: no extract-and-duplicate, no drift between lake and warehouse.\"",
       followups: [
-        "\"What specifically did the lake lack that forced teams to also run a warehouse?\"",
-        "\"If the Lakehouse is so good, why do companies still run Snowflake alongside it?\"",
-        "\"What makes Delta a 'lakehouse' table and plain Parquet not?\""
+        { q: "\"What specifically did the lake lack that forced teams to also run a warehouse?\"", a: "ACID transactions, schema enforcement, and warehouse-grade governed SQL performance. A plain lake was cheap and flexible but couldn't give consistent reads or quality guarantees, so teams bolted on a warehouse for those." },
+        { q: "\"If the Lakehouse is so good, why do companies still run Snowflake alongside it?\"", a: "For predominantly SQL/BI workloads with near-zero admin, a warehouse can be simpler and cheaper to operate; the convergence is recent and existing investment plus inertia keep both around." },
+        { q: "\"What makes Delta a 'lakehouse' table and plain Parquet not?\"", a: "The _delta_log transaction log adds ACID commits, schema enforcement, time travel, and data skipping on top of the Parquet files, giving warehouse guarantees on open storage that raw Parquet lacks." }
       ]
     },
     {
@@ -31,9 +31,9 @@ overview: {
       noteLabel: "Model answer:",
       note: "\"Two planes. The control plane is Databricks-managed — UI, job scheduler, cluster manager, notebook metadata. The data plane runs in my own cloud account: the clusters that crunch data and the object storage holding it. So the data stays in my VPC and my S3/ADLS; Databricks just orchestrates compute that runs beside it. That's the answer to 'where does our PHI live?' — it stays in our account's storage, processed by clusters in our account, which matters for HIPAA. Serverless flips the compute into Databricks' account for faster spin-up, which is a compliance conversation of its own.\"",
       followups: [
-        "\"A security reviewer asks where your PHI physically resides on Databricks. What do you tell them?\"",
-        "\"What's the trade-off of serverless compute vs classic compute in your account?\"",
-        "\"Which plane does the cluster that runs your Spark job live in?\""
+        { q: "\"A security reviewer asks where your PHI physically resides on Databricks. What do you tell them?\"", a: "With classic compute it stays in your own cloud account — your S3/ADLS storage and clusters in your VPC. Databricks' control plane only orchestrates, so the data never leaves your account, which is the HIPAA answer." },
+        { q: "\"What's the trade-off of serverless compute vs classic compute in your account?\"", a: "Serverless runs the compute in Databricks' account for faster startup and no cluster management, but moves it out of your VPC — a data-residency/compliance conversation that classic in-account compute avoids." },
+        { q: "\"Which plane does the cluster that runs your Spark job live in?\"", a: "The data (compute) plane, in your own cloud account with classic compute. The control plane only schedules and manages it." }
       ]
     },
     {
@@ -45,9 +45,9 @@ overview: {
       noteLabel: "Model answer:",
       note: "\"I organize into bronze/silver/gold Delta tables. Bronze is the immutable raw landing — I append exactly what arrived so I can always reprocess. Silver is cleaned, cast, deduped, and conformed — the trustworthy model everything queries. Gold is the business marts and aggregates for BI and ML. Because each layer is a Delta table, every stage is ACID and time-travelable, and I can rebuild silver/gold from bronze after a logic fix. At Cedar Gate that meant raw HL7/FHIR claims in bronze, a validated claims model in silver, and per-provider/per-payer gold marts for reporting.\"",
       followups: [
-        "\"Why keep bronze at all once silver exists — isn't it wasted storage?\"",
-        "\"A bug in your silver logic shipped bad data for a week. How does medallion let you recover?\"",
-        "\"Where do data-quality checks belong in this flow?\""
+        { q: "\"Why keep bronze at all once silver exists — isn't it wasted storage?\"", a: "Bronze is the immutable, full-fidelity raw record, so silver/gold can be reprocessed from scratch after a logic fix or schema change. Object storage is cheap; losing the ability to rebuild is expensive." },
+        { q: "\"A bug in your silver logic shipped bad data for a week. How does medallion let you recover?\"", a: "Fix the silver transform and reprocess from the untouched bronze landing, since bronze retains the raw source. Delta time travel / RESTORE on the affected tables also helps roll back." },
+        { q: "\"Where do data-quality checks belong in this flow?\"", a: "At the bronze→silver boundary: silver is the validated, cleaned, conformed model, so quality gates (not-null keys, valid amounts) run as data is promoted into silver before anything trusts it." }
       ]
     },
     {
@@ -58,9 +58,9 @@ overview: {
       noteLabel: "Model answer:",
       note: "\"Databricks wins when I need one engine across batch, streaming, ML, and BI, with real code not just SQL, on big or semi-structured data, in an open format. It's overkill when the job is pure SQL BI on clean structured data — a warehouse is simpler there — or when the data's small enough that spinning a cluster costs more than it's worth, where a single-node script is honest. I don't pretend it's universal; the value is the unified lakehouse, so if you don't need the breadth, a narrower tool can be cheaper to run.\"",
       followups: [
-        "\"A team does only SQL dashboards on 50GB of clean data. Databricks or Snowflake — argue it.\"",
-        "\"When is spinning up a Spark cluster the wrong call entirely?\"",
-        "\"What does 'open format' actually protect you from?\""
+        { q: "\"A team does only SQL dashboards on 50GB of clean data. Databricks or Snowflake — argue it.\"", a: "Snowflake (or any warehouse): pure SQL/BI on small, clean, structured data needs no Spark/ML/streaming, so a warehouse is simpler and cheaper to operate. Databricks' unified breadth is wasted here." },
+        { q: "\"When is spinning up a Spark cluster the wrong call entirely?\"", a: "When the data is small enough that a single-node script/pandas finishes before a cluster even starts — the cluster overhead costs more than it saves." },
+        { q: "\"What does 'open format' actually protect you from?\"", a: "Vendor lock-in: data stays in open Delta/Parquet on your own object storage, so other engines can read it and you're not trapped in a proprietary managed format." }
       ]
     }
   ]
@@ -80,9 +80,9 @@ workspace: {
       noteLabel: "Model answer:",
       note: "\"Three types. All-purpose for interactive dev — shared, persistent, higher DBU rate. Job clusters for production: spun up per job run and torn down after, billed at the cheaper job rate and isolated so one job can't destabilize another. SQL Warehouses for BI/SQL concurrency. The cost mistake I watch for is production jobs pinned to an always-on all-purpose cluster — you pay the interactive rate 24/7 for work that should run on an ephemeral job cluster. So dev on all-purpose, schedule on job clusters, serve BI from a SQL Warehouse.\"",
       followups: [
-        "\"A team runs all nightly jobs on one shared always-on cluster. What's wrong and what do you change?\"",
-        "\"Why is a job cluster cheaper than an all-purpose cluster for the same work?\"",
-        "\"When would you use a serverless SQL Warehouse over a pro one?\""
+        { q: "\"A team runs all nightly jobs on one shared always-on cluster. What's wrong and what do you change?\"", a: "They pay the interactive all-purpose rate 24/7 for scheduled work, and jobs aren't isolated. Move each production job onto an ephemeral job cluster spun up per run at the cheaper job rate and terminated after." },
+        { q: "\"Why is a job cluster cheaper than an all-purpose cluster for the same work?\"", a: "It's billed at the lower job-compute DBU rate and is ephemeral — created for the run and torn down after — so you don't pay interactive rates or for idle uptime." },
+        { q: "\"When would you use a serverless SQL Warehouse over a pro one?\"", a: "For spiky/interactive BI where you want second-scale startup and fast autoscaling without paying to keep a warehouse warm; pro is chosen when data-residency requires the compute to run in your own account." }
       ]
     },
     {
@@ -93,9 +93,9 @@ workspace: {
       noteLabel: "Model answer:",
       note: "\"Notebooks are great for exploration, but production code is Git-backed via Repos — the pipeline lives in a repo with branches, PRs, and CI running unit tests, not as loose notebooks in a personal workspace folder. I factor shared logic into Python modules/wheels I can import and unit-test off-cluster, and keep notebooks thin. %run works for stitching notebooks but I prefer real imports. That's how I get code review, testing, and reproducible deploys on Databricks instead of click-ops.\"",
       followups: [
-        "\"How do you unit-test transformation logic that runs in a Databricks notebook?\"",
-        "\"Why factor logic into modules/wheels instead of big notebooks?\"",
-        "\"How does a notebook pipeline get from a dev branch to production safely?\""
+        { q: "\"How do you unit-test transformation logic that runs in a Databricks notebook?\"", a: "Factor the logic into pure functions in an importable module/wheel and pytest them off-cluster against a local Spark session (e.g. chispa for DataFrame equality); the notebook stays a thin caller." },
+        { q: "\"Why factor logic into modules/wheels instead of big notebooks?\"", a: "Modules are importable, unit-testable in CI off-cluster, reusable, and code-reviewable — versus logic buried in notebook cells that can only be run and eyeballed." },
+        { q: "\"How does a notebook pipeline get from a dev branch to production safely?\"", a: "It's Git-backed via Repos with branches and PRs, CI runs unit tests, and it's promoted through environments rather than edited live — code review and reproducible deploys instead of click-ops." }
       ]
     },
     {
@@ -107,9 +107,9 @@ workspace: {
       noteLabel: "Model answer:",
       note: "\"DBFS abstracts object storage. The modern, governed way to reach files is Unity Catalog Volumes rather than legacy /mnt mounts — Volumes are access-controlled and audited. dbutils is the toolbelt: dbutils.secrets to pull credentials from a secret scope so nothing's hardcoded, dbutils.widgets to parameterize a notebook so a job passes run dates or paths, dbutils.fs for file ops. The two things I'd flag as current practice: Volumes over mounts, and secrets over inline keys — both are governance/security expectations at a senior level.\"",
       followups: [
-        "\"Why are Unity Catalog Volumes preferred over the old /mnt mount pattern?\"",
-        "\"How do you pass a run date into a notebook from a scheduled job?\"",
-        "\"Where do API keys and DB passwords live so they're not in the notebook?\""
+        { q: "\"Why are Unity Catalog Volumes preferred over the old /mnt mount pattern?\"", a: "Volumes are governed, access-controlled, audited UC objects, whereas /mnt mounts are ad-hoc and ungoverned — Volumes bring file access under the same permission model as tables." },
+        { q: "\"How do you pass a run date into a notebook from a scheduled job?\"", a: "dbutils.widgets: define a widget in the notebook and the job passes the value in, so the same notebook is parameterized per run (e.g. ingest_date)." },
+        { q: "\"Where do API keys and DB passwords live so they're not in the notebook?\"", a: "In a secret scope, pulled at runtime via dbutils.secrets.get — never hardcoded inline." }
       ]
     }
   ]
@@ -129,9 +129,9 @@ spark: {
       noteLabel: "Model answer:",
       note: "\"Transformations are lazy — they just extend the query plan; only an action (write, count, collect, show) triggers execution, at which point Catalyst optimizes the whole plan at once. Two practical consequences: I don't sprinkle count()/display() through a pipeline because each is a full action that re-executes upstream work, and if I reuse an expensive intermediate DataFrame across multiple actions I cache/persist it or the lineage recomputes every time. Lazy evaluation is also why Spark can push filters down and prune columns across a long chain — it sees the whole plan before running anything.\"",
       followups: [
-        "\"You added a count() to 'check progress' mid-pipeline and it got slower. Why?\"",
-        "\"An intermediate DataFrame feeds three different writes and recomputes each time. Fix?\"",
-        "\"Name three actions and three transformations.\""
+        { q: "\"You added a count() to 'check progress' mid-pipeline and it got slower. Why?\"", a: "count() is an action, so it forces the entire upstream transformation chain to execute; the pipeline then re-executes that work again at the real write. Each action triggers a full run." },
+        { q: "\"An intermediate DataFrame feeds three different writes and recomputes each time. Fix?\"", a: "cache/persist the intermediate DataFrame so it's computed once and reused, instead of the lineage recomputing it for every action." },
+        { q: "\"Name three actions and three transformations.\"", a: "Actions: write, count, collect (also show/take). Transformations: select, filter, withColumn (also join/groupBy). Transformations are lazy; actions trigger execution." }
       ]
     },
     {
@@ -142,9 +142,9 @@ spark: {
       noteLabel: "Model answer:",
       note: "\"An action becomes a job; Spark cuts the job into stages at each shuffle, and a stage runs as one task per partition in parallel. Narrow transforms — filter, withColumn, map — stay within a partition, no network. Wide transforms — join, groupBy, distinct — shuffle data across the cluster by key and start a new stage, and that's where the cost is. So when a job's slow I open the Spark UI, find the stage burning the time, and ask: is it a huge shuffle I can avoid or broadcast away, or is it skew where a few tasks run 10x longer than the rest? The shuffle boundary is where I look first.\"",
       followups: [
-        "\"Which of these shuffle: filter, join, withColumn, groupBy, select?\"",
-        "\"Two tasks in a stage run 10x longer than the other 200. Diagnosis?\"",
-        "\"Why does reducing shuffles usually matter more than adding CPU?\""
+        { q: "\"Which of these shuffle: filter, join, withColumn, groupBy, select?\"", a: "join and groupBy shuffle — wide transforms redistributing data by key across the network; filter, withColumn, and select are narrow and stay within a partition." },
+        { q: "\"Two tasks in a stage run 10x longer than the other 200. Diagnosis?\"", a: "Data skew — a few keys hold disproportionate data, so their partitions/tasks take far longer. Fix with AQE skew join or by salting the hot key." },
+        { q: "\"Why does reducing shuffles usually matter more than adding CPU?\"", a: "A shuffle moves data across the network by key and creates a new stage, and that I/O and serialization is usually the bottleneck — so removing a shuffle (e.g. broadcast) helps more than CPU that sits idle waiting on the network." }
       ]
     },
     {
@@ -155,9 +155,9 @@ spark: {
       noteLabel: "Model answer:",
       note: "\"PySpark, SQL, and Scala all lower to the same Catalyst plan, so DataFrame PySpark and SQL perform the same — I choose on readability and the team. SQL for set-based work and analysts, PySpark for complex/tested logic and ML. The performance rule that matters: stay in the DataFrame/SQL API, avoid RDDs (they skip Catalyst) and avoid row-at-a-time Python UDFs (they serialize JVM↔Python and block optimization/pushdown). If I truly need custom logic I reach for a pandas/Arrow-vectorized UDF, but I try native functions first.\"",
       followups: [
-        "\"Is a PySpark DataFrame slower than the equivalent Spark SQL? Why or why not?\"",
-        "\"Why avoid a plain Python UDF, and what's the faster alternative?\"",
-        "\"When would you still drop to the RDD API?\""
+        { q: "\"Is a PySpark DataFrame slower than the equivalent Spark SQL? Why or why not?\"", a: "No — both lower to the same Catalyst-optimized plan, so DataFrame PySpark and SQL perform essentially identically. Choose on readability and team fit." },
+        { q: "\"Why avoid a plain Python UDF, and what's the faster alternative?\"", a: "A row-at-a-time Python UDF serializes data JVM↔Python and is opaque to Catalyst (no pushdown/optimization). Prefer native functions, or a vectorized pandas/Arrow UDF if custom logic is unavoidable." },
+        { q: "\"When would you still drop to the RDD API?\"", a: "Only for low-level control the DataFrame API can't express (custom partitioning, non-tabular data). It bypasses Catalyst optimization, so it's a last resort." }
       ]
     }
   ]
@@ -177,9 +177,9 @@ delta: {
       noteLabel: "Model answer:",
       note: "\"Delta is Parquet plus a transaction log — an ordered set of JSON commits in _delta_log that lists the files each operation adds or removes, with periodic checkpoints. That log is the whole game: readers get a consistent snapshot as of a version, writers commit atomically with optimistic concurrency control, and a crashed job leaves the table clean because its files were never committed to the log. Plain Parquet gives me none of that — a failed append or a concurrent write can expose partial files. The same log also enables time travel, schema enforcement, and Change Data Feed, so it's the foundation for basically every Delta feature.\"",
       followups: [
-        "\"A Spark job writing Parquet dies halfway. What do readers see? Now with Delta?\"",
-        "\"How do two concurrent writers to a Delta table avoid corrupting it?\"",
-        "\"What's actually inside _delta_log?\""
+        { q: "\"A Spark job writing Parquet dies halfway. What do readers see? Now with Delta?\"", a: "With plain Parquet, readers can see partial/half-written files. With Delta, the uncommitted files were never added to _delta_log, so readers still see the last consistent snapshot and the crashed write leaves the table clean." },
+        { q: "\"How do two concurrent writers to a Delta table avoid corrupting it?\"", a: "Optimistic concurrency control on the transaction log: each commits atomically, and a conflicting commit is detected and retried or failed rather than corrupting the table." },
+        { q: "\"What's actually inside _delta_log?\"", a: "An ordered series of JSON commit files listing which data files each atomic operation added/removed, plus schema and per-file stats, with periodic Parquet checkpoints. That log defines each table version." }
       ]
     },
     {
@@ -191,9 +191,9 @@ delta: {
       noteLabel: "Model answer:",
       note: "\"MERGE is Delta's atomic upsert — match target to source on a key, then update/delete/insert in one transaction. It's how I build idempotent CDC sinks and maintain SCD dimensions: because it keys on the business id, replaying a batch updates in place instead of duplicating, so the pipeline is safe to retry — that's the property a blind append can't give me. The cost to respect is that MERGE rewrites whole files touched by matches, so on big tables I constrain the target with a partition predicate (and ZORDER on the merge key) so it rewrites a small slice, not the table. At Cedar Gate this was the pattern for applying claim updates from the source feed.\"",
       followups: [
-        "\"Why is MERGE idempotent where an INSERT append isn't?\"",
-        "\"A MERGE on a 2TB table is rewriting far too much. How do you shrink the blast radius?\"",
-        "\"Map the three CDC operations (I/U/D) to MERGE clauses.\""
+        { q: "\"Why is MERGE idempotent where an INSERT append isn't?\"", a: "MERGE keys on the business id and updates matched rows in place, so replaying a batch updates instead of duplicating. A blind append adds the same rows again on every replay." },
+        { q: "\"A MERGE on a 2TB table is rewriting far too much. How do you shrink the blast radius?\"", a: "Constrain the target with a partition/ZORDER predicate on the merge key so only the relevant files are rewritten — MERGE rewrites entire files containing matched rows, so narrowing the match narrows the rewrite." },
+        { q: "\"Map the three CDC operations (I/U/D) to MERGE clauses.\"", a: "Insert → whenNotMatchedInsert; Update → whenMatchedUpdate; Delete → whenMatchedDelete — all applied atomically in one MERGE keyed on the business id." }
       ]
     },
     {
@@ -205,9 +205,9 @@ delta: {
       noteLabel: "Model answer:",
       note: "\"Every commit is a version, so I can read a table AS OF a version or timestamp — invaluable for reproducing a prior report, debugging what a table looked like before a bad load, auditing, or RESTORE-ing to roll back. VACUUM is the counterweight: it deletes unreferenced files older than the retention window, so time travel only reaches as far back as VACUUM leaves data. I set retention to cover my audit/recovery needs — for regulated claims data that might be longer — and I'm careful that aggressive VACUUM doesn't yank files out from under a running streaming reader or long time-travel query.\"",
       followups: [
-        "\"A bad batch corrupted a table an hour ago. Two ways Delta lets you recover?\"",
-        "\"You set VACUUM retention to 1 hour and a streaming job broke. Why?\"",
-        "\"How far back can you time travel, and what limits it?\""
+        { q: "\"A bad batch corrupted a table an hour ago. Two ways Delta lets you recover?\"", a: "RESTORE the table to the prior version, or read a time-travel snapshot (VERSION/TIMESTAMP AS OF) from before the bad load and rewrite from it — both rely on the versioned log." },
+        { q: "\"You set VACUUM retention to 1 hour and a streaming job broke. Why?\"", a: "VACUUM physically deleted files still referenced by a running reader/time-travel query or the streaming checkpoint, which need older files to remain. Aggressive retention yanks files out from under active readers." },
+        { q: "\"How far back can you time travel, and what limits it?\"", a: "As far back as VACUUM has left the data files — the retention window bounds it. Once VACUUM removes unreferenced older files, those versions can no longer be read." }
       ]
     },
     {
@@ -218,9 +218,9 @@ delta: {
       noteLabel: "Model answer:",
       note: "\"Delta enforces schema on write — a mismatched write fails rather than coercing, so an upstream field rename or type change can't silently poison a table; that's a feature, not an annoyance. When the change is real I evolve deliberately: mergeSchema to add columns on append, ALTER TABLE for explicit changes, and Auto Loader can auto-evolve at the bronze edge where drift is expected. The judgment is where to allow each: I let bronze absorb drift, but silver/gold have enforced schemas because they're contracts downstream depends on — I don't want a surprise column silently reshaping a mart.\"",
       followups: [
-        "\"Upstream renamed a column and your append failed. Is that good or bad? What do you do?\"",
-        "\"Where do you allow schema evolution and where do you enforce strictly? Why?\"",
-        "\"How does this differ from schema-on-read Parquet?\""
+        { q: "\"Upstream renamed a column and your append failed. Is that good or bad? What do you do?\"", a: "Good — schema enforcement rejected the mismatched write instead of silently corrupting the table. Then decide: fix the source mapping, or deliberately evolve the schema (mergeSchema/ALTER TABLE) if the change is intended." },
+        { q: "\"Where do you allow schema evolution and where do you enforce strictly? Why?\"", a: "Allow evolution at the bronze edge where drift is expected (Auto Loader auto-evolve); enforce strictly on silver/gold because they're contracts downstream depends on and a surprise column shouldn't reshape a mart." },
+        { q: "\"How does this differ from schema-on-read Parquet?\"", a: "Delta enforces schema on write and rejects mismatches; schema-on-read Parquet applies a schema only at read time, so bad/mismatched data lands silently and surfaces as corruption later." }
       ]
     },
     {
@@ -232,9 +232,9 @@ delta: {
       noteLabel: "Model answer:",
       note: "\"Streaming and MERGE create small files, so I run OPTIMIZE to bin-pack them into read-sized files, and ZORDER BY the high-cardinality columns queries filter on so data skipping — the file min/max stats in the log — prunes far more files. Increasingly I use liquid clustering instead: I declare CLUSTER BY and Databricks maintains the layout, which sidesteps the classic over- or under-partitioning mistake. The mental model is that data skipping is only as good as the layout, so OPTIMIZE + clustering on the actual query predicates is what gives Delta warehouse-grade scan speed on object storage.\"",
       followups: [
-        "\"A streaming table's queries got slow over time. Most likely cause and fix?\"",
-        "\"What does ZORDER actually change on disk, and how does it speed queries?\"",
-        "\"Why might you choose liquid clustering over Hive-style partitioning + ZORDER?\""
+        { q: "\"A streaming table's queries got slow over time. Most likely cause and fix?\"", a: "The small-files problem from frequent streaming/MERGE writes — per-file overhead kills scans. Run OPTIMIZE to compact them, and ZORDER or liquid-cluster on the columns queries filter on." },
+        { q: "\"What does ZORDER actually change on disk, and how does it speed queries?\"", a: "It co-locates rows with similar values of the chosen high-cardinality columns into the same files, tightening each file's min/max stats so data skipping prunes far more files on a filtered query." },
+        { q: "\"Why might you choose liquid clustering over Hive-style partitioning + ZORDER?\"", a: "Databricks maintains the layout automatically and it sidesteps the over/under-partitioning trap (skew, tiny partitions) of fixed Hive partitioning — you just declare CLUSTER BY." }
       ]
     },
     {
@@ -246,9 +246,9 @@ delta: {
       noteLabel: "Model answer:",
       note: "\"Change Data Feed makes a Delta table emit row-level changes — inserts, pre/post update images, deletes — so a downstream layer reads only what changed since its last version instead of rescanning the whole upstream table. That's how I build incremental medallion pipelines: silver consumes bronze's CDF and MERGEs the changes forward, gold consumes silver's, so each hop touches only deltas. It's also a clean way to feed changes to an external system. The pairing I lean on is CDF upstream + MERGE downstream for efficient, idempotent incremental propagation.\"",
       followups: [
-        "\"How would you make silver update incrementally from bronze instead of full recompute?\"",
-        "\"What change types does CDF emit and why are pre/post images useful?\"",
-        "\"CDF vs just reading the table with a Structured Streaming source — when each?\""
+        { q: "\"How would you make silver update incrementally from bronze instead of full recompute?\"", a: "Enable Change Data Feed on bronze and read only the rows changed since silver's last version, then MERGE them forward — each hop touches only deltas rather than rescanning the whole table." },
+        { q: "\"What change types does CDF emit and why are pre/post images useful?\"", a: "insert, update_preimage, update_postimage, and delete. The pre/post images let a consumer see both the old and new values of an updated row, which is needed for correct downstream merges and aggregations." },
+        { q: "\"CDF vs just reading the table with a Structured Streaming source — when each?\"", a: "A streaming source gives you appended rows; CDF gives full row-level changes including updates (pre/post) and deletes. Use CDF when you must propagate updates/deletes, a plain stream when append-only is enough." }
       ]
     }
   ]
@@ -269,9 +269,9 @@ ingestion: {
       noteLabel: "Model answer:",
       note: "\"Auto Loader incrementally picks up new files from object storage and tracks processed state itself via a checkpoint, so I don't hand-roll a 'diff the directory against what I've loaded' job. At scale I switch it from directory listing to cloud file notifications so it handles millions of files. It infers and evolves schema and rescues bad records at the bronze edge where drift is expected. Exactly-once into Delta falls out of the checkpoint plus Delta's atomic commits. I often run it with trigger availableNow for a batch-style 'process everything new then stop' job, or continuously for low latency.\"",
       followups: [
-        "\"How does Auto Loader know which files it's already processed?\"",
-        "\"Directory listing vs file notifications — when does the difference matter?\"",
-        "\"How do you get exactly-once from files into a bronze Delta table?\""
+        { q: "\"How does Auto Loader know which files it's already processed?\"", a: "It maintains processed-file state itself in its checkpoint, so it only picks up genuinely new files — no hand-rolled directory diffing." },
+        { q: "\"Directory listing vs file notifications — when does the difference matter?\"", a: "At scale: directory listing gets expensive with millions of files, so switch to cloud file-notification queues (cloudFiles.useNotifications) for efficient discovery at high volume." },
+        { q: "\"How do you get exactly-once from files into a bronze Delta table?\"", a: "The Auto Loader checkpoint tracks processed files/offsets and Delta commits atomically, so each file is ingested exactly once even across restarts." }
       ]
     },
     {
@@ -283,9 +283,9 @@ ingestion: {
       noteLabel: "Model answer:",
       note: "\"Structured Streaming is the same DataFrame API over an unbounded input; the engine checkpoints offsets and state, so a restart resumes exactly where it stopped, and with an idempotent Delta sink that's exactly-once. For CDC/Kafka replication I readStream from the topic, parse, and in foreachBatch run a MERGE into silver keyed on the business id — so even a replayed micro-batch can't duplicate. Watermarks bound the state for any windowed logic and expire late data, and I pick the trigger by latency need — a one-minute micro-batch for near-real-time, availableNow when I want batch semantics. That's how I'd frame the Cedar Gate cross-region CDC replication on Databricks.\"",
       followups: [
-        "\"Where does exactly-once actually come from in a Kafka→Delta stream?\"",
-        "\"What's a watermark and what breaks without one in a windowed aggregation?\"",
-        "\"Why run the MERGE inside foreachBatch instead of a plain streaming append?\""
+        { q: "\"Where does exactly-once actually come from in a Kafka→Delta stream?\"", a: "The checkpoint stores Kafka offsets and state so a restart resumes exactly where it stopped, combined with an idempotent Delta sink (a keyed MERGE) so a replayed micro-batch can't double-apply." },
+        { q: "\"What's a watermark and what breaks without one in a windowed aggregation?\"", a: "A watermark declares how late event-time data can arrive, letting the engine finalize windows and evict old state. Without one, windowed state grows unbounded until the job OOMs." },
+        { q: "\"Why run the MERGE inside foreachBatch instead of a plain streaming append?\"", a: "foreachBatch exposes each micro-batch as a DataFrame you can MERGE by business key — giving idempotent upserts (apply updates/deletes, no duplicates on replay); a plain append can only add rows." }
       ]
     },
     {
@@ -310,9 +310,9 @@ ingestion: {
       noteLabel: "Model answer:",
       note: "\"COPY INTO is idempotent SQL batch loading — it remembers the files it already ingested, so a rerun skips them and it's safe to retry without duplicating. I use it for periodic bulk loads and simple SQL-first ingestion. I reach for Auto Loader instead when file volume is high, I want near-real-time or streaming semantics, or I need strong schema evolution and notification-based file discovery. Both give idempotent ingestion into Delta; COPY INTO is the lighter, batch-SQL option and Auto Loader is the scalable streaming one.\"",
       followups: [
-        "\"COPY INTO vs Auto Loader — give me the deciding factors.\"",
-        "\"How does COPY INTO avoid double-loading a file on a retry?\"",
-        "\"When is streaming overkill and a batch COPY INTO the honest choice?\""
+        { q: "\"COPY INTO vs Auto Loader — give me the deciding factors.\"", a: "COPY INTO for straightforward, lower-frequency SQL-driven batch loads; Auto Loader for high file volume, streaming/near-real-time, or robust schema evolution and notification-based discovery. Both are idempotent into Delta." },
+        { q: "\"How does COPY INTO avoid double-loading a file on a retry?\"", a: "It tracks which files it has already ingested, so a rerun skips them — making the load retry-safe without duplicating." },
+        { q: "\"When is streaming overkill and a batch COPY INTO the honest choice?\"", a: "For periodic bulk loads where you don't need continuous processing or low latency — a simple SQL COPY INTO is lighter than standing up checkpointed streaming machinery." }
       ]
     }
   ]
@@ -333,9 +333,9 @@ dlt: {
       noteLabel: "Model answer:",
       note: "\"DLT is declarative pipelines — I define each table as a query over upstream tables and DLT builds the dependency DAG, manages the cluster, decides incremental vs full recompute, and handles retries and monitoring. Streaming tables ingest incrementally; materialized views refresh when inputs change. So instead of hand-wiring task order, checkpoints, and error handling in notebooks, I declare the medallion targets and DLT maintains them. I'd frame the Cedar Gate batch-to-orchestrated migration as exactly this move — from imperative scripts to a declarative, managed pipeline with quality built in.\"",
       followups: [
-        "\"What does DLT manage for you that you'd hand-code in a Workflows-of-notebooks setup?\"",
-        "\"Streaming table vs materialized view in DLT — when each?\"",
-        "\"How does DLT know the order to build your tables?\""
+        { q: "\"What does DLT manage for you that you'd hand-code in a Workflows-of-notebooks setup?\"", a: "The dependency DAG, cluster management, incremental-vs-full recompute decisions, checkpoints, retries, and monitoring — you declare the target tables instead of wiring task order and error handling by hand." },
+        { q: "\"Streaming table vs materialized view in DLT — when each?\"", a: "Streaming table for incremental append/CDC ingestion of new data; materialized view when the result should recompute as its inputs change (aggregations/joins over the full set)." },
+        { q: "\"How does DLT know the order to build your tables?\"", a: "It infers the dependency DAG from the table definitions — each table is a query referencing others — and builds them in that inferred order." }
       ]
     },
     {
@@ -347,9 +347,9 @@ dlt: {
       noteLabel: "Model answer:",
       note: "\"Expectations are DQ rules declared on the table: a condition plus an action — expect to warn and track, expect_or_drop to quarantine bad rows, expect_or_fail to stop the pipeline on a critical breach. DLT records pass/fail rates automatically so quality is a monitored metric, not a script someone forgets to run. That's precisely the validation-and-reconciliation framework from Cedar Gate expressed natively: not-null and positive-amount as hard drops or fails, softer referential checks as tracked warnings — and because it's in the pipeline, bad claims never silently reach the billing/reporting layer.\"",
       followups: [
-        "\"Which expectation action for a null primary key vs a slightly-off reference value?\"",
-        "\"How do you see whether data quality is degrading over time?\"",
-        "\"Where do dropped/quarantined rows go and how do you reprocess them?\""
+        { q: "\"Which expectation action for a null primary key vs a slightly-off reference value?\"", a: "expect_or_drop (or expect_or_fail) for the null key — a hard breach you quarantine or halt on; expect (warn/track, keep the row) for the softer reference value." },
+        { q: "\"How do you see whether data quality is degrading over time?\"", a: "DLT captures pass/fail rates for every expectation automatically and surfaces them in the pipeline UI, so quality is a monitored, alertable metric rather than a one-off script." },
+        { q: "\"Where do dropped/quarantined rows go and how do you reprocess them?\"", a: "Rows failing expect_or_drop are dropped from the target; route them to a quarantine table (via a separate expectation/branch) so you can inspect, fix the source, and reprocess." }
       ]
     },
     {
@@ -374,9 +374,9 @@ dlt: {
       noteLabel: "Model answer:",
       note: "\"DLT is my default for medallion ETL — I get managed incrementality, expectations, and dependency inference with far less orchestration code. I stay imperative in Workflows when the work isn't just table transformations: arbitrary logic, calling external systems, ML training, or when I need fine control over clusters and execution. In practice I often combine them — DLT owns the data-transformation pipeline, and a Workflow orchestrates that pipeline alongside the non-table steps. The trade is the usual declarative-vs-imperative one: less control, less code with DLT; more control, more glue with Workflows.\"",
       followups: [
-        "\"Your pipeline needs to call an external claims-scrubbing API mid-flow. DLT or Workflows?\"",
-        "\"What do you give up by going declarative with DLT?\"",
-        "\"How would you combine DLT and Workflows in one production setup?\""
+        { q: "\"Your pipeline needs to call an external claims-scrubbing API mid-flow. DLT or Workflows?\"", a: "Workflows — calling an external API isn't a table transformation, which is where DLT's declarative model fits. Often combine both: DLT for the data pipeline, a Workflow to orchestrate it alongside the API call." },
+        { q: "\"What do you give up by going declarative with DLT?\"", a: "Fine-grained control over cluster/execution and the ability to express arbitrary non-table logic — the usual declarative trade of less control for less code." },
+        { q: "\"How would you combine DLT and Workflows in one production setup?\"", a: "DLT owns the medallion data-transformation pipeline; a Workflow orchestrates that DLT pipeline alongside non-table steps like API calls, ML training, or external triggers." }
       ]
     }
   ]
@@ -396,9 +396,9 @@ workflows: {
       noteLabel: "Model answer:",
       note: "\"A Workflow is a DAG of tasks — notebooks, wheels, JARs, SQL, a DLT pipeline, or a dbt project — with dependencies so they order correctly and parallelize where they can. I run production jobs on a job cluster that's created for the run and terminated after, for cost and isolation. It handles cron scheduling, per-task parameters, retries, and passing small values between tasks. The advantage over an external scheduler is that it's Databricks-native — it understands job clusters, DLT pipelines, and Unity Catalog directly, so there's less glue.\"",
       followups: [
-        "\"How do tasks in a Workflow share compute, and what's the cost-smart choice?\"",
-        "\"How do you pass a value produced by one task into the next?\"",
-        "\"What task types can a Workflow run besides notebooks?\""
+        { q: "How do tasks in a Workflow share compute, and what's the cost-smart choice?", a: "Tasks can share a single job cluster (created for the run and terminated after) or use separate clusters; sharing one job cluster across tasks is the cost-smart default because it avoids repeated spin-up and idle compute, with separate clusters reserved for tasks that have conflicting resource needs." },
+        { q: "How do you pass a value produced by one task into the next?", a: "Task values (dbutils.jobs.taskValues set/get) pass small values between tasks; anything larger is handed off by writing to a Delta table the downstream task reads." },
+        { q: "What task types can a Workflow run besides notebooks?", a: "A task can run a notebook, a Python script/wheel, a JAR, a SQL query/file, a DLT pipeline, or a dbt project — which is why Workflows can orchestrate a whole pipeline natively." }
       ]
     },
     {
@@ -409,9 +409,9 @@ workflows: {
       noteLabel: "Model answer:",
       note: "\"Workflows gives me per-task retries with backoff, timeouts, failure alerts, and repair run — which re-runs only the failed task and its downstream instead of the entire job, so a failure at task 8 of 10 doesn't recompute 1 through 7. But retries are only safe if tasks are idempotent, so my loads are MERGE on the business key and my ingestion is checkpointed — a replayed task then can't duplicate. It's the same idempotency-first discipline I applied to the Airflow migration: design every step to be safely re-runnable, then let the orchestrator retry freely.\"",
       followups: [
-        "\"A 12-task job fails on task 10. How do you avoid rerunning the first 9?\"",
-        "\"Why is idempotency a precondition for safe automatic retries?\"",
-        "\"What makes a load task idempotent on Databricks?\""
+        { q: "A 12-task job fails on task 10. How do you avoid rerunning the first 9?", a: "Use repair run, which re-executes only the failed task and its downstream dependents, so tasks 1–9 aren't recomputed." },
+        { q: "Why is idempotency a precondition for safe automatic retries?", a: "A retry re-executes the task, so unless it's idempotent the replay double-applies data; idempotency (MERGE/upsert on a business key, checkpointed ingestion) is what lets the orchestrator retry freely without corruption." },
+        { q: "What makes a load task idempotent on Databricks?", a: "Writing via Delta MERGE/upsert keyed on the business id rather than a blind append, plus checkpointed ingestion, so re-running the same batch updates in place instead of creating duplicates." }
       ]
     },
     {
@@ -422,9 +422,9 @@ workflows: {
       noteLabel: "Model answer:",
       note: "\"If everything I orchestrate is on Databricks, Workflows is the simplest choice — no extra infra and native integration with clusters, DLT, and Unity Catalog. I reach for Airflow when the DAG spans a heterogeneous estate — Databricks plus external APIs, other warehouses, on-prem — or I need its operator ecosystem and richer backfill/scheduling, or the company already runs it. The pattern I've actually used is Airflow as the enterprise orchestrator triggering Databricks jobs through the Databricks operator: Databricks does the heavy compute, Airflow coordinates the cross-system dependencies. So it's not either/or — it's 'native for Databricks-only, Airflow for cross-system'.\"",
       followups: [
-        "\"Your pipeline touches Databricks, an on-prem SFTP, and Salesforce. Workflows or Airflow?\"",
-        "\"How do Airflow and Databricks coexist in one architecture?\"",
-        "\"What does Workflows do better than Airflow for a Databricks-only shop?\""
+        { q: "Your pipeline touches Databricks, an on-prem SFTP, and Salesforce. Workflows or Airflow?", a: "Airflow (e.g. MWAA): the DAG spans a heterogeneous estate needing varied operators/connectors, so Airflow orchestrates the cross-system steps and triggers the Databricks compute via the Databricks operator." },
+        { q: "How do Airflow and Databricks coexist in one architecture?", a: "Airflow is the enterprise orchestrator calling the Databricks Jobs API (through the Databricks operator), so Databricks does the heavy compute while Airflow coordinates the cross-system dependencies — not either/or." },
+        { q: "What does Workflows do better than Airflow for a Databricks-only shop?", a: "It's native — no extra infrastructure and deep integration with clusters, DLT, Unity Catalog, and notebooks — so there's far less glue when everything you orchestrate already lives on Databricks." }
       ]
     }
   ]
@@ -444,9 +444,9 @@ unity: {
       noteLabel: "Model answer:",
       note: "\"Unity Catalog gives a three-level namespace — catalog.schema.table — under one metastore that spans all workspaces in a region, replacing the old per-workspace two-level hive_metastore. So main.silver.claims is the same governed object everywhere, with one place for permissions, lineage, and discovery. I use catalogs to separate environments or domains — prod vs dev, or per business unit — schemas to group tables, and UC also governs views, volumes, functions, and ML models. The win is centralized, consistent governance instead of reconciling permissions workspace by workspace.\"",
       followups: [
-        "\"What did the old hive_metastore make painful that UC fixes?\"",
-        "\"How would you lay out catalogs and schemas for prod/dev across two domains?\"",
-        "\"Besides tables, what else does Unity Catalog govern?\""
+        { q: "\"What did the old hive_metastore make painful that UC fixes?\"", a: "It was two-level (schema.table) and per-workspace, so permissions, lineage, and discovery had to be reconciled workspace by workspace. UC's single metastore gives one consistent three-level namespace and governance across all workspaces in a region." },
+        { q: "\"How would you lay out catalogs and schemas for prod/dev across two domains?\"", a: "Catalogs as the top grouping per environment/domain (e.g. prod and dev, or per business unit), with schemas grouping tables within each, so grants and isolation are managed at the catalog level." },
+        { q: "\"Besides tables, what else does Unity Catalog govern?\"", a: "Views, volumes (files), functions, and ML models — all governed assets under the same namespace and permission model." }
       ]
     },
     {
@@ -472,9 +472,9 @@ unity: {
       noteLabel: "Model answer:",
       note: "\"UC is SQL-standard GRANT/REVOKE from catalog down to row and column level. For PHI I work least-privilege by group, then layer column masking — a masking function that returns the raw MRN/SSN only if the caller is in a compliance group and NULL otherwise — and row filters so, say, a regional analyst only sees their region's claims. The reason this matters over per-tool controls is that UC enforces it centrally, so the same masking applies whether someone hits the table from SQL, a notebook, or Power BI — I'm not re-implementing HIPAA controls in every access path, which is exactly the consistency an auditor wants.\"",
       followups: [
-        "\"Analysts must see claims but never the raw SSN. How do you implement that?\"",
-        "\"A user should only see their own facility's rows. Which UC feature?\"",
-        "\"Why is centralized governance better than masking in each BI tool?\""
+        { q: "\"Analysts must see claims but never the raw SSN. How do you implement that?\"", a: "A column mask: a UC masking function that returns the raw SSN only if the caller is in a privileged (compliance) group and NULL otherwise, applied to the column — enforced centrally across SQL, notebooks, and BI." },
+        { q: "\"A user should only see their own facility's rows. Which UC feature?\"", a: "Row-level filters — a row filter function so each user sees only rows matching their facility/region." },
+        { q: "\"Why is centralized governance better than masking in each BI tool?\"", a: "UC enforces the controls at the data layer, so the same masking/row filters apply across every access path — SQL, notebooks, Power BI — instead of being re-implemented, and inconsistently, per tool." }
       ]
     },
     {
@@ -485,9 +485,9 @@ unity: {
       noteLabel: "Model answer:",
       note: "\"UC auto-captures column-level lineage — every table and column traced to the job/notebook that produced it — plus an audit log of access. For regulated claims data that answers the questions auditors actually ask: where does PHI flow from source to dashboard, and who touched this table. It also lets me do impact analysis before changing a schema — see every downstream consumer of a column before I drop it — and it powers discovery so teams find and reuse governed tables instead of copying data around. This is the automated version of the lineage and HIPAA-audit documentation I maintained by hand at Cedar Gate.\"",
       followups: [
-        "\"An auditor asks you to prove where PHI flows. How does UC answer that?\"",
-        "\"Before dropping a column, how do you find everything that depends on it?\"",
-        "\"How does automatic lineage change your data-governance workload vs documenting by hand?\""
+        { q: "\"An auditor asks you to prove where PHI flows. How does UC answer that?\"", a: "UC's automatic column-level lineage traces every table/column to the job or notebook that produced it, so you can show PHI flowing source → bronze → silver → gold → dashboard end to end." },
+        { q: "\"Before dropping a column, how do you find everything that depends on it?\"", a: "Use UC's column-level lineage for impact analysis — it shows every downstream table, view, and consumer of that column before you change it." },
+        { q: "\"How does automatic lineage change your data-governance workload vs documenting by hand?\"", a: "It's captured automatically and stays current, replacing manually-maintained lineage/HIPAA-audit docs that drift — governance becomes a query rather than a documentation chore." }
       ]
     }
   ]
@@ -507,9 +507,9 @@ sqlwarehouse: {
       noteLabel: "Model answer:",
       note: "\"A SQL Warehouse is compute built for concurrent SQL and BI on Delta. Serverless is my default for interactive BI — it starts in seconds and scales fast, so analysts aren't waiting on a cold cluster and I'm not paying to keep one warm; it auto-scales for concurrency and auto-stops when idle. I use classic or pro when data-residency rules require the compute to run in our own cloud account rather than Databricks'. I point Power BI/Tableau and the SQL editor at the warehouse. So the decision is mostly serverless for spiky interactive BI, in-account when compliance dictates.\"",
       followups: [
-        "\"Analysts complain the first query each morning is slow. Which warehouse type helps and why?\"",
-        "\"What makes serverless start faster than a classic warehouse?\"",
-        "\"When would data-residency push you off serverless?\""
+        { q: "\"Analysts complain the first query each morning is slow. Which warehouse type helps and why?\"", a: "Serverless — it starts in seconds from Databricks' warm pool, so there's no cold-cluster wait on the first morning query, unlike classic/pro which provision in your account." },
+        { q: "\"What makes serverless start faster than a classic warehouse?\"", a: "The compute runs in Databricks' account from pre-warmed capacity, so there's no VM provisioning wait in your own account — startup drops from minutes to seconds." },
+        { q: "\"When would data-residency push you off serverless?\"", a: "When compliance requires compute to run inside your own cloud account/VPC; serverless runs in Databricks' account, so you use classic or pro instead." }
       ]
     },
     {
@@ -520,9 +520,9 @@ sqlwarehouse: {
       noteLabel: "Model answer:",
       note: "\"Photon is a native C++ vectorized engine that replaces parts of JVM Spark for SQL/DataFrame work — columnar, SIMD, batch-at-a-time — so scans, joins, and aggregations run several times faster on the same nodes. It's transparent: I enable it and my existing SQL/DataFrame code just runs faster, which also lowers cost because the job finishes in fewer DBU-seconds. The caveat is it accelerates analytical SQL, not arbitrary Python UDFs, which still execute in Python — another reason to prefer native functions. Photon is a big part of why Databricks SQL can compete with dedicated warehouses on BI.\"",
       followups: [
-        "\"Photon is on but your Python-UDF-heavy job didn't speed up. Why?\"",
-        "\"How can enabling Photon reduce cost even though it's the same cluster?\"",
-        "\"What kinds of queries benefit most from Photon?\""
+        { q: "\"Photon is on but your Python-UDF-heavy job didn't speed up. Why?\"", a: "Photon accelerates native SQL/DataFrame operations; a row-at-a-time Python UDF still executes in Python outside the vectorized engine, so it doesn't benefit. Use native functions instead." },
+        { q: "\"How can enabling Photon reduce cost even though it's the same cluster?\"", a: "It finishes the work in fewer DBU-seconds — faster completion on the same hardware means less billed compute time." },
+        { q: "\"What kinds of queries benefit most from Photon?\"", a: "Analytical SQL/DataFrame work — scans, filters, joins, and aggregations — where vectorized columnar/SIMD execution pays off." }
       ]
     },
     {
@@ -533,9 +533,9 @@ sqlwarehouse: {
       noteLabel: "Model answer:",
       note: "\"SQL Warehouse for the read/serve side — interactive, concurrent BI and SQL on gold tables, with auto-scaling for concurrency. Job cluster for the write/build side — scheduled PySpark/SQL ETL that produces bronze/silver/gold and then terminates. The clean rule I use: job clusters build the layers, warehouses serve the gold layer to people and BI tools. The anti-patterns are running big scheduled ETL on a warehouse or trying to serve hundreds of concurrent dashboards off an all-purpose cluster — matching the compute to the workload is a real cost and performance lever.\"",
       followups: [
-        "\"Nightly PySpark ETL vs a Power BI dashboard on gold — which compute for each?\"",
-        "\"Why not just serve BI from your always-on all-purpose dev cluster?\"",
-        "\"How does auto-scaling differ in purpose between a warehouse and a job cluster?\""
+        { q: "\"Nightly PySpark ETL vs a Power BI dashboard on gold — which compute for each?\"", a: "Job cluster for the nightly PySpark ETL (builds the layers, then terminates); SQL Warehouse for the Power BI dashboard (concurrent interactive reads of gold)." },
+        { q: "\"Why not just serve BI from your always-on all-purpose dev cluster?\"", a: "It's the expensive interactive rate running 24/7 and isn't tuned for the SQL concurrency many dashboards need — a SQL Warehouse auto-scales for concurrency and auto-stops when idle." },
+        { q: "\"How does auto-scaling differ in purpose between a warehouse and a job cluster?\"", a: "A warehouse scales out to handle query concurrency (more simultaneous users); a job cluster scales workers to parallelize a single job's data processing." }
       ]
     }
   ]
@@ -555,9 +555,9 @@ performance: {
       noteLabel: "Model answer:",
       note: "\"Right-sizing means fitting the cluster to the job. Autoscaling handles variable load by adding workers within a range, but I know its limits: it can't help a job stuck on one skewed task or a driver-side collect — extra workers just idle. So before I scale up I read the Spark UI and find the real bottleneck: skew, a giant shuffle, small files, or driver work. Adding nodes only helps genuinely parallelizable work; throwing hardware at a skewed or serialized job just raises the bill without fixing runtime. That diagnose-then-size discipline is exactly how I approached cost right-sizing at Amex.\"",
       followups: [
-        "\"You doubled the cluster and the job got no faster. What are the likely reasons?\"",
-        "\"When does autoscaling help and when is it useless?\"",
-        "\"What do you check before deciding a job needs a bigger cluster?\""
+        { q: "\"You doubled the cluster and the job got no faster. What are the likely reasons?\"", a: "The bottleneck doesn't parallelize: data skew on one hot task, a driver-side collect(), or an I/O-bound small-files problem — extra workers just idle. Diagnose in the Spark UI before scaling." },
+        { q: "\"When does autoscaling help and when is it useless?\"", a: "It helps with variable, parallelizable load (adds workers when stages need them); it's useless against a single skewed task or driver-serialized work, where the extra workers idle." },
+        { q: "\"What do you check before deciding a job needs a bigger cluster?\"", a: "The Spark UI for the real bottleneck — skew, a huge shuffle, small files, or driver work — since more hardware only helps genuinely parallelizable work." }
       ]
     },
     {
@@ -568,9 +568,9 @@ performance: {
       noteLabel: "Model answer:",
       note: "\"My cost toolkit: production on job clusters at the cheaper rate, not always-on all-purpose; Spot workers with on-demand driver for the discount without risking the whole job; cluster pools so short jobs start warm in seconds instead of paying minutes of spin-up; and cluster policies plus mandatory auto-termination so nobody leaves a giant cluster running. On top of that, Photon to finish in fewer DBU-seconds and OPTIMIZE/clustering so jobs scan less data. The method is the same one I used at Amex — find the biggest spender, change one thing, re-measure — governed here by policies so the savings stick instead of drifting back.\"",
       followups: [
-        "\"Which cluster nodes are safe on Spot and which aren't? Why?\"",
-        "\"Teams keep spinning oversized always-on clusters. How do you stop that platform-wide?\"",
-        "\"Many tiny jobs each wait 4 minutes for cluster startup. What cuts that?\""
+        { q: "\"Which cluster nodes are safe on Spot and which aren't? Why?\"", a: "Workers are safe on Spot — they tolerate interruption and can be re-provisioned. Keep the driver on-demand, since losing the driver kills the whole job." },
+        { q: "\"Teams keep spinning oversized always-on clusters. How do you stop that platform-wide?\"", a: "Cluster policies that cap instance types/sizes and enforce mandatory auto-termination, so the savings are governed and can't drift back." },
+        { q: "\"Many tiny jobs each wait 4 minutes for cluster startup. What cuts that?\"", a: "Cluster pools — pre-warmed instances kept ready so job clusters start in seconds instead of minutes, cutting idle-wait cost across many short jobs." }
       ]
     },
     {
@@ -581,9 +581,9 @@ performance: {
       noteLabel: "Model answer:",
       note: "\"First I lean on AQE — it's on by default and already coalesces shuffle partitions, flips join strategies, and handles many skew cases at runtime. Beyond that: broadcast the small dimension so the big fact table doesn't shuffle; for a hot key AQE can't tame, salt it; cache a DataFrame only if it's reused across multiple actions; and cure small files with OPTIMIZE and 128MB–1GB target sizes. I also kill the usual culprits — replace row-at-a-time Python UDFs with native or pandas UDFs, and remove stray count()/display() that trigger extra full executions. Every change I verify in the Spark UI against runtime and shuffle metrics, not by guessing.\"",
       followups: [
-        "\"A large-table join is shuffling everything. First thing you try?\"",
-        "\"AQE is on but one task still runs 20x longer. What's left to do?\"",
-        "\"When does caching help and when is it just wasted memory?\""
+        { q: "\"A large-table join is shuffling everything. First thing you try?\"", a: "Broadcast the small side (broadcast hash join) so the large table never shuffles — the biggest single win when one side fits in memory." },
+        { q: "\"AQE is on but one task still runs 20x longer. What's left to do?\"", a: "It's skew AQE can't fully tame — salt the hot key to spread it across partitions, or split it out and handle it separately." },
+        { q: "\"When does caching help and when is it just wasted memory?\"", a: "Caching helps only when an expensive DataFrame is reused across multiple actions; if it's used once, caching just consumes memory for no gain." }
       ]
     }
   ]
@@ -770,9 +770,9 @@ compare: {
       noteLabel: "Model answer:",
       note: "\"They've converged but their DNA differs. Snowflake is the easiest path for SQL/BI — near-zero admin, excellent concurrency — but it started warehouse-first, so code-heavy data science, custom Spark, and streaming were later additions, and data sits in its managed format. Databricks started Spark/ML-first: best-in-class for PySpark, ML, and streaming on open Delta you control, with strong SQL via Photon, at the cost of more compute concepts to manage. So I choose on workload: predominantly SQL/BI with a small team wanting simplicity → Snowflake; heavy transformation, ML, streaming, and open-format control in one place → Databricks. Both can serve the other case now; it's about where the center of gravity is.\"",
       followups: [
-        "\"A shop is 90% SQL dashboards. Which, and what would change your mind?\"",
-        "\"What did Snowflake historically make hard that Databricks did well, and vice versa?\"",
-        "\"How have Snowpark and serverless SQL blurred this comparison?\""
+        { q: "\"A shop is 90% SQL dashboards. Which, and what would change your mind?\"", a: "Snowflake — predominantly SQL/BI favors its near-zero admin and concurrency. Heavy code-first transformation, ML, or streaming entering the picture would flip it toward Databricks." },
+        { q: "\"What did Snowflake historically make hard that Databricks did well, and vice versa?\"", a: "Snowflake was weaker at code-first data science, custom Spark, and streaming; Databricks required managing more compute concepts where Snowflake offered near-zero-admin SQL simplicity." },
+        { q: "\"How have Snowpark and serverless SQL blurred this comparison?\"", a: "Snowflake added Snowpark/Iceberg (code + open format) and Databricks added serverless SQL and Photon (easy, fast BI), so it's rarely a capability wall now — more a fit-and-operability call." }
       ]
     },
     {
@@ -783,9 +783,9 @@ compare: {
       noteLabel: "Model answer:",
       note: "\"Same engine, different amount of assembly. EMR gives me cluster control and Glue gives me serverless Spark, both AWS-native and cheaper on raw compute — but I build the surrounding platform myself: catalog, quality, governance, notebooks, optimization. Databricks hands me that integrated — Delta plus Photon and auto-optimize, Unity Catalog, Repos, Workflows, DLT, MLflow — so the team ships faster with far less plumbing, at a platform premium and some lock-in to the experience, though Delta is open so my data isn't trapped. I'd pick EMR/Glue when cost and AWS-native matter more than developer time, Databricks when productivity and the unified feature set pay for themselves.\"",
       followups: [
-        "\"Your team of 4 has no platform engineers. Databricks or roll-your-own on Glue/EMR?\"",
-        "\"What exactly do you have to build yourself on EMR that Databricks gives you?\"",
-        "\"How real is Databricks lock-in given Delta is open source?\""
+        { q: "\"Your team of 4 has no platform engineers. Databricks or roll-your-own on Glue/EMR?\"", a: "Databricks — the integrated platform (Delta, UC, Workflows, DLT, MLflow) means far less to build and operate, which matters most for a tiny team with no platform engineers. The premium buys developer productivity." },
+        { q: "\"What exactly do you have to build yourself on EMR that Databricks gives you?\"", a: "The catalog/governance, data quality, notebooks/Repos, orchestration, file optimization, and ML lifecycle — Databricks ships these integrated; on EMR/Glue you assemble them yourself." },
+        { q: "\"How real is Databricks lock-in given Delta is open source?\"", a: "Data lock-in is limited because Delta is open and lives in your own object storage, readable by other engines. The lock-in is to the Databricks platform experience and tooling, not the data format." }
       ]
     },
     {
@@ -796,9 +796,9 @@ compare: {
       noteLabel: "Model answer:",
       note: "\"The two-tier world is a lake for raw/ML plus a separate warehouse for BI, with ETL shuffling curated data between them — which means two copies, drift, two governance models, and extract latency. The Lakehouse pitch is one governed copy in open Delta that serves both ML and BI, so you delete the copy step and the drift. I'll acknowledge the two-tier can be pragmatic where an org is heavily invested in an existing warehouse and a separate DS lake, but the direction I'd argue for is consolidating onto one governed tier — that's the whole reason the lakehouse concept exists.\"",
       followups: [
-        "\"What are the concrete costs of maintaining a lake AND a warehouse?\"",
-        "\"When is staying two-tier actually the pragmatic choice?\"",
-        "\"How does one governed copy change your data-quality and governance work?\""
+        { q: "\"What are the concrete costs of maintaining a lake AND a warehouse?\"", a: "Two copies of the data, drift between them, two governance models to reconcile, and extract latency from the ETL copying curated data into the warehouse." },
+        { q: "\"When is staying two-tier actually the pragmatic choice?\"", a: "When an org is heavily invested in an existing warehouse for BI plus a separate lake for data science, and consolidation isn't worth the migration cost right now." },
+        { q: "\"How does one governed copy change your data-quality and governance work?\"", a: "One governed Delta copy under one governance model (Unity Catalog) removes the copy/reconcile step, so quality and access controls are defined once and serve both BI and ML consistently." }
       ]
     }
   ]
@@ -818,9 +818,9 @@ interview: {
       noteLabel: "Model answer:",
       note: "\"Ingest with Auto Loader (or Kafka via Structured Streaming for CDC) into a bronze Delta table — raw, appended, checkpointed for exactly-once. Silver cleans, casts, and dedups via MERGE on the business key so it's idempotent and retry-safe, with DLT expectations enforcing not-null keys and valid amounts — bad rows quarantined before they reach billing. Gold builds the per-provider/per-risk marts as materialized views. Orchestrate with a Workflow (or DLT pipeline) on job clusters that terminate after; Unity Catalog governs access with column masking on PHI and gives me lineage for audit. OPTIMIZE/liquid-clustering keeps files read-sized. For hourly files that's batch triggers; only if it's true real-time do I run continuous streaming. That's the Cedar Gate pipeline expressed natively.\"",
       followups: [
-        "\"Where exactly is exactly-once guaranteed, and where is idempotency guaranteed?\"",
-        "\"Now make it near-real-time. What changes vs the batch version?\"",
-        "\"How do you keep PHI controlled across every access path in this design?\""
+        { q: "\"Where exactly is exactly-once guaranteed, and where is idempotency guaranteed?\"", a: "Exactly-once comes from the ingestion checkpoint (offsets/processed files) plus Delta's atomic commits; idempotency comes from the keyed MERGE in silver, so a replayed batch updates in place instead of duplicating." },
+        { q: "\"Now make it near-real-time. What changes vs the batch version?\"", a: "Swap batch triggers for continuous Structured Streaming (Kafka/CDC source, short micro-batch trigger) feeding foreachBatch MERGEs; the medallion structure, quality gates, and governance stay the same." },
+        { q: "\"How do you keep PHI controlled across every access path in this design?\"", a: "Unity Catalog enforces least-privilege grants, column masking on PHI, and row filters centrally, so the same controls apply across SQL, notebooks, and BI, with lineage for audit." }
       ]
     },
     {
@@ -831,9 +831,9 @@ interview: {
       noteLabel: "Model answer:",
       note: "\"The legacy problem was monolithic batch scripts: no idempotency, full recomputes, and failures that needed manual reruns from the top. On Databricks I'd move it to DLT/Workflows with medallion Delta tables. Wins that are real engineering: idempotent MERGE loads and checkpointed ingestion make every step safely retryable; incremental processing via CDF/streaming tables means silver/gold rebuild only what changed instead of full recomputes — that's most of the throughput gain; DLT expectations catch bad data inline instead of downstream reprocessing; parallelism across independent tasks and Photon on the heavy transforms cut wall-clock; and repair-run reruns only failed tasks. I'd measure before/after on runtime and on-call pages, and cut over by running both in parallel and reconciling outputs before switching.\"",
       followups: [
-        "\"Which specific change drove most of the throughput improvement, and why?\"",
-        "\"How do you cut over safely without a risky big-bang switch?\"",
-        "\"How did you measure the improvement credibly?\""
+        { q: "\"Which specific change drove most of the throughput improvement, and why?\"", a: "Incremental processing (CDF/streaming tables) — silver/gold rebuild only what changed instead of full recomputes, which is most of the throughput gain over monolithic batch scripts." },
+        { q: "\"How do you cut over safely without a risky big-bang switch?\"", a: "Run the new pipeline in parallel with the legacy one and reconcile outputs before switching over, so correctness is proven before decommissioning the old path." },
+        { q: "\"How did you measure the improvement credibly?\"", a: "Before/after on wall-clock runtime and on-call pages/failures, measured against real metrics rather than claiming \\\"we rewrote it.\\\"" }
       ]
     },
     {
@@ -844,9 +844,9 @@ interview: {
       noteLabel: "Model answer:",
       note: "\"Natively with DLT expectations — declarative rules on each table with an action: expect_or_fail for critical breaches that must halt the pipeline (null primary key), expect_or_drop to quarantine bad rows (negative amount), and expect to track softer issues while keeping the row. DLT records pass/fail rates automatically, so quality is a monitored metric I can alert on, not a script that rots. Quarantined rows land somewhere I can inspect and reprocess after fixing the source. Outside DLT I'd assert the same checks in the job before the write and fail closed. This is the validation-and-reconciliation framework from Cedar Gate — the point is bad claims never silently reach reporting or billing.\"",
       followups: [
-        "\"Null key vs a reference value that's slightly off — which action for each?\"",
-        "\"How do you know if data quality is degrading week over week?\"",
-        "\"What happens to dropped rows and how do you get them back in?\""
+        { q: "\"Null key vs a reference value that's slightly off — which action for each?\"", a: "expect_or_fail (or expect_or_drop) for the null primary key — a critical breach; expect (warn/track, keep the row) for the slightly-off reference value." },
+        { q: "\"How do you know if data quality is degrading week over week?\"", a: "DLT records expectation pass/fail rates automatically, so you monitor and alert on those trends — quality is an observable metric, not a script that rots." },
+        { q: "\"What happens to dropped rows and how do you get them back in?\"", a: "expect_or_drop quarantines them out of the target; route them to a quarantine table so you can inspect, fix the source, and reprocess once corrected." }
       ]
     },
     {
@@ -857,9 +857,9 @@ interview: {
       noteLabel: "Model answer:",
       note: "\"Changes land on a stream — Kafka, or DMS/Debezium into a topic. I readStream from it, and in foreachBatch run a Delta MERGE into the silver table keyed on the business id, mapping the CDC op to update/delete/insert. The streaming checkpoint stores offsets so a restart resumes exactly once, and the keyed MERGE makes a replayed micro-batch idempotent — together that's no loss and no double-apply, the two things CDC must guarantee. For ordering I sequence by the source commit/LSN so a stale update can't overwrite a newer one, and I propagate onward with Change Data Feed so downstream layers consume only deltas. That's the Cedar Gate cross-region replication in Databricks form.\"",
       followups: [
-        "\"Out-of-order events: an old update arrives after a newer one. How do you prevent regression?\"",
-        "\"Exactly where do exactly-once and idempotency each come from here?\"",
-        "\"How do you propagate these changes efficiently to gold?\""
+        { q: "\"Out-of-order events: an old update arrives after a newer one. How do you prevent regression?\"", a: "Sequence by the source commit/LSN in the MERGE so a stale update can't overwrite a newer one — only apply the change if its sequence is newer than what's already stored." },
+        { q: "\"Exactly where do exactly-once and idempotency each come from here?\"", a: "Exactly-once from the streaming checkpoint's stored offsets (a restart resumes where it stopped); idempotency from the business-key MERGE, so a replayed micro-batch updates in place rather than duplicating." },
+        { q: "\"How do you propagate these changes efficiently to gold?\"", a: "Enable Change Data Feed on silver so gold consumes only the changed rows and MERGEs them forward, instead of recomputing the whole table each run." }
       ]
     },
     {
@@ -870,9 +870,9 @@ interview: {
       noteLabel: "Model answer:",
       note: "\"Method first: find the biggest spenders from usage/system tables — which jobs and clusters burn the most DBUs — then attack those, not everything. Levers: move production off always-on all-purpose clusters onto ephemeral job clusters; Spot workers with on-demand driver; cluster pools so short jobs don't pay minutes of startup; auto-termination everywhere; Photon so jobs finish in fewer DBU-seconds; and OPTIMIZE/clustering so they scan less data. Then I make it stick with cluster policies capping sizes and enforcing auto-terminate, so savings don't drift back as teams spin up giant clusters. Change one thing, re-measure against the DBU metric — same discipline as the Amex right-sizing work, just with Databricks knobs.\"",
       followups: [
-        "\"Where do you look to find what's actually costing the most?\"",
-        "\"How do you make the savings permanent instead of drifting back?\"",
-        "\"A job runs fine but costs a lot. What are the first two changes?\""
+        { q: "\"Where do you look to find what's actually costing the most?\"", a: "Usage/system tables to identify the jobs and clusters burning the most DBUs, then attack those biggest spenders rather than everything." },
+        { q: "\"How do you make the savings permanent instead of drifting back?\"", a: "Cluster policies capping sizes and enforcing auto-termination, so teams can't re-spin oversized always-on clusters and the savings stick." },
+        { q: "\"A job runs fine but costs a lot. What are the first two changes?\"", a: "Move it off an always-on all-purpose cluster onto an ephemeral job cluster, and enable Photon (plus OPTIMIZE/clustering) so it finishes in fewer DBU-seconds scanning less data." }
       ]
     },
     {
@@ -883,9 +883,9 @@ interview: {
       noteLabel: "Model answer:",
       note: "\"Unity Catalog as the single governance layer. Least-privilege grants by group; column masking so raw MRN/SSN is visible only to a compliance group and NULL otherwise; row filters so a facility only sees its own claims. Because UC enforces centrally, the same controls apply whether someone queries from SQL, a notebook, or Power BI — I'm not re-implementing masking per tool, which is exactly what an auditor wants to see. UC's automatic column-level lineage proves where PHI flows source-to-dashboard, and its audit log answers 'who accessed this table.' On the platform side, PHI stays in our own account's storage under the classic-compute data plane. That's the HIPAA controls and lineage documentation from my resume, but enforced and automated instead of manual.\"",
       followups: [
-        "\"Analysts need claims but must never see the SSN. Implement it.\"",
-        "\"An auditor asks you to prove PHI never reached an unauthorized table. How?\"",
-        "\"Why is UC's centralized enforcement better than masking in each BI tool?\""
+        { q: "\"Analysts need claims but must never see the SSN. Implement it.\"", a: "A Unity Catalog column mask: a masking function returning the raw SSN only for a compliance group and NULL otherwise, applied to the SSN column, enforced centrally across every access path." },
+        { q: "\"An auditor asks you to prove PHI never reached an unauthorized table. How?\"", a: "UC's automatic column-level lineage shows every table/column PHI flows into end to end, and the audit log shows who accessed what — together proving containment." },
+        { q: "\"Why is UC's centralized enforcement better than masking in each BI tool?\"", a: "UC enforces at the data layer, so the same masking/row filters apply across SQL, notebooks, and every BI tool, instead of being re-implemented inconsistently per tool." }
       ]
     },
     {
@@ -896,9 +896,9 @@ interview: {
       noteLabel: "Model answer:",
       note: "\"I'd decide on where the workload's center of gravity sits. If it's predominantly SQL and BI on structured data with a team that values near-zero admin, Snowflake is the simpler, cheaper-to-operate choice. If there's heavy code-first transformation, ML, and streaming, and I want one open-format copy serving both data science and BI, Databricks wins. I'd flip toward Snowflake if the ML/streaming need evaporated, and toward Databricks if we needed serious Spark/ML or wanted to avoid a managed proprietary format. I'd also note both have converged — Snowpark and Iceberg on one side, serverless SQL and Photon on the other — so it's rarely a capability wall now, more a fit-and-operability call. I won't pretend one is universally better.\"",
       followups: [
-        "\"What single fact about the workload would flip your recommendation?\"",
-        "\"Where do the two genuinely still differ in 2026?\"",
-        "\"How do you avoid sounding like a vendor fan in this answer?\""
+        { q: "\"What single fact about the workload would flip your recommendation?\"", a: "Whether there's serious code-first transformation, ML, or streaming: its presence pushes to Databricks, its absence (pure SQL/BI) pushes to Snowflake." },
+        { q: "\"Where do the two genuinely still differ in 2026?\"", a: "DNA and operability: Snowflake's near-zero-admin SQL simplicity vs Databricks' code/ML/streaming depth on open Delta you own — rarely a capability wall now, more a fit call." },
+        { q: "\"How do you avoid sounding like a vendor fan in this answer?\"", a: "Decide on workload center-of-gravity, name what would flip you either way, and acknowledge both have converged — judgment, not fandom." }
       ]
     }
   ]
