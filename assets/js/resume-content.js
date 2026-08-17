@@ -335,6 +335,41 @@ landmines: {
       ]
     }
   ]
+},
+
+senior: {
+  intro: {
+    title: "Senior & scope — proving you're 6 years senior, not 1 year × 6",
+    desc: "The questions that separate a senior DE from a mid-level one aren't about a single bullet — they're about scope, leverage, judgment, and whether you can hold a whole system in your head and critique it honestly. At 6 years an interviewer expects you to set technical direction, multiply the team, and know when NOT to build. These two cards defend exactly that: what makes you senior, and the capstone 'largest system you architected' question."
+  },
+  cards: [
+    {
+      title: "\"What makes you a senior DE and not a mid-level one?\"",
+      badge: "fundamentals",
+      conceptLabel: "What's being tested:",
+      concept: "Whether '6 years' means six years of growth or one year repeated six times. The interviewer is distinguishing someone who delivers assigned pipelines well (mid) from someone who owns problems before there's a ticket, multiplies the team, and shows judgment about complexity (senior). They probe for design ownership, mentoring, cross-team influence, and — the subtle one — restraint about when not to build.",
+      noteLabel: "Model answer:",
+      note: "\"For me the line is scope and leverage. A mid-level DE delivers the pipeline they're handed, well. A senior owns the problem before it's a ticket — I scope an ambiguous ask into a design, name the trade-offs and failure modes up front, and I'm accountable for the outcome, not just the merge. Leverage is the other half: I multiply the team by reviewing designs and PRs for the why, writing the runbooks and data contracts that stop repeat incidents, and mentoring so a junior doesn't relearn the idempotency lesson the hard way. And a real senior tell is restraint — knowing the answer is sometimes 'don't build this, a scheduled query covers it' instead of a new service. So I'd point to systems I drove end to end, the people I leveled up, and the times I argued us out of unnecessary complexity.\"",
+      followups: [
+        { q: "\"Give a concrete example of influence without authority.\"", a: "A source team kept breaking us with silent schema changes and I had no authority over them. I made the cost visible — documented the downstream impact and incident hours — proposed a minimal contract (just advance notice on schema changes), and shipped a schema guard on my side meanwhile. Showing the cost plus offering the cheap fix earned buy-in that demanding it wouldn't have." },
+        { q: "\"How do you mentor without just doing the work for them?\"", a: "I pair on the design and the first hard case, then hand off with a clear check — 'make it safe to re-run, add the row-count gate' — rather than writing it myself. Code review is where I teach: I comment on the reasoning, not just the fix. The goal is they hit the next problem without me, so I optimize for their next task, not this one's speed." },
+        { q: "\"Tell me about a time the senior move was NOT to build something.\"", a: "Someone wanted a streaming pipeline for a dashboard that refreshed daily. The freshness SLA didn't justify the operational cost, so I pushed back and a scheduled batch load covered it at a fraction of the complexity. Matching the tool to the SLA — rather than building the impressive thing — is the judgment that separates senior from eager." }
+      ]
+    },
+    {
+      title: "\"What's the largest system you've architected end to end — and what would you change?\"",
+      badge: "advanced",
+      conceptLabel: "What's being tested:",
+      concept: "The capstone senior question. They want to see you hold a whole system in your head — not one bullet — reason about the constraint that drove the design, and critique it honestly. The 'what would you change' half is the real test: a senior has scar tissue and opinions; a mid-level says 'nothing, it worked.' Naming a real weakness and the lesson from it is the strongest signal in the interview.",
+      noteLabel: "Model answer:",
+      note: "\"I'd take the Cedar Gate claims platform, because I owned it end to end. The constraint that drove everything was correctness under messy input — a dropped or double-counted claim is lost revenue and a compliance problem — so the architecture was raw-immutable-first, idempotent merge-on-key loads, malformed records quarantined not dropped, and reconciliation of billed (837) against paid (835) as a first-class gated stage, all orchestrated in Airflow with dbt transforms and validation checks. What I'd change: I'd push data contracts with the source systems far earlier — most of our incidents were silent upstream schema changes we caught downstream instead of at the edge — and I'd have invested in lineage/observability tooling sooner rather than hand-maintaining data maps for audits. The design was right on correctness; the gap was shifting failure detection left, to the source boundary.\"",
+      followups: [
+        { q: "\"What single constraint drove the architecture, and where did it show up?\"", a: "Correctness on lossy healthcare data. It shows up in every decision: immutable raw landing (reprocess, never re-pull), idempotent keyed upserts (safe replay), quarantine-not-drop for malformed claims, and reconciliation as a gated stage. Each one traces back to the same rule — never silently lose or double a claim." },
+        { q: "\"You'd add data contracts earlier — so why didn't you at the time?\"", a: "Honestly, we treated sources as fixed and fought fires as they came; it took a few silent-schema incidents to justify the cross-team effort. The lesson is that contracts are cheaper than the incidents they prevent, so now I push for them at design time — even a minimal 'notify before schema change' — instead of after the third page." },
+        { q: "\"Rebuild it today on a modern lakehouse — what stays and what changes?\"", a: "Stays: medallion layering, idempotency, reconciliation, quarantine — those are architecture, not tooling. Changes: Delta Lake for ACID/MERGE/time-travel instead of hand-rolled idempotency, Unity Catalog for the governance and lineage I was documenting by hand, and DLT expectations for the validation gates. Same design, far less glue — which is exactly why the fundamentals matter more than the platform." }
+      ]
+    }
+  ]
 }
 
 };
