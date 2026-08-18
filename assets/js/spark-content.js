@@ -24,7 +24,7 @@ overview: {
       navLabel: "Why teams choose it:",
       nav: "It's the dominant engine for large-scale batch and streaming ETL when the data or the transformation logic is too big or too custom for pure SQL in a warehouse — arbitrary Python/Scala transformation code, ML feature engineering, joining many large datasets, and unifying batch + streaming under one API. It also runs everywhere: on-prem clusters, EMR, Databricks, Kubernetes — not tied to one vendor's storage.",
       noteLabel: "Where it fits vs. Snowflake:",
-      note: "Snowflake is a SQL-first warehouse optimized for structured/semi-structured analytics with minimal ops. Spark is a general compute engine — better when you need custom code (not just SQL), ML pipelines, or to process data before it ever lands in a warehouse. Many real architectures use both: Spark for heavy upstream transformation/ML, Snowflake for the serving/BI layer. See the Compare tab for a fuller breakdown."
+      note: "Snowflake and Spark solve different jobs. Snowflake is a SQL-first warehouse. It is built for structured and semi-structured analytics with very little ops work.<br><br>Spark is a general compute engine. Reach for it when you need custom code, not just SQL. It also fits ML pipelines, or cleaning data before it ever lands in a warehouse.<br><br>Many real setups use both. Spark does the heavy upstream transformation and ML. Snowflake handles the serving and BI layer. See the Compare tab for a fuller breakdown."
     },
     {
       title: "Core abstraction: RDDs, DataFrames, and (in Scala/Java) Datasets",
@@ -86,7 +86,7 @@ setup: {
       code: `# First cell — confirm the session and Spark version
 spark
 print(spark.version)`,
-      note: "spark (a SparkSession) is pre-created and injected automatically in every Databricks notebook cell — you never need to build it yourself with SparkSession.builder like you would running PySpark locally."
+      note: "In every Databricks notebook cell, spark (a SparkSession) is already created and injected for you. You never build it yourself with SparkSession.builder, the way you would when running PySpark locally."
     },
     {
       title: "Load sample raw data",
@@ -100,7 +100,7 @@ print(spark.version)`,
 )
 df_raw.printSchema()
 df_raw.show(5)`,
-      note: "inferSchema=True makes Spark do a pass over the data first to guess types — convenient for exploration, but in a real production pipeline you should pass an explicit StructType schema instead, so a malformed/reordered source file fails loudly rather than silently inferring the wrong types."
+      note: "inferSchema=True makes Spark read the data once first to guess the column types. That is handy for exploration.<br><br>In a real production pipeline, pass an explicit StructType schema instead. Then a malformed or reordered source file fails loudly, rather than silently inferring the wrong types."
     },
     {
       title: "Transform with the DataFrame API",
@@ -122,7 +122,7 @@ df_clean = (
     .withColumn("price_per_1000_pop", F.round(F.col("median_price") / (F.col("population") / 1000), 2))
 )
 df_clean.show(5)`,
-      note: "F.col(...) references a column explicitly rather than using a bare string — this is the idiomatic PySpark style because it lets you build column expressions (arithmetic, casts, conditionals) that a plain string can't represent."
+      note: "F.col(...) points at a column explicitly instead of using a bare string. This is the idiomatic PySpark style.<br><br>It lets you build column expressions like arithmetic, casts, and conditionals that a plain string can't represent."
     },
     {
       title: "Write the curated output as Delta",
@@ -136,7 +136,7 @@ df_clean.show(5)`,
     .saveAsTable("city_price_stats"))
 
 display(spark.sql("SELECT * FROM city_price_stats ORDER BY price_per_1000_pop DESC LIMIT 10"))`,
-      note: "mode('overwrite') replaces the table's contents entirely on each run — fine for a learning pipeline; a real incremental pipeline would use mode('append') plus a dedup/MERGE strategy instead, the same idempotency concern covered in the Snowflake module's Tasks+Streams tab."
+      note: "mode('overwrite') replaces the whole table's contents on every run. That is fine for a learning pipeline.<br><br>A real incremental pipeline would use mode('append') plus a dedup or MERGE strategy instead. This is the same idempotency concern covered in the Snowflake module's Tasks+Streams tab."
     },
     {
       title: "Inspect the execution plan and Spark UI",
@@ -145,7 +145,7 @@ display(spark.sql("SELECT * FROM city_price_stats ORDER BY price_per_1000_pop DE
       navLabel: "Navigation:",
       nav: "Databricks: click the cluster name in the notebook's top bar → Spark UI tab, or in the notebook itself, each cell that triggered a job shows a small expandable 'View' link under the cell for that job's DAG/stages.",
       code: `df_clean.explain(True)   # shows the logical + physical plan for a DataFrame without running it`,
-      note: "explain(True) is free (it doesn't execute the job) and is the single fastest way to check whether Spark actually pushed a filter down to the data source or is planning to shuffle more than expected, before you spend cluster time finding out the slow way."
+      note: "explain(True) is free, because it doesn't run the job. It is the fastest way to check the plan before you spend cluster time.<br><br>Use it to see whether Spark actually pushed a filter down to the data source, or is planning to shuffle more than you expect, instead of finding out the slow way."
     }
   ]
 },
@@ -208,7 +208,7 @@ filtered = df_raw.rdd.filter(check_row)
 filtered.count()  # action — forces evaluation, accumulator value is now reliable
 print(f"Bad rows encountered: {bad_row_count.value}")`,
       noteLabel: "Interview framing:",
-      note: "'How would you count how many rows failed a validation check, without materializing them all to the Driver' is exactly the accumulator use case — and being able to name the reliability caveat (guaranteed accurate only within actions, not arbitrary transformations, due to potential task re-execution) shows you understand the mechanism, not just the API surface."
+      note: "'How would you count how many rows failed a validation check, without materializing them all to the Driver' is exactly the accumulator use case.<br><br>Name the reliability caveat too: an accumulator is guaranteed accurate only within actions, not arbitrary transformations, because a task can re-execute. Saying that shows you understand the mechanism, not just the API surface."
     },
     {
       title: "Working with nested/complex data: explode, StructType, ArrayType, MapType",
@@ -232,7 +232,7 @@ exploded = (
 # posexplode gives you the array index too, when order/position matters
 with_position = df_orders.select("order_id", F.posexplode("line_items").alias("pos", "item"))`,
       noteLabel: "Interview framing:",
-      note: "If handed a sample of nested JSON and asked to flatten it into rows on the spot, explode() plus dot notation into struct fields is the expected core answer — directly parallel to the FLATTEN/LATERAL JOIN pattern in the Snowflake module, just via PySpark's own schema-aware API instead of SQL."
+      note: "If you're handed nested JSON and asked to flatten it into rows on the spot, the expected core answer is explode() plus dot notation into struct fields.<br><br>This is directly parallel to the FLATTEN/LATERAL JOIN pattern in the Snowflake module. It just uses PySpark's own schema-aware API instead of SQL."
     },
     {
       title: "Transformations vs. actions — the full taxonomy",
@@ -263,7 +263,7 @@ result = (
     .orderBy(F.col("avg_price").desc())
 )
 result.show()`,
-      note: "Every .agg() call here triggers a shuffle (groupBy requires collecting rows by key across partitions) — this is exactly the kind of wide transformation from the previous card, and it's the natural place to reach for query-plan inspection (.explain()) if this were running slow on a large dataset."
+      note: "Every .agg() call here triggers a shuffle, because groupBy has to collect rows by key across partitions. This is exactly the kind of wide transformation from the previous card.<br><br>It is also the natural place to reach for query-plan inspection with .explain(), if this were running slow on a large dataset."
     },
     {
       title: "Joins: shuffle joins vs. broadcast joins",
@@ -278,7 +278,7 @@ result = large_df.join(F.broadcast(small_lookup_df), on="key", how="left")
 
 # Check which join strategy Spark actually chose
 result.explain()   # look for "BroadcastHashJoin" vs "SortMergeJoin" in the physical plan`,
-      note: "'Explain the difference between a shuffle join and a broadcast join, and when you'd force one' is one of the most common PySpark performance interview questions — being able to name the config threshold and the explain() verification step signals real hands-on experience, not just textbook knowledge."
+      note: "'Explain the difference between a shuffle join and a broadcast join, and when you'd force one' is one of the most common PySpark performance interview questions.<br><br>Name the config threshold and the explain() verification step. That signals real hands-on experience, not just textbook knowledge."
     },
     {
       title: "Window functions",
@@ -293,7 +293,7 @@ window_spec = Window.partitionBy("state").orderBy(F.col("population").desc())
 
 ranked = df_clean.withColumn("rank_in_state", F.rank().over(window_spec))
 ranked.filter(F.col("rank_in_state") <= 3).show()`,
-      note: "rank() vs dense_rank() vs row_number() is a common follow-up: rank() leaves gaps after ties (1,1,3), dense_rank() doesn't (1,1,2), row_number() breaks ties arbitrarily with no repeats (1,2,3) — know which one a given business requirement actually needs."
+      note: "rank() vs dense_rank() vs row_number() is a common follow-up. rank() leaves gaps after ties (1,1,3). dense_rank() doesn't (1,1,2). row_number() breaks ties arbitrarily with no repeats (1,2,3).<br><br>Know which one a given business requirement actually needs."
     },
     {
       title: "User-Defined Functions (UDFs) — and why to avoid them when possible",
@@ -320,7 +320,7 @@ classified = df_clean.withColumn(
 @pandas_udf(StringType())
 def classify_pandas_udf(pop: pd.Series) -> pd.Series:
     return pop.apply(lambda p: "large" if p > 500000 else "small")`,
-      note: "'When would you use a UDF, and what's the faster alternative' is a near-guaranteed interview question — the expected answer is: avoid them when a built-in exists, and prefer pandas UDFs over plain UDFs when custom logic is truly required, because Arrow-based batching amortizes the serialization cost across many rows instead of paying it per-row."
+      note: "'When would you use a UDF, and what's the faster alternative' is a near-guaranteed interview question. The expected answer: avoid UDFs when a built-in exists.<br><br>When custom logic is truly required, prefer pandas UDFs over plain UDFs. Arrow-based batching spreads the serialization cost across many rows, instead of paying it per row."
     },
     {
       title: "Spark SQL — the same engine, SQL syntax",
@@ -338,7 +338,7 @@ result = spark.sql("""
     ORDER BY avg_price DESC
 """)
 result.show()`,
-      note: "createOrReplaceTempView registers the view only for the current SparkSession/notebook — it's not persisted anywhere. saveAsTable (used in the Setup tab) is what actually persists a table durably."
+      note: "createOrReplaceTempView registers the view only for the current SparkSession or notebook. It is not persisted anywhere. saveAsTable, used in the Setup tab, is what actually persists a table durably."
     }
   ]
 },
@@ -363,7 +363,7 @@ df_clean.groupBy("state").agg(F.avg("median_price")).write.format("delta").saveA
 #   [shuffle boundary — groupBy]
 #   Stage 2 (wide: aggregate + write)          -> M tasks, M = number of shuffle partitions (default 200)`,
       noteLabel: "Why this matters:",
-      note: "This hierarchy is the actual vocabulary the Spark UI, and every performance discussion, is built on — 'this job is slow' isn't specific enough to debug, but 'stage 2 has a 40-second task and the rest finish in 2 seconds' immediately points at skew in a specific stage."
+      note: "This hierarchy is the vocabulary the Spark UI and every performance discussion are built on.<br><br>'This job is slow' isn't specific enough to debug. But 'stage 2 has a 40-second task and the rest finish in 2 seconds' points straight at skew in a specific stage."
     },
     {
       title: "Narrow vs. wide dependencies — what actually creates a new stage",
@@ -404,7 +404,7 @@ spark-submit --deploy-mode client --master yarn my_job.py
 # Cluster mode: Driver runs inside the cluster itself, managed by the cluster manager
 spark-submit --deploy-mode cluster --master yarn my_job.py`,
       noteLabel: "Interview framing:",
-      note: "'Why would a production Spark job use cluster mode instead of client mode?' — so the Driver's lifecycle isn't tied to a single machine staying online; an unattended scheduled job (via Airflow, cron, or a job scheduler) should run in cluster mode so a disconnect on the submitting side doesn't kill a multi-hour job partway through. Databricks Jobs (as opposed to interactive notebooks) conceptually follow the same cluster-mode philosophy — the Driver's lifecycle is tied to the managed job run, not to your own machine."
+      note: "'Why would a production Spark job use cluster mode instead of client mode?' So the Driver's lifecycle isn't tied to a single machine staying online.<br><br>An unattended scheduled job, run via Airflow, cron, or a job scheduler, should use cluster mode. Then a disconnect on the submitting side doesn't kill a multi-hour job partway through.<br><br>Databricks Jobs, as opposed to interactive notebooks, follow the same philosophy. The Driver's lifecycle is tied to the managed job run, not to your own machine."
     },
     {
       title: "Tracing one action end-to-end",
@@ -413,7 +413,7 @@ spark-submit --deploy-mode cluster --master yarn my_job.py`,
       navLabel: "Where to verify this:",
       nav: "Spark UI → Jobs tab (one row per action/Job) → click into the Job → Stages (in execution order, with the shuffle boundary visible as the transition between them) → click a Stage → Tasks tab shows every individual task, its executor, duration, and any retries — this is the literal, visual confirmation of everything in this tab.",
       code: null,
-      note: "Being able to narrate this whole chain — Job to Stage to Task, DAGScheduler to TaskScheduler, narrow vs. wide as the reason stages exist at all — in response to 'what happens when I call .write() on a DataFrame' is one of the strongest signals of genuine Spark depth in an interview, well beyond just knowing the DataFrame API."
+      note: "Being able to narrate this whole chain is one of the strongest signals of real Spark depth in an interview. It goes well beyond just knowing the DataFrame API.<br><br>The chain: Job to Stage to Task, DAGScheduler to TaskScheduler, and narrow vs. wide as the reason stages exist at all. Interviewers ask it as 'what happens when I call .write() on a DataFrame'."
     }
   ]
 },
@@ -444,7 +444,7 @@ df_clean.coalesce(4).write.format("delta").mode("overwrite").saveAsTable("city_p
 
 # Rebalance/repartition by a key before a join or aggregation that's skewed
 df_repartitioned = df_clean.repartition(200, "state")`,
-      note: "'Why do I have 500 tiny output files instead of a few reasonably-sized ones' is a very common real-world Spark complaint, and the answer is almost always 'too many partitions going into the write, use coalesce.'"
+      note: "'Why do I have 500 tiny output files instead of a few reasonably-sized ones' is a very common real-world Spark complaint. The answer is almost always the same: too many partitions are going into the write, so use coalesce."
     },
     {
       title: "Shuffles — the most expensive operation in Spark",
@@ -466,7 +466,7 @@ df_clean.count()          # first action materializes the cache
 df_clean.filter(...).show()   # reuses the cached result, doesn't recompute df_clean from df_raw
 
 df_clean.unpersist()      # free the memory once you're done with it`,
-      note: "A common mistake: calling .cache() and expecting it to do something immediately — cache() is itself lazy too, it only marks the DataFrame for caching; the actual caching happens on the next action that touches it."
+      note: "A common mistake is calling .cache() and expecting it to do something right away. cache() is lazy too.<br><br>It only marks the DataFrame for caching. The actual caching happens on the next action that touches it."
     },
     {
       title: "Adaptive Query Execution (AQE)",
@@ -489,7 +489,7 @@ spark.conf.get("spark.sql.adaptive.enabled")`,
 # Salting pattern for a severely skewed join key
 salted = df.withColumn("salted_key", F.concat(F.col("key"), F.lit("_"), (F.rand() * 10).cast("int")))
 # join on salted_key against a correspondingly exploded version of the small side, then drop the salt suffix after`,
-      note: "'How would you handle a skewed join' is a classic senior-level Spark question — mentioning both AQE's automatic handling and salting as the manual fallback shows awareness of both the modern default behavior and the underlying problem it's solving."
+      note: "'How would you handle a skewed join' is a classic senior-level Spark question. Mention both AQE's automatic handling and salting as the manual fallback.<br><br>That shows you know the modern default behavior and the underlying problem it solves."
     },
     {
       title: "Memory management: unified memory model",
@@ -514,7 +514,7 @@ salted = df.withColumn("salted_key", F.concat(F.col("key"), F.lit("_"), (F.rand(
   --conf spark.dynamicAllocation.enabled=true \\
   my_job.py`,
       noteLabel: "Interview framing:",
-      note: "'How would you size a Spark job's resources' — start from data volume and shuffle partition count, not a guessed cluster size: enough executor-cores in total to have meaningfully more tasks running in parallel than waiting, enough executor-memory per core to hold a partition's working set without spilling, and prefer dynamic allocation over a fixed executor count for variable workloads."
+      note: "'How would you size a Spark job's resources' Start from data volume and shuffle partition count, not a guessed cluster size.<br><br>Total executor-cores should let meaningfully more tasks run in parallel than sit waiting. Executor-memory per core should hold a partition's working set without spilling.<br><br>For variable workloads, prefer dynamic allocation over a fixed executor count."
     },
     {
       title: "Serialization: Java vs. Kryo",
@@ -524,7 +524,7 @@ salted = df.withColumn("salted_key", F.concat(F.col("key"), F.lit("_"), (F.rand(
       nav: "Set Kryo as the default serializer for an RDD-heavy or cache-heavy job.",
       code: `spark-submit --conf spark.serializer=org.apache.spark.serializer.KryoSerializer my_job.py`,
       noteLabel: "Interview framing:",
-      note: "A concrete, specific answer ('switch to Kryo via spark.serializer, since it's faster and more compact than Java serialization for shuffle/cache-heavy RDD workloads') signals real tuning experience — most candidates only know Spark 'does serialization' without knowing there's a choice or a config for it."
+      note: "A concrete, specific answer signals real tuning experience. For example: 'switch to Kryo via spark.serializer, since it's faster and more compact than Java serialization for shuffle- or cache-heavy RDD workloads.'<br><br>Most candidates only know that Spark 'does serialization.' They don't know there's a choice, or a config for it."
     },
     {
       title: "partitionBy (physical, on write) vs. repartition (in-memory)",
@@ -541,7 +541,7 @@ salted = df.withColumn("salted_key", F.concat(F.col("key"), F.lit("_"), (F.rand(
 # Result: one subdirectory per distinct state value, e.g. state=CA/, state=TX/, ...
 # A later query filtering WHERE state = 'CA' skips reading every other directory entirely.`,
       noteLabel: "Interview framing:",
-      note: "'What's the difference between repartition and partitionBy' is a near-guaranteed question specifically because they sound like the same concept — the clean answer is: repartition is about in-memory parallelism during processing, partitionBy is about physical file layout on write for future read pruning. Over-partitioning on write (too many distinct values, e.g. partitioning by a high-cardinality column like customer_id) creates the small-file problem at the storage layer — a real, common mistake worth naming unprompted."
+      note: "'What's the difference between repartition and partitionBy' is a near-guaranteed question, precisely because they sound like the same concept. The clean answer: repartition is about in-memory parallelism during processing; partitionBy is about physical file layout on write, for future read pruning.<br><br>Over-partitioning on write creates the small-file problem at the storage layer. That happens with too many distinct values, like partitioning by a high-cardinality column such as customer_id. It is a real, common mistake worth naming unprompted."
     }
   ]
 },
@@ -585,7 +585,7 @@ query = (
     .start("/mnt/curated/purchases/")
 )
 query.awaitTermination()`,
-      note: "Streaming sources require an explicit schema — inferSchema isn't allowed, since Spark can't infer a schema from data that hasn't arrived yet."
+      note: "Streaming sources require an explicit schema. inferSchema isn't allowed, because Spark can't infer a schema from data that hasn't arrived yet."
     },
     {
       title: "Checkpointing",
@@ -617,7 +617,7 @@ query.awaitTermination()`,
     .groupBy(F.window("event_time", "5 minutes"), "event_type")
     .count()
 )`,
-      note: "'How does Spark handle data that arrives late' is a direct signal question for streaming maturity — the answer is watermarking, and the trade-off is explicit: too tight a threshold drops legitimately late data, too loose a threshold keeps state around (and memory pressure) longer than necessary."
+      note: "'How does Spark handle data that arrives late' is a direct signal question for streaming maturity. The answer is watermarking.<br><br>The trade-off is explicit. Too tight a threshold drops legitimately late data. Too loose a threshold keeps state, and memory pressure, around longer than necessary."
     },
     {
       title: "Exactly-once semantics with idempotent sinks",
@@ -663,7 +663,7 @@ spark.sql("DESCRIBE HISTORY city_price_stats").show()
 
 # Roll back to a prior version
 spark.sql("RESTORE TABLE city_price_stats TO VERSION AS OF 3")`,
-      note: "Time travel depends on the old data files still existing — VACUUM (covered below) permanently deletes files older than its retention threshold, which caps how far back you can actually travel."
+      note: "Time travel depends on the old data files still existing. VACUUM, covered below, permanently deletes files older than its retention threshold. That caps how far back you can actually travel."
     },
     {
       title: "Schema enforcement and schema evolution",
@@ -672,7 +672,7 @@ spark.sql("RESTORE TABLE city_price_stats TO VERSION AS OF 3")`,
       navLabel: "Try it:",
       nav: "Add a new column via an evolving write instead of hand-running ALTER TABLE.",
       code: `df_with_new_col.write.format("delta").mode("append").option("mergeSchema", "true").saveAsTable("city_price_stats")`,
-      note: "This is the direct Delta equivalent of the 'schema evolution isn't handled' gap flagged in the Snowflake module's production-hardening discussion — worth explicitly contrasting the two approaches if asked how each platform handles it."
+      note: "This is the direct Delta equivalent of the 'schema evolution isn't handled' gap flagged in the Snowflake module's production-hardening discussion. If asked how each platform handles it, contrast the two approaches explicitly."
     },
     {
       title: "MERGE INTO — upserts",
@@ -698,7 +698,7 @@ target = DeltaTable.forName(spark, "city_price_stats")
       navLabel: "Try it:",
       nav: "Compact and Z-order a table that's been receiving frequent small writes.",
       code: `spark.sql("OPTIMIZE city_price_stats ZORDER BY (state)")`,
-      note: "'Delta's OPTIMIZE ZORDER is basically Snowflake's CLUSTER BY key' is a strong comparison to have ready — both exist to solve the exact same problem (help the engine prune irrelevant data on a selective filter) via a similar mechanism (colocating similar values together), just triggered differently (manual OPTIMIZE run vs. Snowflake's automatic background reclustering)."
+      note: "'Delta's OPTIMIZE ZORDER is basically Snowflake's CLUSTER BY key' is a strong comparison to have ready. Both solve the exact same problem: help the engine prune irrelevant data on a selective filter.<br><br>They use a similar mechanism, colocating similar values together. They just trigger differently: a manual OPTIMIZE run vs. Snowflake's automatic background reclustering."
     },
     {
       title: "VACUUM — cleaning up old files",
@@ -710,7 +710,7 @@ target = DeltaTable.forName(spark, "city_price_stats")
 spark.sql("VACUUM city_price_stats DRY RUN")
 
 spark.sql("VACUUM city_price_stats RETAIN 168 HOURS")  -- 7 days, the default`,
-      note: "Running VACUUM with too short a retention window is a real, hard-to-reverse mistake — it can delete files a concurrent long-running read or an intended time-travel query still needed, directly paralleling why Snowflake's DATA_RETENTION_TIME_IN_DAYS is a deliberate per-table decision, not a default to leave unexamined."
+      note: "Running VACUUM with too short a retention window is a real, hard-to-reverse mistake. It can delete files that a concurrent long-running read, or an intended time-travel query, still needed.<br><br>This directly parallels why Snowflake's DATA_RETENTION_TIME_IN_DAYS is a deliberate per-table decision, not a default to leave unexamined."
     }
   ]
 },
@@ -754,7 +754,7 @@ def test_price_per_1000_pop(spark):
     row = result.collect()[0]
     assert row.price_per_1000_pop == 300.0`,
       noteLabel: "Interview framing:",
-      note: "'How do you test Spark code' is a real differentiator question — many candidates have only ever run transformations interactively in a notebook and never extracted them into testable functions at all. Mentioning local[*] mode, small hand-built input DataFrames instead of production-scale data, and asserting on collected output signals real engineering practice, not just notebook exploration."
+      note: "'How do you test Spark code' is a real differentiator question. Many candidates have only ever run transformations interactively in a notebook, and never extracted them into testable functions at all.<br><br>Mention local[*] mode, small hand-built input DataFrames instead of production-scale data, and asserting on collected output. That signals real engineering practice, not just notebook exploration."
     },
     {
       title: "Databricks Auto Loader (cloudFiles) — Spark's answer to incremental ingestion",
@@ -776,7 +776,7 @@ def test_price_per_1000_pop(spark):
     .trigger(availableNow=True)   # process what's currently available, then stop — good for scheduled batch-style runs
     .start("/mnt/curated/orders/"))`,
       noteLabel: "Interview framing:",
-      note: "'How would you incrementally ingest new files landing in S3 into a Spark/Databricks pipeline, without a full directory rescan each time' — Auto Loader, and being able to name that it can use cloud-native file notifications (not just directory listing) for efficiency at scale is the same maturity signal as knowing Snowpipe uses SQS rather than polling."
+      note: "'How would you incrementally ingest new files landing in S3 into a Spark/Databricks pipeline, without a full directory rescan each time' The answer is Auto Loader.<br><br>Name that it can use cloud-native file notifications, not just directory listing, for efficiency at scale. That is the same maturity signal as knowing Snowpipe uses SQS rather than polling."
     },
     {
       title: "Orchestrating Spark jobs: Databricks Jobs and Airflow",
@@ -792,7 +792,7 @@ run_spark_job = DatabricksRunNowOperator(
     job_id=12345,   # the Databricks Job ID configured in the workspace UI
 )`,
       noteLabel: "Interview framing:",
-      note: "'Notebook run manually' vs. 'Databricks Job' vs. 'Airflow triggering a Databricks Job' is a spectrum of production-readiness worth being able to place a given setup on — mirroring exactly the same 'native orchestration vs. external orchestrator' trade-off discussion already covered for Snowflake Tasks vs. dbt+Airflow."
+      note: "'Notebook run manually' vs. 'Databricks Job' vs. 'Airflow triggering a Databricks Job' is a spectrum of production-readiness. Be able to place a given setup on it.<br><br>It mirrors the same 'native orchestration vs. external orchestrator' trade-off already covered for Snowflake Tasks vs. dbt+Airflow."
     },
     {
       title: "Bucketing (bucketBy) for repeated joins on the same key",
@@ -804,7 +804,7 @@ run_spark_job = DatabricksRunNowOperator(
 df_customers.write.bucketBy(8, "customer_id").sortBy("customer_id").saveAsTable("customers_bucketed")
 # A later join on customer_id between these two tables can skip the shuffle entirely`,
       noteLabel: "Interview framing:",
-      note: "Lower priority than broadcast joins for most interviews, but worth knowing exists — 'bucketing trades a one-time write-time cost for avoiding a shuffle on every future join,' as the concise answer if asked to go beyond broadcast joins."
+      note: "For most interviews this is lower priority than broadcast joins, but worth knowing it exists. If asked to go beyond broadcast joins, the concise answer is: 'bucketing trades a one-time write-time cost for avoiding a shuffle on every future join.'"
     },
     {
       title: "FAIR vs. FIFO scheduling within one Application",
@@ -814,7 +814,7 @@ df_customers.write.bucketBy(8, "customer_id").sortBy("customer_id").saveAsTable(
       nav: "Switch to FAIR scheduling for a workload with multiple concurrent, independent jobs sharing one Application.",
       code: `spark.conf.set("spark.scheduler.mode", "FAIR")`,
       noteLabel: "Interview framing:",
-      note: "This is a niche but real distinguishing question — most candidates only know about cluster-manager-level resource allocation and have never considered that jobs within a single Application also need a scheduling policy relative to each other."
+      note: "This is a niche but real distinguishing question. Most candidates only know about cluster-manager-level resource allocation. They have never considered that jobs within a single Application also need a scheduling policy relative to each other."
     },
     {
       title: "Cost control: autoscaling, spot instances, cluster pools",
@@ -841,7 +841,7 @@ advanced: {
       navLabel: "The practical levers:",
       nav: "The most common performance fix is forcing or preventing a broadcast: broadcast(df) hint (or /*+ BROADCAST(t) */ in SQL) when Catalyst underestimates a small side after filtering, or RAISING autoBroadcastJoinThreshold. AQE also converts sort-merge to broadcast at runtime once it sees real post-filter sizes. Set it to -1 to disable broadcasting entirely when a 'small' side is actually large enough to OOM the executors building the hash table. The interview signal is knowing sort-merge is the large-table default and broadcast is the thing you reach for — and why an errant broadcast causes executor OOM.",
       code: "from pyspark.sql.functions import broadcast\nbig.join(broadcast(small), \"key\")          # force broadcast hash join\n# SQL: SELECT /*+ BROADCAST(small) */ ...\nspark.conf.set(\"spark.sql.autoBroadcastJoinThreshold\", 50*1024*1024)",
-      note: "A join silently degrading to Sort-Merge (or worse, a Cartesian/BroadcastNestedLoop for a non-equi condition) is a top cause of slow jobs. .explain() literally names the join type in the physical plan — that's the first thing to check."
+      note: "A join silently degrading to Sort-Merge is a top cause of slow jobs. It is even worse when a non-equi condition drops to a Cartesian or BroadcastNestedLoop join.<br><br>.explain() literally names the join type in the physical plan. That's the first thing to check."
     },
     {
       title: "Photon — the vectorized C++ engine",
@@ -857,7 +857,7 @@ advanced: {
       concept: "A straggler is one task far slower than its peers (a slow disk, a noisy-neighbor node, mild skew). Speculative execution (spark.speculation=true) launches a duplicate copy of a task that's running much slower than the median; whichever finishes first wins, the other is killed — it hides transient slow nodes at the cost of some redundant work. Separately, the external shuffle service is a process that lives on each worker node and serves shuffle files independently of the executors — so an executor can be removed (dynamic allocation scaling down, or a spot-instance reclaim) WITHOUT losing the shuffle data other stages still need to read.",
       navLabel: "Why they matter together at scale:",
       nav: "Dynamic allocation (add/remove executors based on load) is only safe with the external shuffle service — otherwise scaling down or losing an executor would delete shuffle output and force expensive recomputation. Speculative execution is the mitigation for stragglers that aren't true data skew (which you fix with salting/AQE instead). The distinction interviewers probe: speculation helps with a slow NODE; salting/AQE skew-join helps with a slow PARTITION (uneven data). Using speculation to paper over real skew just wastes compute duplicating an inherently huge task.",
-      note: "On Databricks, decommissioning + the shuffle service is also what makes spot/preemptible instances viable — a reclaimed node's shuffle data is migrated rather than lost. This is a big cost lever tied directly to this machinery."
+      note: "On Databricks, decommissioning plus the shuffle service is also what makes spot and preemptible instances viable. A reclaimed node's shuffle data is migrated rather than lost.<br><br>This is a big cost lever tied directly to this machinery."
     },
     {
       title: "Stateful Structured Streaming: stream-stream joins & arbitrary state",
@@ -865,7 +865,7 @@ advanced: {
       concept: "Beyond stateless map/filter, Structured Streaming keeps STATE across micro-batches in a state store (backed by checkpointed files, RocksDB on Databricks). Stream-stream joins buffer both sides in state and require a watermark + time constraint on the join condition so state doesn't grow unbounded — you're joining events within a bounded time window of each other. For logic that windowing can't express, flatMapGroupsWithState / mapGroupsWithState (and the newer transformWithState) let you maintain arbitrary per-key state with your own timeout/eviction — e.g. sessionization, custom deduplication, or state machines over an event stream.",
       navLabel: "The thing that bites people:",
       nav: "Unbounded state growth. A stream-stream join or arbitrary-state operator without a watermark (or with too loose a one) accumulates state forever until the job OOMs or checkpoints balloon — the #1 stateful-streaming failure. The watermark is what tells Spark 'events older than this can't match anymore, evict their state.' The senior answer to any stateful-streaming design question always names the watermark and the state-eviction/timeout policy explicitly, and treats the state store size as a first-class metric to monitor.",
-      note: "RocksDB state store (vs the default in-memory + HDFS) is the standard choice for large state — it spills to local disk so state bigger than executor memory doesn't OOM, at the cost of some latency. Naming it signals you've run stateful streaming at real scale."
+      note: "The RocksDB state store, vs the default in-memory plus HDFS, is the standard choice for large state. It spills to local disk, so state bigger than executor memory doesn't OOM, at the cost of some latency.<br><br>Naming it signals you've run stateful streaming at real scale."
     },
     {
       title: "Modern Delta: Change Data Feed, liquid clustering, deletion vectors",
@@ -930,7 +930,7 @@ interview: {
       badge: "behavioral",
       nav: "Use this project's shape as your STAR narrative: Situation (need to transform raw data at a scale/complexity SQL alone couldn't handle cleanly), Task (build a reliable, performant ETL job), Action (DataFrame API transformations, Delta for the output, attention to shuffles/partitioning), Result (a curated table ready for downstream consumption). Keep it under 90 seconds.",
       noteLabel: "Model answer:",
-      note: "\"I built a PySpark pipeline that reads raw source files, applies a series of DataFrame transformations — type casting, filtering, derived columns — and writes the curated result as a Delta table so downstream consumers get ACID guarantees and time travel for free. Along the way I paid attention to the things that actually determine whether a Spark job is fast or slow: avoiding unnecessary shuffles, using broadcast joins where one side was small, and checking the physical plan with .explain() rather than guessing at performance.\""
+      note: "\"I built a PySpark pipeline that reads raw source files. It applies a series of DataFrame transformations: type casting, filtering, and derived columns. Then it writes the curated result as a Delta table, so downstream consumers get ACID guarantees and time travel for free.<br><br>Along the way I watched the things that actually make a Spark job fast or slow. I avoided unnecessary shuffles. I used broadcast joins where one side was small. And I checked the physical plan with .explain() instead of guessing at performance.\""
     },
     {
       title: "Why DataFrame API over RDDs for almost everything?",
@@ -943,7 +943,7 @@ interview: {
       badge: "concept",
       nav: "Tie the answer to Catalyst specifically, not just 'it's easier to write.'",
       noteLabel: "Model answer:",
-      note: "DataFrames carry a schema and get compiled through Catalyst's optimizer — predicate pushdown, column pruning, join reordering, whole-stage code generation — none of which Catalyst can do for an RDD, because an RDD's transformations are opaque Python/Scala closures it can't see inside. The performance gap isn't marginal; it's the difference between an optimized JVM execution plan and interpreted, row-by-row Python in the worst case."
+      note: "DataFrames carry a schema and get compiled through Catalyst's optimizer. That means predicate pushdown, column pruning, join reordering, and whole-stage code generation.<br><br>Catalyst can do none of that for an RDD. An RDD's transformations are opaque Python or Scala closures it can't see inside.<br><br>The performance gap isn't marginal. It's the difference between an optimized JVM execution plan and interpreted, row-by-row Python in the worst case."
     },
     {
       title: "How do you approach debugging a slow Spark job?",
@@ -956,7 +956,7 @@ interview: {
       badge: "deep-dive",
       nav: "Give a concrete diagnostic order, not a vague 'I'd look at the logs.'",
       noteLabel: "Model answer:",
-      note: "\"First, .explain() on the DataFrame to see the physical plan — am I getting a broadcast join where I expect one, is a filter actually pushed down to the source? Second, the Spark UI's Stages tab — looking for a stage with disproportionate shuffle read/write, or wildly uneven task durations, which usually means data skew. Third, checking partition count and size going into expensive stages — too few large partitions underutilizes the cluster, too many tiny ones adds scheduling overhead. From there it's usually one of: add a broadcast hint, repartition on a better key, salt a skewed key, or cache a DataFrame that's being recomputed multiple times.\""
+      note: "\"First, I run .explain() on the DataFrame to see the physical plan. Am I getting a broadcast join where I expect one? Is a filter actually pushed down to the source?<br><br>Second, I check the Spark UI's Stages tab. I look for a stage with disproportionate shuffle read or write, or wildly uneven task durations, which usually means data skew.<br><br>Third, I check partition count and size going into the expensive stages. Too few large partitions underutilize the cluster. Too many tiny ones add scheduling overhead.<br><br>From there it's usually one fix: add a broadcast hint, repartition on a better key, salt a skewed key, or cache a DataFrame that's being recomputed multiple times.\""
     },
     {
       title: "Walk me through what happens when I call .write() on a DataFrame.",
@@ -969,7 +969,7 @@ interview: {
       badge: "deep-dive",
       nav: "This is the execution-model question, almost verbatim — narrate the full chain from the Execution Model tab rather than staying at the surface level of 'it writes the data.'",
       noteLabel: "Model answer:",
-      note: "\"Calling .write() is the action that finally triggers the accumulated lazy plan. The Driver's DAGScheduler looks at that plan and creates one Job, then walks it backward, cutting a new Stage at every wide-dependency shuffle boundary — narrow operations like filter and select before the first shuffle stay pipelined into one stage. Each Stage becomes a TaskSet with one task per partition, which the TaskScheduler hands off to executors, respecting data locality where possible. Stage 2 can't start until every task in Stage 1 finishes writing its shuffle output. If a single task fails transiently, the TaskScheduler just retries that task; if a whole executor is lost, the DAGScheduler recomputes the lost partitions from lineage rather than restarting the Job. I'd verify all of this concretely in the Spark UI's Jobs → Stages → Tasks views rather than just asserting it.\""
+      note: "\"Calling .write() is the action that finally triggers the accumulated lazy plan. The Driver's DAGScheduler looks at that plan and creates one Job. Then it walks the plan backward, cutting a new Stage at every wide-dependency shuffle boundary. Narrow operations like filter and select before the first shuffle stay pipelined into one stage.<br><br>Each Stage becomes a TaskSet with one task per partition. The TaskScheduler hands those off to executors, respecting data locality where possible. Stage 2 can't start until every task in Stage 1 finishes writing its shuffle output.<br><br>If a single task fails transiently, the TaskScheduler just retries that task. If a whole executor is lost, the DAGScheduler recomputes the lost partitions from lineage instead of restarting the Job.<br><br>I'd verify all of this concretely in the Spark UI's Jobs, Stages, and Tasks views, rather than just asserting it.\""
     },
     {
       title: "What's the difference between cache() and checkpoint()?",
@@ -982,7 +982,7 @@ interview: {
       badge: "gotcha",
       nav: "A good one to have precise, since the two sound similar but solve different problems.",
       noteLabel: "Model answer:",
-      note: "cache()/persist() stores a DataFrame's materialized result in memory/disk on the executors to avoid recomputing it across multiple actions — but it doesn't truncate lineage; if an executor holding cached data is lost, Spark still knows how to recompute it from the original plan. checkpoint() (a different concept from Structured Streaming's checkpointing) writes the DataFrame to reliable storage and truncates the lineage/DAG entirely — used for very long, iterative lineages (common in ML/graph algorithms) where recomputing from scratch after a failure would be prohibitively expensive, at the cost of an actual write to storage rather than just an in-memory cache."
+      note: "cache() and persist() store a DataFrame's materialized result in memory or on disk on the executors, to avoid recomputing it across multiple actions. But they don't truncate lineage. If an executor holding cached data is lost, Spark still knows how to recompute it from the original plan.<br><br>checkpoint() is a different concept from Structured Streaming's checkpointing. It writes the DataFrame to reliable storage and truncates the lineage/DAG entirely.<br><br>Use it for very long, iterative lineages, common in ML and graph algorithms, where recomputing from scratch after a failure would be prohibitively expensive. The cost is an actual write to storage, rather than just an in-memory cache."
     },
     {
       title: "How would you handle a job that's failing with executor OOM errors?",
@@ -995,7 +995,7 @@ interview: {
       badge: "scenario",
       nav: "Walk through a real diagnostic/fix order rather than jumping straight to 'add more memory.'",
       noteLabel: "Model answer:",
-      note: "\"I wouldn't reach for a bigger cluster first. I'd check: is a broadcast join broadcasting something bigger than expected (e.g. a 'small' lookup table that grew, or the auto-broadcast threshold misjudging size after upstream filtering)? Is data heavily skewed, so one task/partition is holding far more data than the rest? Am I caching more DataFrames than I actually still need, without unpersisting? Is partition count too low for the data volume, so each partition is oversized for a single task's memory? Only after ruling those out would I actually scale up executor memory, since that just delays the same problem at a higher data volume otherwise.\""
+      note: "\"I wouldn't reach for a bigger cluster first. I'd check a few things.<br><br>Is a broadcast join broadcasting something bigger than expected? Maybe a 'small' lookup table that grew, or the auto-broadcast threshold misjudging size after upstream filtering. Is the data heavily skewed, so one task or partition holds far more than the rest? Am I caching more DataFrames than I still need, without unpersisting? Is partition count too low for the data volume, so each partition is oversized for one task's memory?<br><br>Only after ruling those out would I actually scale up executor memory. Otherwise that just delays the same problem at a higher data volume.\""
     },
     {
       title: "When would you use Spark instead of Snowflake, or vice versa, in a real pipeline?",
@@ -1008,7 +1008,7 @@ interview: {
       badge: "architecture",
       nav: "Shows you can reason about the two tools together rather than treating them as competitors in every scenario — often the strongest answer is 'both, at different stages.'",
       noteLabel: "Model answer:",
-      note: "\"Snowflake for SQL-shaped analytics and BI serving where low operational overhead matters and the transformation logic fits naturally in SQL. Spark when I need custom code Snowflake SQL can't express cleanly, ML feature engineering, or processing that needs to happen before data lands in a warehouse at all — e.g. cleaning and joining large raw files from multiple systems. A lot of real architectures use Spark upstream for the heavy lifting and land clean, curated data into Snowflake for the serving layer, rather than picking one exclusively.\""
+      note: "\"I'd use Snowflake for SQL-shaped analytics and BI serving, where low operational overhead matters and the transformation logic fits naturally in SQL.<br><br>I'd use Spark when I need custom code Snowflake SQL can't express cleanly, ML feature engineering, or processing that has to happen before data lands in a warehouse at all. For example, cleaning and joining large raw files from multiple systems.<br><br>A lot of real architectures use Spark upstream for the heavy lifting, then land clean, curated data into Snowflake for the serving layer, rather than picking one exclusively.\""
     },
     {
       title: "\"How does Spark decide which join to use, and how would you change it?\"",
@@ -1016,7 +1016,7 @@ interview: {
       badge: "deep-dive",
       nav: "Name the join taxonomy and the cost basis, then the concrete levers (broadcast hint, threshold, AQE). Land the 'sort-merge is the large-table default, broadcast is what you reach for' point.",
       noteLabel: "Model answer:",
-      note: "\"Catalyst chooses by cost. If one side is under the autoBroadcastJoinThreshold — 10MB by default, and AQE raises this using real post-filter sizes — it does a broadcast hash join: ship the small side everywhere, no shuffle of the big side, the fastest option. For two large tables it defaults to sort-merge join, which shuffles and sorts both sides; shuffle-hash join is used when one side is smallish but over the broadcast threshold and hashing beats sorting. A non-equi condition falls back to broadcast-nested-loop or Cartesian, which is usually a red flag. To change it I'd add a broadcast() hint when Catalyst underestimates a small side after filtering, or raise the threshold; conversely I'd set it to -1 if a 'small' side is actually large enough to OOM executors building the hash table. I confirm the actual choice in .explain() — the physical plan names the join type.\"",
+      note: "\"Catalyst chooses by cost. If one side is under the autoBroadcastJoinThreshold, it does a broadcast hash join: ship the small side everywhere, no shuffle of the big side, the fastest option. That threshold is 10MB by default, and AQE raises it using real post-filter sizes.<br><br>For two large tables it defaults to a sort-merge join, which shuffles and sorts both sides. A shuffle-hash join is used when one side is smallish but over the broadcast threshold, and hashing beats sorting. A non-equi condition falls back to broadcast-nested-loop or Cartesian, which is usually a red flag.<br><br>To change it, I'd add a broadcast() hint when Catalyst underestimates a small side after filtering, or raise the threshold. Conversely, I'd set it to -1 if a 'small' side is actually large enough to OOM the executors building the hash table.<br><br>I confirm the actual choice in .explain(). The physical plan names the join type.\"",
       followups: [
         "\"An errant broadcast is OOM-ing the executors — what happened and how do you fix it?\"",
         "\"You see a BroadcastNestedLoopJoin in the plan — what does that usually mean?\"",
@@ -1029,7 +1029,7 @@ interview: {
       badge: "databricks",
       nav: "Vectorized C++ engine, columnar batches, transparent — but UDF-blind. Close on 'benchmark total cost, not just runtime.'",
       noteLabel: "Model answer:",
-      note: "\"Photon is Databricks' native vectorized engine written in C++ that replaces parts of JVM Spark execution for SQL and DataFrame operators. Instead of row-at-a-time JVM code it processes columnar batches with SIMD, so scans, filters, joins, and aggregations on Delta/Parquet often run 2-3x faster, transparently — same API, it runs the operators it supports and falls back to Spark for the rest. The key limitation is that it doesn't accelerate arbitrary Python UDFs or RDD code — those still run on the JVM/Python — so a UDF-dominated job barely benefits, which is one more reason to prefer built-in functions. And Photon clusters cost more per DBU but often finish faster, so I'd benchmark total job cost rather than assuming faster equals cheaper.\"",
+      note: "\"Photon is Databricks' native vectorized engine, written in C++, that replaces parts of JVM Spark execution for SQL and DataFrame operators. Instead of row-at-a-time JVM code, it processes columnar batches with SIMD. So scans, filters, joins, and aggregations on Delta and Parquet often run 2-3x faster, transparently. Same API: it runs the operators it supports and falls back to Spark for the rest.<br><br>The key limitation is that it doesn't accelerate arbitrary Python UDFs or RDD code. Those still run on the JVM or Python. So a UDF-dominated job barely benefits, which is one more reason to prefer built-in functions.<br><br>Photon clusters also cost more per DBU but often finish faster. So I'd benchmark total job cost, rather than assuming faster means cheaper.\"",
       followups: [
         "\"Your job is dominated by a Python UDF — will Photon help? Why or why not?\"",
         "\"Photon finished faster but the bill went up — how is that possible?\""
@@ -1041,7 +1041,7 @@ interview: {
       badge: "streaming",
       nav: "This is the watermark question in disguise. Explain unbounded state, the watermark's role in eviction, and the RocksDB state store for large state.",
       noteLabel: "Model answer:",
-      note: "\"That's unbounded state growth — the classic stateful-streaming failure. A stream-stream join buffers both sides in the state store to match late-arriving events, and without a watermark plus a time constraint on the join condition, Spark can never conclude that old events won't match anymore, so state grows forever until it OOMs or checkpoints balloon. The fix is a watermark on both streams and a time-bounded join condition, so Spark knows 'events older than this can be evicted.' For genuinely large state I'd use the RocksDB state store, which spills to local disk instead of holding everything in executor memory, and I'd monitor state store size as a first-class metric. The same watermark/eviction thinking applies to arbitrary state via flatMapGroupsWithState — you must define a timeout, or state leaks.\"",
+      note: "\"That's unbounded state growth, the classic stateful-streaming failure. A stream-stream join buffers both sides in the state store to match late-arriving events. Without a watermark plus a time constraint on the join condition, Spark can never conclude that old events won't match anymore. So state grows forever until it OOMs or checkpoints balloon.<br><br>The fix is a watermark on both streams and a time-bounded join condition, so Spark knows 'events older than this can be evicted.'<br><br>For genuinely large state I'd use the RocksDB state store, which spills to local disk instead of holding everything in executor memory. And I'd monitor state store size as a first-class metric.<br><br>The same watermark and eviction thinking applies to arbitrary state via flatMapGroupsWithState. You must define a timeout, or state leaks.\"",
       followups: [
         "\"What exactly does the watermark let Spark do to the state store?\"",
         "\"When would you use flatMapGroupsWithState instead of a windowed aggregation?\"",

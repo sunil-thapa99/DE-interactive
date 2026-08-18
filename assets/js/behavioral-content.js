@@ -17,7 +17,7 @@ overview: {
       navLabel: "How the loop is structured:",
       nav: "Typically one or two dedicated behavioral interviewers plus a hiring manager, each 45–60 min. Openers are broad (\"tell me about a project you're proud of\"), then they drill into specifics for 10–15 min per story. The senior signal is that YOU volunteer the metric, the trade-off, and the failure mode before they have to pull it out of you.",
       noteLabel: "The bar for your level:",
-      note: "At 6 years and applying past a junior title, \"I built the pipeline\" is table stakes. They want scope: you designed the schema standards, you set the SLA with the source owner, you ran the RCA, you mentored the junior who now owns it. Talk about systems and people, not just tasks."
+      note: "At six years, \"I built the pipeline\" is the bare minimum. They want scope.<br><br>Show that you designed the schema standards. You set the SLA with the source owner. You ran the RCA. You mentored the junior who now owns it.<br><br>Talk about systems and people, not just tasks."
     },
     {
       title: "The STAR method — the only structure you need",
@@ -27,7 +27,7 @@ overview: {
       navLabel: "How to keep it tight:",
       nav: "Aim for 2–3 minutes per story. If you're past three minutes you're rambling. A good rhythm: 20 seconds Situation/Task, 90 seconds Action, 30 seconds Result. End on the number and the lesson, then stop talking — silence invites the follow-up, which is where you score.",
       noteLabel: "Strong answer skeleton:",
-      note: "\"At Cedar Gate we had [situation]. I owned [task]. I did three things: first [action + why], then [action + why], then [action + why]. The result was [metric — +35% throughput], and it taught me [lesson].\" That skeleton fits every story in this module."
+      note: "\"At Cedar Gate we had [situation]. I owned [task]. I did three things: first [action, and why], then [action, and why], then [action, and why]. The result was [metric, like +35% throughput], and it taught me [lesson].\"<br><br>That skeleton fits every story in this module."
     },
     {
       title: "Impact & metrics — quantify or it didn't happen",
@@ -37,7 +37,7 @@ overview: {
       navLabel: "How to build a metric when you don't have the exact figure:",
       nav: "Never fabricate. Instead, quantify the SHAPE: \"cut the reconciliation job from roughly X hours to Y\", \"reduced repeated on-call pages for that pipeline from several a week to near zero\", \"onboarded N new data sources on a standard ingestion pattern.\" Directional-but-honest beats precise-but-invented, and it beats no number at all.",
       noteLabel: "The two metrics to memorize cold:",
-      note: "+35% throughput from migrating legacy batch scripts to modular Airflow+dbt at Cedar Gate. -25% operational cost from the predictive forecasting work at InfoDevelopers. These are your headline numbers — weave them into \"tell me about yourself\" and at least two deep-dive answers."
+      note: "Memorize two numbers cold.<br><br>First: +35% throughput from moving legacy batch scripts to modular Airflow and dbt at Cedar Gate. Second: -25% operational cost from the predictive forecasting work at InfoDevelopers.<br><br>These are your headline numbers. Weave them into \"tell me about yourself\" and at least two deep-dive answers."
     },
     {
       title: "\"I\" vs \"we\" — claim your work without overclaiming",
@@ -47,7 +47,7 @@ overview: {
       navLabel: "How to phrase it:",
       nav: "Use \"we\" for context and \"I\" for your decisions. \"We were seeing rising claim denials [context]. I proposed and built a reconciliation framework that flagged mismatches before submission [your action].\" When the work was genuinely shared, say who did what — that honesty reads as senior, not weak.",
       noteLabel: "Watch for:",
-      note: "Interviewers will deliberately ask \"what did YOU do versus the team?\" If your story collapses when they ask that, it wasn't really your story. Pick projects where you owned a distinct, defensible slice."
+      note: "Interviewers will ask straight out: \"what did YOU do versus the team?\"<br><br>If your story falls apart under that question, it was never really your story. Pick projects where you owned a distinct, defensible slice."
     },
     {
       title: "The five mistakes that sink strong engineers",
@@ -57,7 +57,7 @@ overview: {
       navLabel: "How to inoculate yourself:",
       nav: "Structure with STAR (fixes rambling). Pre-load a metric per story (fixes no-metric). Reframe blame as \"here's how I handled a hard situation\" (fixes blaming). Rehearse the \"what did YOU do\" cut (fixes we/I). Have a genuine failure ready with the lesson (fixes the flawless-hero problem).",
       noteLabel: "The failure story is mandatory:",
-      note: "Prepare one real failure — a bad cutover, a missed edge case, a wrong assumption about a data source — where you own the mistake and show what you changed. Refusing to have a failure story is itself a red flag."
+      note: "Prepare one real failure. A bad cutover, a missed edge case, a wrong assumption about a data source.<br><br>Own the mistake, and show what you changed afterward. Refusing to have a failure story is a red flag on its own."
     }
   ]
 },
@@ -76,7 +76,7 @@ star: {
       navLabel: "How to structure it:",
       nav: "Pick the Cedar Gate Airflow+dbt migration (it has the cleanest metric). One line of context, then your three key decisions, then the +35%. Don't pick the biggest system — pick the one where your fingerprints are clearest and the number is real.",
       noteLabel: "Strong answer skeleton:",
-      note: "\"At Cedar Gate we ran high-volume clinical and claims ETL on brittle legacy batch scripts — hard to test, no lineage, failures were silent. I led the migration to a modular Airflow + dbt architecture: I broke the monolith into idempotent tasks with explicit dependencies, moved transforms into tested dbt models, and added monitoring for latency and data drift. Result: +35% throughput and failures became visible and re-runnable. What I'm proud of is that it became the template the team reused for every new feed.\"",
+      note: "\"At Cedar Gate we ran high-volume clinical and claims ETL on brittle legacy batch scripts. They were hard to test, they had no lineage, and failures were silent.<br><br>I led the migration to a modular Airflow and dbt setup. I broke the monolith into idempotent tasks with explicit dependencies. I moved the transforms into tested dbt models. And I added monitoring for latency and data drift.<br><br>The result was 35% more throughput, and failures finally became visible and easy to re-run. What I'm most proud of is that it became the template the team reused for every new feed.\"",
       followups: [
         "How did you measure the 35% — wall-clock runtime, rows processed, or something else?",
         "What made the legacy scripts slow — was it the code, the scheduling, or the infrastructure?",
@@ -92,7 +92,7 @@ star: {
       navLabel: "How to structure it:",
       nav: "Situation short, own the mistake in the Task/Action without blaming data or teammates, then spend your Result on what you changed so it can't recur. Pick something real but bounded — a cutover that broke, a validation gap that let bad data through — not a career-defining catastrophe.",
       noteLabel: "Strong answer skeleton:",
-      note: "\"Early in the Cedar Gate migration I cut over a claims feed without a full parallel-run window — I trusted my row-count checks. A subtle timezone bug in one HL7 field shifted a day boundary and a batch landed in the wrong partition. I caught it in reconciliation, but it cost me a re-backfill. The lesson: I made dual-run-until-reconciled a hard gate in my cutover checklist, and I added a schema/semantic diff, not just row counts. I've never skipped it since.\" (Quantify if you can: e.g. \"cost about a day of rework.\")",
+      note: "\"Early in the Cedar Gate migration I cut over a claims feed without a full parallel-run window. I trusted my row-count checks.<br><br>A subtle timezone bug in one HL7 field shifted a day boundary, and a batch landed in the wrong partition. I caught it in reconciliation, but it cost me a re-backfill.<br><br>Here's the lesson. I made dual-run-until-reconciled a hard gate in my cutover checklist, and I added a schema and semantic diff, not just row counts. I've never skipped it since.\" (Quantify if you can, for example 'it cost about a day of rework.')",
       followups: [
         "How did you catch it — what alerted you?",
         "How long did recovery take, and who did you have to notify?",
@@ -108,7 +108,7 @@ star: {
       navLabel: "How to structure it:",
       nav: "Frame the disagreement as a technical trade-off, not a personality clash. State both positions fairly, show the evidence you brought, then — critically — say what happened AND that you committed to the outcome even if it wasn't your pick. \"Disagree and commit\" is the phrase they want to hear demonstrated.",
       noteLabel: "Strong answer skeleton:",
-      note: "\"At Amex I pushed for near-real-time ingestion on a new source; my lead wanted batch to keep it simple. I disagreed but instead of arguing I pulled the actual latency SLA the risk team needed and the cost delta of streaming vs micro-batch. The data showed micro-batch in Airflow met the SLA at a fraction of the streaming cost — so I changed MY mind. We shipped micro-batch. The lesson: bring the number, not the opinion, and be willing to lose the argument to the data.\"",
+      note: "\"At Amex I pushed for near-real-time ingestion on a new source. My lead wanted batch to keep it simple.<br><br>I disagreed, but instead of arguing I pulled the numbers. I looked at the actual latency SLA the risk team needed and the cost difference between streaming and micro-batch. The data showed micro-batch in Airflow met the SLA at a fraction of the streaming cost. So I changed my own mind, and we shipped micro-batch.<br><br>The lesson: bring the number, not the opinion, and be willing to lose the argument to the data.\"",
       followups: [
         "What would have changed your mind the other way?",
         "How did you keep the relationship good after disagreeing?",
@@ -124,7 +124,7 @@ star: {
       navLabel: "How to structure it:",
       nav: "Name the constraint and the stakes, then show the triage: what was must-have vs nice-to-have, what you de-scoped, and how you kept quality on the critical path. End on the delivery AND the fact that you flagged residual risk honestly rather than hiding it.",
       noteLabel: "Strong answer skeleton:",
-      note: "\"Onboarding a new payer feed at Cedar Gate, we had a fixed go-live tied to a client contract. I protected the non-negotiables — validation rules and PHI access controls — and de-scoped the nice-to-haves like the extra reconciliation dashboard, which I shipped a sprint later. I flagged that trade-off to the PM in writing so it was a decision, not a surprise. We hit the date with the data contract intact. (Quantify: e.g. 'ingested N sources on schedule.')\"",
+      note: "\"We were onboarding a new payer feed at Cedar Gate with a fixed go-live tied to a client contract.<br><br>I protected the non-negotiables, which were the validation rules and the PHI access controls. I de-scoped the nice-to-haves, like the extra reconciliation dashboard, and shipped that a sprint later. I flagged the trade-off to the PM in writing, so it was a decision and not a surprise.<br><br>We hit the date with the data contract intact. (Quantify it, for example 'ingested N sources on schedule.')\"",
       followups: [
         "What specifically did you de-scope, and did anything you cut come back to bite you?",
         "How did you decide what was safe to defer?",
@@ -140,7 +140,7 @@ star: {
       navLabel: "How to structure it:",
       nav: "Show your process for removing ambiguity: who you talked to, the questions you asked, and the artifact you produced (a data contract, a schema standard, an SLA). The senior signal is that you converted talk into a written, agreed spec that both sides signed off on.",
       noteLabel: "Strong answer skeleton:",
-      note: "\"At Amex, a risk-analytics ask came in as 'we need transaction data we can trust.' I sat with the analysts and the source owners and turned it into a data contract: exact fields, freshness SLA, null/validation rules, and ownership on both sides. That artifact killed the ambiguity — everyone knew what 'trust' meant in columns and thresholds. It also became a reusable onboarding template for new sources.\"",
+      note: "\"At Amex, a risk-analytics ask came in as 'we need transaction data we can trust.'<br><br>I sat with the analysts and the source owners and turned that into a data contract. It spelled out the exact fields, a freshness SLA, null and validation rules, and who owned what on each side.<br><br>That artifact killed the ambiguity. Everyone now knew what 'trust' meant in columns and thresholds. It also became a reusable onboarding template for new sources.\"",
       followups: [
         "What goes into your data contract — can you list the fields?",
         "What do you do when the source owner won't commit to an SLA?",
@@ -156,7 +156,7 @@ star: {
       navLabel: "How to structure it:",
       nav: "Pick something you initiated, not something you were handed. Show you saw the recurring pain, made the case, and built the durable fix. Reusability and adoption by others is the strongest version of this answer.",
       noteLabel: "Strong answer skeleton:",
-      note: "\"Nobody asked me to, but I kept seeing the same manual data-cleanup steps across feeds at Cedar Gate, so I built a library of reusable Python cleanup scripts and got the team to standardize on them. It cut per-feed onboarding effort and made new-hire ramp faster. The same instinct is why I set up validation-rule templates rather than one-off checks.\" (Quantify: e.g. 'cut new-feed setup from days to hours.')",
+      note: "\"Nobody asked me to, but I kept seeing the same manual data-cleanup steps across feeds at Cedar Gate. So I built a library of reusable Python cleanup scripts and got the team to standardize on them.<br><br>That cut the effort to onboard each feed and made new hires ramp up faster. The same instinct is why I set up validation-rule templates instead of one-off checks.\" (Quantify it, for example 'cut new-feed setup from days to hours.')",
       followups: [
         "How did you get others to actually adopt it?",
         "How do you balance this kind of work against your assigned deliverables?",
@@ -181,7 +181,7 @@ projects: {
       navLabel: "What they're probing:",
       nav: "Whether you understand WHY the old design was slow and fragile, and whether the new design's wins came from real engineering (idempotency, parallelism, tested transforms, observability) versus just \"we rewrote it.\" They'll poke at how you measured and how you cut over safely.",
       noteLabel: "Model answer (STAR):",
-      note: "\"Situation: brittle legacy batch scripts for claims/clinical ETL — hard to test, failures were silent, backfills were manual. Task: I owned re-architecting it. Action: I decomposed the monolith into idempotent Airflow tasks with explicit dependency ordering; moved transforms into dbt models with tests and documented lineage; and added monitoring for latency and data drift so failures surfaced immediately. I ran old and new in parallel and reconciled before cutover. Result: +35% throughput, re-runnable failures, and a modular template the team reused for new feeds.\"",
+      note: "\"The situation was brittle legacy batch scripts for claims and clinical ETL. They were hard to test, failures were silent, and backfills were manual.<br><br>My task was to own re-architecting it. So I broke the monolith into idempotent Airflow tasks with explicit dependency ordering. I moved the transforms into dbt models with tests and documented lineage. And I added monitoring for latency and data drift, so failures surfaced right away. I ran the old and new versions in parallel and reconciled them before cutover.<br><br>The result was 35% more throughput, failures you could re-run, and a modular template the team reused for new feeds.\"",
       followups: [
         "How did you measure the 35% — runtime, rows/hour, or SLA hit-rate? Over what window?",
         "What broke or surprised you during cutover?",
@@ -199,7 +199,7 @@ projects: {
       navLabel: "What they're probing:",
       nav: "Whether you think about data quality as a system (rules, thresholds, reconciliation between source and target) rather than ad-hoc checks, and whether you can connect a technical control to a business outcome (fewer denials = revenue protected).",
       noteLabel: "Model answer (STAR):",
-      note: "\"Denials were rising and we were catching bad claims after submission. I built a validation framework — schema, referential, and payer-rule checks at ingestion — plus a reconciliation layer that compared source counts and key amounts against what landed in the warehouse, flagging drift before it reached submission. Bad records got quarantined and routed for correction instead of failing downstream. Result: fewer denials and far less firefighting. (Quantify with your real figure: e.g. 'cut denial-related rework by X%.')\"",
+      note: "\"Denials were rising, and we were catching bad claims only after submission.<br><br>I built a validation framework that ran schema, referential, and payer-rule checks at ingestion. I added a reconciliation layer that compared source counts and key amounts against what landed in the warehouse, so it flagged drift before it reached submission. Bad records got quarantined and routed for correction instead of failing downstream.<br><br>The result was fewer denials and far less firefighting. (Quantify with your real figure, for example 'cut denial-related rework by X%.')\"",
       followups: [
         "What were the actual validation rules — give me three concrete examples?",
         "Row-count reconciliation is weak against same-count-wrong-values — how did you catch value-level drift?",
@@ -217,7 +217,7 @@ projects: {
       navLabel: "What they're probing:",
       nav: "Concrete controls, not buzzwords — encryption at rest and in transit, least-privilege/role-based access, masking/tokenization, audit logging, and lineage docs that prove where PHI flows. Amex risk/compliance work makes this doubly relevant to bring up.",
       noteLabel: "Model answer (STAR):",
-      note: "\"PHI was in scope end to end. I enforced least-privilege access — role-based, so analysts saw de-identified or minimum-necessary fields, not raw PHI — encryption at rest and in transit, and I maintained data-mapping and lineage docs so we could show exactly where PHI entered, moved, and rested for audits. Where analytics didn't need identifiers I masked or tokenized them at ingestion. The lineage work also paid off operationally — it made impact analysis for schema changes trivial. At Amex I apply the same discipline partnering with data governance on quality, lineage, and access control.\"",
+      note: "\"PHI was in scope end to end. So I enforced least-privilege access.<br><br>Access was role-based, so analysts saw de-identified or minimum-necessary fields, never raw PHI. I encrypted data at rest and in transit. And I kept data-mapping and lineage docs, so for audits we could show exactly where PHI entered, moved, and rested. Where analytics didn't need identifiers, I masked or tokenized them at ingestion.<br><br>The lineage work paid off operationally too. It made impact analysis for schema changes trivial. At Amex I apply the same discipline, partnering with data governance on quality, lineage, and access control.\"",
       followups: [
         "Where exactly is data encrypted, and who holds the keys?",
         "How do you enforce minimum-necessary — column-level, row-level, or view-based?",
@@ -235,7 +235,7 @@ projects: {
       navLabel: "What they're probing:",
       nav: "Whether you understand CDC mechanics (log-based capture, ordering, idempotency), how you handled schema changes and out-of-order/duplicate events, and how you kept regions consistent without losing or double-applying records.",
       noteLabel: "Model answer (STAR):",
-      note: "\"We needed regional facility data centralized without brittle nightly dumps. I used log-based CDC into Kafka, keyed by entity so per-record ordering held within a partition, and consumers applied changes idempotently (upsert on primary key) so replays and duplicates were safe. I handled schema evolution with a registry so a producer change didn't break consumers, and monitored consumer lag as the health metric. The payoff was near-real-time consistency across facilities instead of stale batch snapshots.\"",
+      note: "\"We needed regional facility data centralized, but without brittle nightly dumps.<br><br>I used log-based CDC into Kafka, keyed by entity so per-record ordering held within a partition. Consumers applied changes idempotently, using an upsert on the primary key, so replays and duplicates were safe. I handled schema evolution with a registry, so a producer change didn't break consumers. And I monitored consumer lag as the health metric.<br><br>The payoff was near-real-time consistency across facilities instead of stale batch snapshots.\"",
       followups: [
         "Log-based CDC or query-based — and why does that choice matter?",
         "How did you guarantee exactly-once effect on the target given at-least-once delivery?",
@@ -253,7 +253,7 @@ projects: {
       navLabel: "What they're probing:",
       nav: "Incident discipline: how you triaged (stop the bleeding vs find the cause), how you communicated to stakeholders while data was late, the actual root cause, and — most important — the preventive fix so it never pages again. Blaming upstream data is the wrong tone; owning the response is the right one.",
       noteLabel: "Model answer (STAR):",
-      note: "\"A near-real-time risk feed started lagging its SLA overnight. First I stabilized — I checked consumer lag and pipeline health, confirmed no data loss, and communicated a revised ETA to the risk stakeholders so they weren't flying blind. Root cause was an upstream source that changed volume/shape and blew past our cluster sizing. Immediate fix: reprocessed the backlog idempotently. Preventive fix: I right-sized the job, added a volume-anomaly alert, and put a data contract on that source so shape changes came with notice. That class of page stopped.\" (Quantify: e.g. 'recurring pages for that pipeline dropped to near zero.')",
+      note: "\"A near-real-time risk feed started lagging its SLA overnight.<br><br>First I stabilized it. I checked consumer lag and pipeline health, confirmed no data loss, and gave the risk stakeholders a revised ETA so they weren't flying blind. The root cause was an upstream source that changed its volume and shape and blew past our cluster sizing.<br><br>The immediate fix was to reprocess the backlog idempotently. The preventive fix was bigger: I right-sized the job, added a volume-anomaly alert, and put a data contract on that source so shape changes came with notice. That class of page stopped.\" (Quantify it, for example 'recurring pages for that pipeline dropped to near zero.')",
       followups: [
         "How do you decide between mitigating fast vs finding root cause first?",
         "What did you tell stakeholders, and when?",
@@ -271,7 +271,7 @@ projects: {
       navLabel: "What they're probing:",
       nav: "Whether you diagnose from evidence (Spark UI stages, skew, spill; Snowflake query profile, pruning, spilling to remote storage) and whether your fixes are principled — partitioning, broadcast joins, avoiding shuffles, clustering keys, warehouse right-sizing — with a before/after number.",
       noteLabel: "Model answer (STAR):",
-      note: "\"A Spark job on transaction data was slow and pricey. The Spark UI showed skew — a few keys dominated a shuffle join and spilled to disk. I salted the hot keys and switched a small dimension to a broadcast join, which killed the big shuffle. On the Snowflake side I fixed a query that wasn't pruning by adding a clustering key aligned to the filter and stopped selecting unused columns. I paired that with right-sizing the warehouse/cluster so we weren't paying for idle capacity. (Quantify: e.g. 'cut runtime from X to Y and spend by Z%.')\"",
+      note: "\"A Spark job on transaction data was slow and expensive.<br><br>The Spark UI showed skew. A few keys dominated a shuffle join and spilled to disk. I salted the hot keys and switched a small dimension to a broadcast join, which killed the big shuffle.<br><br>On the Snowflake side, one query wasn't pruning. I added a clustering key aligned to the filter and stopped selecting unused columns. I paired that with right-sizing the warehouse and cluster, so we weren't paying for idle capacity. (Quantify it, for example 'cut runtime from X to Y and spend by Z%.')\"",
       followups: [
         "How did you identify the skew — what in the Spark UI told you?",
         "When is a broadcast join the wrong choice?",
@@ -289,7 +289,7 @@ projects: {
       navLabel: "What they're probing:",
       nav: "Whether you approached cost systematically (found the biggest spenders first, measured, changed one thing, re-measured) and whether you protected SLAs while cutting spend. They want a method, not a one-off lucky win.",
       noteLabel: "Model answer (STAR):",
-      note: "\"Compute/storage spend was creeping up. I started by finding the biggest line items — a handful of oversized warehouses and always-on clusters plus cold data sitting on hot storage. I right-sized warehouses to actual concurrency, set auto-suspend, moved cold partitions to cheaper storage tiers, and killed redundant intermediate datasets. I watched SLA and query latency after each change so I wasn't trading cost for reliability. (Quantify: e.g. 'reduced monthly spend by X% with no SLA regressions.')\"",
+      note: "\"Compute and storage spend was creeping up.<br><br>I started by finding the biggest line items. It came down to a handful of oversized warehouses, always-on clusters, and cold data sitting on hot storage. So I right-sized warehouses to actual concurrency, turned on auto-suspend, moved cold partitions to cheaper storage tiers, and killed redundant intermediate datasets.<br><br>After each change I watched SLA and query latency, so I wasn't trading cost for reliability. (Quantify it, for example 'reduced monthly spend by X% with no SLA regressions.')\"",
       followups: [
         "How did you find where the money was actually going?",
         "How do you avoid cost cuts that quietly break an SLA?",
@@ -307,7 +307,7 @@ projects: {
       navLabel: "What they're probing:",
       nav: "Whether you can drive agreement between producers and consumers — the fields, freshness, quality thresholds, ownership, and what happens on breach — and whether you enforce the contract in code rather than trusting goodwill.",
       noteLabel: "Model answer (STAR):",
-      note: "\"When I onboard a source I don't start with pipelines, I start with a contract. I sit with the source owner and the consumer (risk/analytics) and pin down the schema, a freshness SLA, validation rules and thresholds, and who owns what on breach. Then I enforce it — schema checks and freshness/volume alerts at ingestion, so a violated contract fails loudly instead of poisoning downstream. That's also how I standardized onboarding at Amex so every new source follows the same pattern.\"",
+      note: "\"When I onboard a source, I don't start with pipelines. I start with a contract.<br><br>I sit with the source owner and the consumer, which is usually risk or analytics, and we pin down the schema, a freshness SLA, validation rules and thresholds, and who owns what on a breach. Then I enforce it in code, with schema checks and freshness and volume alerts at ingestion. That way a broken contract fails loudly instead of poisoning everything downstream.<br><br>That's also how I standardized onboarding at Amex, so every new source follows the same pattern.\"",
       followups: [
         "What's in the contract — walk me through the fields?",
         "What happens technically when a producer violates the contract?",
@@ -325,7 +325,7 @@ projects: {
       navLabel: "What they're probing:",
       nav: "Whether you develop people deliberately (not just answer questions), transfer ownership, and raise the team's bar through standards and code review. The strongest version shows the mentee growing into real ownership.",
       noteLabel: "Model answer (STAR):",
-      note: "\"A junior DE was strong on code but shipping pipelines without thinking about idempotency or observability. Instead of fixing his PRs myself, I paired with him on one pipeline end to end — we set up the validation, the alerts, the backfill story together — then had him own the next one solo with me on review. I also wrote down our schema and ingestion standards so the guidance didn't live only in my head. Within a couple of months he owned a source area outright and was reviewing others' PRs.\"",
+      note: "\"A junior DE was strong on code, but he was shipping pipelines without thinking about idempotency or observability.<br><br>Instead of fixing his PRs myself, I paired with him on one pipeline end to end. We set up the validation, the alerts, and the backfill story together. Then I had him own the next one solo, with me on review. I also wrote down our schema and ingestion standards, so the guidance didn't live only in my head.<br><br>Within a couple of months he owned a source area outright and was reviewing other people's PRs.\"",
       followups: [
         "How do you give feedback that lands without discouraging someone?",
         "How do you decide when to let someone struggle vs step in?",
@@ -343,7 +343,7 @@ projects: {
       navLabel: "What they're probing:",
       nav: "That the number is real and attributable — what was forecast, how the forecast drove a decision that saved money, and why you chose ARIMA vs LSTM. Be ready to be honest that this is earlier-career and less core to DE than your recent work.",
       noteLabel: "Model answer (STAR):",
-      note: "\"We were over-provisioning because planning ran on gut feel. I built demand forecasting — ARIMA as a strong seasonal baseline, LSTM where the patterns were non-linear and I had enough history — and fed it into capacity planning so provisioning matched actual expected demand. That alignment cut operational cost by 25%. I'll be honest it's earlier-career and more modeling than pipeline work, but it's why I care about tying data work to a dollar outcome — the same instinct behind my cost right-sizing at Amex.\"",
+      note: "\"We were over-provisioning because planning ran on gut feel.<br><br>I built demand forecasting. I used ARIMA as a strong seasonal baseline, and LSTM where the patterns were non-linear and I had enough history. Then I fed it into capacity planning, so provisioning matched the actual expected demand. That alignment cut operational cost by 25%.<br><br>I'll be honest, this is earlier-career and it's more modeling than pipeline work. But it's why I care about tying data work to a dollar outcome, which is the same instinct behind my cost right-sizing at Amex.\"",
       followups: [
         "Why ARIMA vs LSTM — how did you choose, and did LSTM actually beat the baseline?",
         "How did you validate the forecast — what error metric, what backtest window?",
@@ -370,7 +370,7 @@ leadership: {
       navLabel: "How to structure it:",
       nav: "Show a specific person, a specific gap, your intervention (pairing, transferring ownership, written standards), and the outcome (they now own it). Tie it to the schema/ingestion standards you set so it's clearly systemic, not one-off.",
       noteLabel: "Strong answer skeleton:",
-      note: "\"I mentor by transferring ownership, not by fixing PRs. With one junior DE I paired on a full pipeline, then had him own the next solo under review, and I wrote down our schema/ingestion standards so the bar was explicit for everyone. He's now the owner of a source area and reviews others.\"",
+      note: "\"I mentor by transferring ownership, not by fixing PRs.<br><br>With one junior DE, I paired on a full pipeline, then had him own the next one solo under review. I also wrote down our schema and ingestion standards, so the bar was explicit for everyone. He now owns a source area and reviews others.\"",
       followups: [
         "How do you tell when to step in versus let someone struggle?",
         "What's in your written standard, and how do you keep it alive?",
@@ -386,7 +386,7 @@ leadership: {
       navLabel: "How to structure it:",
       nav: "Give your actual checklist: idempotency, tests (dbt tests / data-quality checks), observability (alerts on lag/latency/drift), documented lineage, and a backfill story. Show you review for design and data-correctness, not just style.",
       noteLabel: "Strong answer skeleton:",
-      note: "\"My review bar for a pipeline PR: is it idempotent and safe to re-run, are there data-quality tests, does it alert on failure/lag/drift, is lineage documented, and is there a backfill plan? I review design before syntax, and I frame comments as questions so it's a conversation, not a gate.\"",
+      note: "\"For a pipeline PR I have a clear bar. Is it idempotent and safe to re-run? Are there data-quality tests? Does it alert on failure, lag, and drift? Is the lineage documented? And is there a backfill plan?<br><br>I review the design before the syntax, and I frame my comments as questions, so it's a conversation and not a gate.\"",
       followups: [
         "How do you handle a PR that works but doesn't meet the bar under deadline pressure?",
         "How do you keep reviews from becoming a bottleneck?",
@@ -402,7 +402,7 @@ leadership: {
       navLabel: "How to structure it:",
       nav: "Show that you led with their incentives and with data, not with your preference. Name the shared goal, the evidence you brought, and how you made the right thing the easy thing for them.",
       noteLabel: "Strong answer skeleton:",
-      note: "\"To get a source team to commit to an SLA and validation, I didn't escalate — I showed them the downstream cost of drift in their terms (denials / risk-reporting delays), and made compliance cheap by giving them the schema check to run on their side. Framed as helping them avoid pages, they signed on.\"",
+      note: "\"To get a source team to commit to an SLA and validation, I didn't escalate.<br><br>I showed them the downstream cost of drift in their own terms, like denials and risk-reporting delays. Then I made compliance cheap by giving them the schema check to run on their side. Framed as a way to help them avoid pages, they signed on.\"",
       followups: [
         "What do you do when they still won't cooperate?",
         "When is escalation the right call versus a last resort?",
@@ -418,7 +418,7 @@ leadership: {
       navLabel: "How to structure it:",
       nav: "Disagree with evidence, state it once clearly, then commit visibly. The phrase to demonstrate is \"disagree and commit\" — show you executed the chosen path in good faith even when it wasn't yours.",
       noteLabel: "Strong answer skeleton:",
-      note: "\"I argued for streaming a source; leadership chose micro-batch. I made my case with the latency SLA and cost numbers once, the team went micro-batch, and I built it properly rather than half-heartedly. The data later proved micro-batch was right for that SLA — which reinforced that I should bring numbers and stay open to being wrong.\"",
+      note: "\"I argued for streaming a source, and leadership chose micro-batch.<br><br>I made my case once, with the latency SLA and the cost numbers. The team went micro-batch, and I built it properly instead of half-heartedly. The data later proved micro-batch was right for that SLA. That reinforced two things for me: bring numbers, and stay open to being wrong.\"",
       followups: [
         "Tell me about a time you committed to a decision and it turned out badly.",
         "How do you know when to keep pushing versus let it go?",
@@ -434,7 +434,7 @@ leadership: {
       navLabel: "How to structure it:",
       nav: "Order matters: stop the bleeding and confirm no data loss first, communicate a clear status/ETA to stakeholders early, then find root cause, then ship the preventive fix. Emphasize the loop actually closing.",
       noteLabel: "Strong answer skeleton:",
-      note: "\"When a risk feed breached SLA overnight I stabilized first (confirmed no data loss, checked lag), gave the risk team a clear ETA so they weren't guessing, then found root cause — an upstream volume change past our sizing. I reprocessed idempotently and shipped the preventive fix: right-sizing plus a volume-anomaly alert plus a contract on the source. The page class stopped.\"",
+      note: "\"When a risk feed breached SLA overnight, I stabilized it first. I confirmed no data loss and checked the lag.<br><br>Then I gave the risk team a clear ETA, so they weren't guessing, and I found the root cause, which was an upstream volume change past our sizing. I reprocessed idempotently and shipped the preventive fix: right-sizing, plus a volume-anomaly alert, plus a contract on the source. That class of page stopped.\"",
       followups: [
         "Mitigate first or root-cause first — how do you decide?",
         "How much do you communicate to stakeholders during an active incident?",
@@ -450,7 +450,7 @@ leadership: {
       navLabel: "How to structure it:",
       nav: "Show you lead with the business impact and the decision they need to make, not the implementation. Give an example of turning a vague ask into a concrete contract, and of explaining an incident or trade-off in their terms.",
       noteLabel: "Strong answer skeleton:",
-      note: "\"With risk stakeholders I talk in freshness, trust, and decisions, not in Airflow DAGs. When a feed was late I told them 'reporting will be N hours behind and here's the revised ETA and what's affected' — not the stack trace. And I turn vague asks like 'we need better data' into a written data contract they can actually sign off on.\"",
+      note: "\"With risk stakeholders I talk in freshness, trust, and decisions, not in Airflow DAGs.<br><br>When a feed was late, I told them 'reporting will be N hours behind, here's the revised ETA, and here's what's affected.' I didn't hand them the stack trace. And I turn vague asks like 'we need better data' into a written data contract they can actually sign off on.\"",
       followups: [
         "How do you say no to a stakeholder request without damaging the relationship?",
         "How do you explain a technical trade-off (cost vs latency) to a non-engineer?",
@@ -466,7 +466,7 @@ leadership: {
       navLabel: "How to structure it:",
       nav: "Frame conflict as a technical or priority disagreement, show you sought to understand the other side first, found the shared goal, and resolved it with data or a small experiment. Avoid any story that makes a colleague the villain.",
       noteLabel: "Strong answer skeleton:",
-      note: "\"Another engineer and I disagreed on owning transforms in dbt vs Python. Rather than argue in the abstract, I asked what he was optimizing for — turned out it was debuggability. We agreed on dbt for set-based transforms and Python for the connector logic, and wrote it into the standard. The disagreement actually produced a better rule than either of us had alone.\"",
+      note: "\"Another engineer and I disagreed on whether transforms should live in dbt or Python.<br><br>Rather than argue in the abstract, I asked what he was optimizing for. It turned out to be debuggability. So we agreed on dbt for set-based transforms and Python for the connector logic, and we wrote it into the standard. The disagreement actually produced a better rule than either of us had alone.\"",
       followups: [
         "What if you'd understood their position and still disagreed?",
         "When do you bring a manager into a peer conflict?",
@@ -491,7 +491,7 @@ interview: {
       navLabel: "Structure:",
       nav: "One line on who you are now (senior DE, domain), two or three lines of the strongest resume proof with numbers, one line on what you're looking for that connects to this role. Stop at 60–75 seconds.",
       noteLabel: "Model answer (memorize this shape):",
-      note: "\"I'm a data engineer with 6+ years, currently at American Express in Toronto, where I architect large-scale ETL/ELT for transaction and customer data on our lake and Snowflake warehouse for risk and analytics — batch and near-real-time in Airflow, with a lot of Spark and Snowflake tuning and cost work. Before that at Cedar Gate in healthcare I re-architected legacy batch scripts into a modular Airflow + dbt platform that lifted throughput 35%, and built the validation and reconciliation frameworks that cut claim denials. Earlier I built forecasting models that took 25% out of operational cost. I care about pipelines that are reliable, observable, and tied to a real business outcome — which is exactly why this role interests me.\"",
+      note: "\"I'm a data engineer with over six years of experience, currently at American Express in Toronto. There I architect large-scale ETL and ELT for transaction and customer data on our lake and Snowflake warehouse, for risk and analytics. It's batch and near-real-time in Airflow, with a lot of Spark and Snowflake tuning and cost work.<br><br>Before that, at Cedar Gate in healthcare, I re-architected legacy batch scripts into a modular Airflow and dbt platform that lifted throughput by 35%, and I built the validation and reconciliation frameworks that cut claim denials. Earlier, I built forecasting models that took 25% out of operational cost.<br><br>I care about pipelines that are reliable, observable, and tied to a real business outcome. That's exactly why this role interests me.\"",
       followups: [
         "You mentioned 35% — how did you measure that?",
         "What are you looking for that you're not getting today?",
@@ -507,7 +507,7 @@ interview: {
       navLabel: "How to approach it:",
       nav: "Name a concrete reason tied to the role (their scale, their domain, a data challenge you're suited to), then bridge to your matching experience. Do 20 minutes of homework on their stack/domain beforehand so this isn't hollow.",
       noteLabel: "Model answer:",
-      note: "\"Two reasons. One, the scale and the problem — [company]'s data challenge in [their domain] is exactly the kind of large-scale, reliability-and-governance-heavy work I've done at Amex on risk data and at Cedar Gate under HIPAA, so I can contribute early. Two, I want to keep working where data quality and cost actually matter to the business, not where pipelines are an afterthought — that's the environment I do my best work in.\" (Insert a specific fact about the company you researched.)",
+      note: "\"There are two reasons.<br><br>First, the scale and the problem. [Company]'s data challenge in [their domain] is exactly the kind of large-scale, reliability-and-governance-heavy work I did at Amex on risk data and at Cedar Gate under HIPAA. So I can contribute early. Second, I want to keep working where data quality and cost actually matter to the business, not where pipelines are an afterthought. That's the environment where I do my best work.\" (Insert a specific fact about the company you researched.)",
       followups: [
         "What specifically about our stack appeals to you?",
         "What do you know about what our team works on?",
@@ -523,7 +523,7 @@ interview: {
       navLabel: "How to approach it:",
       nav: "Positive, forward-looking, brief. Acknowledge what's good about Amex, then name the specific growth this role offers that's harder to get where you are. Keep it to two sentences — don't over-explain, which reads as defensive.",
       noteLabel: "Model answer:",
-      note: "\"I've grown a lot at Amex — large-scale risk pipelines, on-call ownership, mentoring — and I'm grateful for it. I'm looking for a role with more scope to [own architecture end to end / work in this domain / lead more], which is a natural next step for me and matches what this position offers. It's about the opportunity ahead, not anything wrong where I am.\"",
+      note: "\"I've grown a lot at Amex, with large-scale risk pipelines, on-call ownership, and mentoring, and I'm grateful for it.<br><br>I'm looking for a role with more scope to [own architecture end to end / work in this domain / lead more]. That's a natural next step for me, and it matches what this position offers. It's about the opportunity ahead, not anything wrong where I am.\"",
       followups: [
         "What specifically can't you get in your current role?",
         "Have you tried to get that scope internally?",
@@ -539,7 +539,7 @@ interview: {
       navLabel: "How to approach it:",
       nav: "Name it, then immediately back it with a specific story and number. For a senior DE, the strongest picks are reliability/ownership, turning ambiguity into contracts, or performance/cost engineering.",
       noteLabel: "Model answer:",
-      note: "\"Turning messy, ambiguous data problems into reliable systems. At Cedar Gate I took brittle legacy scripts and built a modular Airflow + dbt platform with real testing and observability — 35% more throughput and failures that were finally visible and re-runnable. I don't just make a pipeline work once; I make it something the team can trust and reuse.\"",
+      note: "\"Turning messy, ambiguous data problems into reliable systems.<br><br>At Cedar Gate I took brittle legacy scripts and built a modular Airflow and dbt platform with real testing and observability. That gave us 35% more throughput, and failures were finally visible and easy to re-run. I don't just make a pipeline work once. I make it something the team can trust and reuse.\"",
       followups: [
         "When has that strength been a weakness?",
         "Give me another example of it.",
@@ -555,7 +555,7 @@ interview: {
       navLabel: "How to approach it:",
       nav: "Pick a genuine, non-fatal weakness and pair it with the specific habit you built to counter it. Avoid anything that's core to the job (\"I'm bad at SQL\" is disqualifying).",
       noteLabel: "Model answer:",
-      note: "\"I've tended to over-invest in polishing a pipeline — extra tests, extra observability — past the point of diminishing returns, especially under a deadline. I manage it now by agreeing the must-haves versus nice-to-haves up front and time-boxing the polish, then shipping the rest as a follow-up. Naming that trade-off explicitly with stakeholders keeps me from gold-plating on the critical path.\"",
+      note: "\"I've tended to over-invest in polishing a pipeline, with extra tests and extra observability, past the point of diminishing returns, especially under a deadline.<br><br>I manage it now by agreeing the must-haves versus the nice-to-haves up front, and time-boxing the polish, then shipping the rest as a follow-up. Naming that trade-off out loud with stakeholders keeps me from gold-plating on the critical path.\"",
       followups: [
         "How has that weakness actually cost you?",
         "What are you doing to improve it right now?",
@@ -571,7 +571,7 @@ interview: {
       navLabel: "How to approach it:",
       nav: "Point at a plausible senior/lead/architect track and tie it to skills you'd build here. Keep it about impact and depth, not just titles.",
       noteLabel: "Model answer:",
-      note: "\"Growing into a senior/lead data engineer or data architect role — owning platform-level architecture, setting the standards and data-contract practices for a team, and mentoring more heavily, which I already do informally. I'm not chasing a title; I want the scope to shape how data is built reliably at scale, and this role is a strong step toward that.\"",
+      note: "\"Growing into a senior or lead data engineer, or a data architect role. That means owning platform-level architecture, setting the standards and data-contract practices for a team, and mentoring more heavily, which I already do informally.<br><br>I'm not chasing a title. I want the scope to shape how data is built reliably at scale, and this role is a strong step toward that.\"",
       followups: [
         "Do you want to move into management or stay technical?",
         "What skills do you still need to build to get there?",
@@ -587,7 +587,7 @@ interview: {
       navLabel: "How to approach it:",
       nav: "Pick your two or three strongest differentiators that match the job description and back each with a one-line proof. Don't list your whole resume — synthesize.",
       noteLabel: "Model answer:",
-      note: "\"Three things: I've shipped reliable large-scale pipelines in two demanding, regulated domains — risk at Amex and healthcare under HIPAA at Cedar Gate — so governance and reliability are second nature. I have hard results, not just activity: 35% throughput, 25% cost. And I raise the team around me through standards and mentoring. That combination — scale, measurable impact, and lifting the team — is what I'd bring here.\"",
+      note: "\"Three things.<br><br>First, I've shipped reliable large-scale pipelines in two demanding, regulated domains: risk at Amex and healthcare under HIPAA at Cedar Gate. So governance and reliability are second nature. Second, I have hard results, not just activity: 35% throughput and 25% cost. Third, I raise the team around me through standards and mentoring.<br><br>That combination of scale, measurable impact, and lifting the team is what I'd bring here.\"",
       followups: [
         "Which of those matters most for this role?",
         "Where would you have the biggest impact in your first 90 days?",
@@ -603,7 +603,7 @@ interview: {
       navLabel: "How to approach it:",
       nav: "Prepare 4–5 so you're not stuck if some get answered earlier. Aim them at reality, not perks. The best questions make the interviewer picture you already on the team.",
       noteLabel: "Strong questions to ask:",
-      note: "\"How does the team handle data quality and observability today — is it a culture or a backlog? What does on-call look like, and how are incidents followed up? How do you decide what pipelines to build versus buy? How is success measured for this role in the first year? What's the biggest data challenge the team is facing right now?\"",
+      note: "\"How does the team handle data quality and observability today? Is it a culture, or a backlog?<br><br>What does on-call look like, and how do you follow up on incidents? How do you decide which pipelines to build versus buy?<br><br>How is success measured for this role in the first year? And what's the biggest data challenge the team is facing right now?\"",
       followups: [
         "(Listen actively and ask a genuine follow-up to their answer.)",
         "Tie their answer back to your experience where honest.",
