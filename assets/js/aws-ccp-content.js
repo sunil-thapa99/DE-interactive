@@ -16,7 +16,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "Time management matters: 90 minutes for 65 questions is about 1.3 minutes per question, and unanswered questions are scored as incorrect, so every question should get an answer before time runs out.",
       noteLabel: "Remember:",
-      note: "For multiple-response questions, ALL correct choices must be selected — there is no partial credit. Selecting 2 of 3 correct answers counts as wrong."
+      note: "On multiple-response questions, you must select every correct choice. There is no partial credit. Get 2 of 3 right and the whole answer counts as wrong."
     },
     {
       title: "Domain Weightings",
@@ -26,7 +26,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "Security and Cloud Technology/Services together make up 64% of the exam — prioritize study time there, but don't ignore Billing/Support just because it's the smallest slice, since a few easy points can be the difference between pass and fail.",
       noteLabel: "Remember:",
-      note: "Verify current domain weightings on AWS's official exam guide before scheduling, as AWS periodically updates exam guides between versions."
+      note: "Check the current domain weightings on the official AWS exam guide before you book. AWS updates these guides between versions."
     },
     {
       title: "How to Register",
@@ -36,7 +36,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "Online proctored exams offer flexibility but have stricter environment requirements (see the exam-day card below); testing centers are more predictable but require travel and adherence to their ID/arrival policies.",
       noteLabel: "Remember:",
-      note: "Verify current exam pricing and available languages on AWS's official exam guide before scheduling — these details change over time."
+      note: "Check the current price and available languages on the official AWS exam guide before you book. These details change over time."
     },
     {
       title: "Prerequisites",
@@ -46,7 +46,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "This is an entry-level, non-technical certification. It tests conceptual understanding and awareness of services, not hands-on configuration skill.",
       noteLabel: "Remember:",
-      note: "You don't need hands-on production experience to pass — familiarity from reading and light experimentation is sufficient if paired with structured study."
+      note: "You do not need hands-on production experience to pass. Familiarity from reading and light experimenting is enough, as long as you pair it with structured study."
     },
     {
       title: "How to Use This Module",
@@ -56,7 +56,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "The domains build on each other conceptually (e.g., Security concepts like shared responsibility reappear when discussing specific services), so sequencing matters more than jumping around.",
       noteLabel: "Remember:",
-      note: "Don't skip straight to the Mock Exam tab — it's most useful after you've built a foundation, not as a substitute for one."
+      note: "Do not skip straight to the Mock Exam tab. It works best after you have built a foundation. It is not a substitute for one."
     },
     {
       title: "Cheat Sheet + Mock Exam Loop",
@@ -66,7 +66,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "Aim to consistently score 80%+ on mock exams before scheduling the real thing — this margin accounts for exam-day nerves and question phrasing you haven't seen before.",
       noteLabel: "Remember:",
-      note: "Treat every missed mock question as a direct signal to go back and re-read that specific domain tab, not just a wrong answer to move past."
+      note: "Treat every missed mock question as a signal. Go back and re-read that specific domain tab. Do not just note the wrong answer and move on."
     },
     {
       title: "Trap Pattern: Service Selection Over Definitions",
@@ -76,7 +76,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "When reading a scenario question, always ask: 'what is the requirement actually driving this decision?' — is it cost, compliance, latency, or durability? The correct answer is the one that satisfies that specific driver.",
       noteLabel: "Remember:",
-      note: "If you find yourself choosing based on 'which service sounds most powerful' rather than 'which service fits the stated requirement,' re-read the question."
+      note: "Watch how you are choosing. If you are picking the service that sounds most powerful instead of the one that fits the stated requirement, re-read the question."
     },
     {
       title: "Trap Pattern: Shared Responsibility Model",
@@ -86,7 +86,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "Whenever a question describes a task or failure, ask 'who manages this specific layer — AWS or the customer?' This single question resolves most shared-responsibility traps quickly.",
       noteLabel: "Remember:",
-      note: "AWS is responsible for security OF the cloud (infrastructure, hardware, managed service internals); the customer is responsible for security IN the cloud (data, access management, configuration)."
+      note: "AWS handles security OF the cloud. That covers infrastructure, hardware, and the internals of managed services.<br><br>The customer handles security IN the cloud. That covers data, access management, and configuration."
     },
     {
       title: "Trap Pattern: Look-Alike Services",
@@ -96,7 +96,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "These groupings are tested specifically because they're easy to confuse — expect at least a few questions built entirely around telling two similar-sounding services apart.",
       noteLabel: "Remember:",
-      note: "The Service Cheat Sheet tab groups these look-alike services together on purpose — review those groupings right before your exam."
+      note: "The Service Cheat Sheet tab groups these look-alike services together on purpose. Review those groupings right before your exam."
     },
     {
       title: "Trap Pattern: Don't Overthink It",
@@ -106,7 +106,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "If answering a question seems to require detailed hands-on config expertise, you are probably overanalyzing it. The simpler, higher-level answer is usually correct.",
       noteLabel: "Remember:",
-      note: "When torn between a simple conceptual answer and a complex technical one, lean toward the simple answer — this exam rewards breadth of awareness, not implementation depth."
+      note: "Torn between a simple conceptual answer and a complex technical one? Lean toward the simple one. This exam rewards broad awareness, not deep implementation skill."
     },
     {
       title: "Exam-Day Mechanics",
@@ -116,7 +116,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "No notes, phone, or reference material of any kind is allowed in either format. Testing centers provide a scratchpad or whiteboard for calculations/notes during the exam.",
       noteLabel: "Remember:",
-      note: "For online proctored exams, scan your desk and room thoroughly per instructions before starting — failing the room scan can delay or disqualify your session."
+      note: "For online proctored exams, scan your desk and room carefully and follow the instructions before you start. Failing the room scan can delay or disqualify your session."
     },
     {
       title: "Time Management During the Exam",
@@ -126,7 +126,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "Use a flag-and-skip strategy: if a question is taking too long, flag it for review and move on, then return to flagged questions after finishing the rest. Don't let one hard question consume time needed for several easy ones.",
       noteLabel: "Remember:",
-      note: "Answer every question before time expires, even a guess — unanswered questions are automatically wrong."
+      note: "Answer every question before time runs out, even if it is a guess. Unanswered questions are marked wrong automatically."
     },
     {
       title: "Getting Results",
@@ -136,7 +136,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "Passing earns a digital badge (shareable on profiles/resumes), a discount voucher toward your next AWS certification exam, and access to the AWS re/Post community.",
       noteLabel: "Remember:",
-      note: "Verify current voucher discount percentages and validity periods on AWS's official certification benefits page, as these terms can change."
+      note: "Check the current voucher discount and how long it stays valid on the official AWS certification benefits page. These terms can change."
     },
     {
       title: "If You Don't Pass",
@@ -146,7 +146,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "Use the waiting period productively: review your score report's per-domain performance breakdown to identify exactly which domains were weakest, then focus re-study on this module's corresponding tabs before retaking.",
       noteLabel: "Remember:",
-      note: "A per-domain breakdown, not just a pass/fail flag, is provided in the official score report — use it to target study rather than re-reading everything equally."
+      note: "The official score report gives a per-domain breakdown, not just a pass or fail. Use it to target your study instead of re-reading everything equally."
     },
     {
       title: "Verify These Numbers Right Before You Book",
@@ -156,7 +156,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "These are logistics facts, not exam content — getting them wrong doesn't cost you exam points, but it can cost you money or a scheduling surprise (e.g. assuming a discount that's since changed, or a Free Tier limit that's been revised).",
       noteLabel: "Remember:",
-      note: "Check the official AWS Certification exam guide and the AWS Free Tier page for current figures in the week you actually book, not from memory of an older number."
+      note: "Check the official AWS Certification exam guide and the AWS Free Tier page for current figures. Do this in the week you actually book. Do not rely on an older number from memory."
     },
     {
       title: "Well-Architected Framework Lenses (Out of Scope, but Know the Name)",
@@ -166,7 +166,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "Lenses are NOT part of the CLF-C02 exam guide and are very unlikely to be tested directly — this card exists so you recognize the term if you see it in AWS documentation and don't mistake it for a required exam topic.",
       noteLabel: "Remember:",
-      note: "You do not need to study individual Lenses for this exam — know the six pillars cold, and know 'Lens' just means a specialized application of them."
+      note: "You do not need to study individual Lenses for this exam. Know the six pillars cold. Just know that a 'Lens' is a specialized application of those pillars."
     },
     {
       title: "Get Hands-On Before the Exam, Even Briefly",
@@ -176,7 +176,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "Scenario questions read faster and feel more concrete once you've seen the actual EC2 launch wizard, an S3 bucket's storage-class dropdown, or the IAM policy JSON editor with your own eyes — it's a small time investment with an outsized confidence payoff.",
       noteLabel: "Remember:",
-      note: "You don't need a real project — 20 minutes of curious clicking in the Free Tier console is enough exposure for this exam's level."
+      note: "You do not need a real project. Twenty minutes of curious clicking in the Free Tier console is enough exposure for this exam."
     },
     {
       title: "Exam Languages and Accessibility Accommodations",
@@ -186,7 +186,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "If either applies to you, request it well before your target exam date — accommodation requests and non-English language selection both go through a review/setup process that isn't instant.",
       noteLabel: "Remember:",
-      note: "This only matters if you need a non-English exam or an accommodation — verify current language availability and the accommodation request process on AWS's official certification accessibility page."
+      note: "This only matters if you need a non-English exam or an accommodation. If it applies to you, check the current language options and the accommodation request process on the official AWS certification accessibility page."
     },
     {
       title: "Supplement With Official AWS Practice Resources",
@@ -196,7 +196,7 @@ overview: {
       navLabel: "Why it matters:",
       nav: "AWS's own practice exam is the closest available proxy for the real question-writing style and phrasing quirks — doing at least one official practice exam in addition to this module's mock exam reduces the chance of being surprised by phrasing on test day.",
       noteLabel: "Remember:",
-      note: "Use this module to build and check your knowledge first; use AWS Skill Builder's official practice exam as a final calibration check closer to your test date."
+      note: "Use this module to build and check your knowledge first. Then use AWS Skill Builder's official practice exam as a final calibration check closer to your test date."
     }
   ]
 },
@@ -215,7 +215,7 @@ concepts: {
       navLabel: "Exam angle:",
       nav: "Questions describe a scenario (e.g., a startup wants to avoid buying servers) and ask which cloud characteristic applies. 'Pay only for what you use' and 'no upfront hardware investment' are the most common correct-answer phrasings.",
       noteLabel: "Remember:",
-      note: "Cloud = on-demand, self-service IT resources over the internet, billed on consumption.",
+      note: "Cloud means IT resources you get on demand and provision yourself over the internet. You pay based on what you consume.",
       followups: [
         "A company wants to eliminate the need to forecast server capacity years in advance — which cloud advantage does this describe?",
         "Which is NOT a characteristic of cloud computing: (a) pay-as-you-go, (b) on-demand self-service, (c) long-term hardware ownership, (d) rapid elasticity?"
@@ -229,7 +229,7 @@ concepts: {
       navLabel: "Exam angle:",
       nav: "Exam gives a business scenario and asks 'which advantage of cloud computing does this represent?' Learn to recognize each by paraphrase — e.g., 'no longer need to buy servers upfront' = capex to opex; 'launch in Japan and Australia in an afternoon' = go global in minutes.",
       noteLabel: "Remember:",
-      note: "Capex→Opex, economies of scale, stop guessing capacity, speed/agility, stop managing data centers, go global in minutes.",
+      note: "The six advantages, in short: trade capex for opex, gain economies of scale, stop guessing capacity, gain speed and agility, stop managing data centers, and go global in minutes.",
       followups: [
         "A company reduces its server fleet costs by benefiting from AWS's aggregated purchasing power across all customers — which advantage is this?",
         "A retailer over-provisioned servers for a holiday sale that never arrived, wasting money on idle capacity — which advantage of cloud computing solves this going forward?",
@@ -244,7 +244,7 @@ concepts: {
       navLabel: "Exam angle:",
       nav: "Given a scenario like 'a company keeps sensitive data on-premises but bursts compute to AWS during peak load,' the answer is hybrid. 'Company has no on-prem infrastructure at all' is public cloud.",
       noteLabel: "Remember:",
-      note: "Public = all in cloud; Private = all on-prem; Hybrid = connects both.",
+      note: "Public means everything runs in the cloud. Private means everything runs on-premises. Hybrid connects the two.",
       followups: [
         "A hospital must keep patient records on-premises for compliance but wants to run analytics in AWS — which deployment model?",
         "A company has zero physical servers and runs 100% of its infrastructure on AWS — which deployment model?"
@@ -258,7 +258,7 @@ concepts: {
       navLabel: "Exam angle:",
       nav: "Exam gives an AWS service name and asks which model it fits, or gives a description ('I don't want to manage servers, just deploy code') and asks for the model (PaaS/Lambda). A frequent trap: EC2 is IaaS even though it's 'in the cloud' — because you still manage the OS.",
       noteLabel: "Remember:",
-      note: "IaaS=EC2 (you manage OS+), PaaS=Elastic Beanstalk/Lambda (you manage app only), SaaS=QuickSight/Chime (fully managed product).",
+      note: "IaaS is EC2, where you manage the OS and up. PaaS is Elastic Beanstalk or Lambda, where you manage only the app. SaaS is QuickSight or Chime, a fully managed product you just use.",
       followups: [
         "A developer wants to upload code and have AWS handle scaling, patching, and OS management automatically — which model and which service exemplifies it?",
         "Which AWS service is the clearest example of SaaS: EC2, Elastic Beanstalk, or Amazon Chime?",
@@ -273,7 +273,7 @@ concepts: {
       navLabel: "Exam angle:",
       nav: "Exam asks 'which pillar does this design principle belong to' or 'a company wants to automate infrastructure changes and track every deployment — which pillar?' (Operational Excellence). Least privilege / encrypting data at rest questions map to Security pillar.",
       noteLabel: "Remember:",
-      note: "Op Excellence = run/monitor/improve via automation; Security = protect via layered defense and least privilege.",
+      note: "Operational Excellence is about running, monitoring, and improving systems through automation. Security is about protecting them with layered defense and least privilege.",
       followups: [
         "A team automates all infrastructure deployments using scripts and tracks every change — which Well-Architected pillar is this?",
         "Applying encryption to data both in transit and at rest supports which pillar?"
@@ -287,7 +287,7 @@ concepts: {
       navLabel: "Exam angle:",
       nav: "'A company automatically replaces a failed EC2 instance without manual intervention' = Reliability. 'A company chooses a purpose-built database instead of a generic one to match workload needs' = Performance Efficiency (mechanical sympathy).",
       noteLabel: "Remember:",
-      note: "Reliability = recover from failure/scale to meet demand; Performance Efficiency = right resource for the job, stays efficient as tech evolves.",
+      note: "Reliability is about recovering from failure and scaling to meet demand. Performance Efficiency is about picking the right resource for the job and staying efficient as technology evolves.",
       followups: [
         "A system automatically detects a failed component and replaces it without human action — which pillar?",
         "Choosing a graph database instead of a relational database because it fits the access pattern better reflects which pillar's principle of 'mechanical sympathy'?"
@@ -301,7 +301,7 @@ concepts: {
       navLabel: "Exam angle:",
       nav: "Sustainability is the newest pillar (added 2021) and is frequently tested via 'minimizing environmental/carbon footprint' scenarios. Cost Optimization questions often reference Reserved Instances, Savings Plans, or rightsizing as the applied mechanism — but the pillar name itself is the concept tested here.",
       noteLabel: "Remember:",
-      note: "Cost Optimization = lowest price for business value (consumption model); Sustainability = minimize environmental impact (efficiency + managed services).",
+      note: "Cost Optimization is about delivering business value at the lowest price, using a consumption model. Sustainability is about minimizing environmental impact through efficiency and managed services.",
       followups: [
         "A company tags every resource by department to track and attribute spending — which pillar?",
         "A company migrates from self-managed servers to managed services partly to reduce its carbon footprint — which pillar is the primary driver?"
@@ -315,7 +315,7 @@ concepts: {
       navLabel: "Exam angle:",
       nav: "Exam distinguishes the two tools: Pricing Calculator = 'estimate cost of a planned AWS deployment/architecture'; TCO Calculator = 'compare on-premises costs to AWS costs to justify migration.' Don't confuse either with the Cost Explorer or Billing Console (those analyze costs of resources already running — Domain 4 territory).",
       noteLabel: "Remember:",
-      note: "Pricing Calculator = estimate future AWS cost; TCO Calculator = compare on-prem vs AWS to build migration case.",
+      note: "The Pricing Calculator estimates the future cost of an AWS setup. The TCO Calculator compares on-premises costs against AWS to build the case for migrating.",
       followups: [
         "A company wants to show leadership how much cheaper AWS would be than their current data center before migrating — which tool?",
         "A solutions architect wants to estimate the monthly cost of a proposed 3-tier AWS architecture — which tool?"
@@ -329,7 +329,7 @@ concepts: {
       navLabel: "Exam angle:",
       nav: "Exam frequently asks 'a company must keep data within the EU for GDPR — what should they consider when choosing a Region?' → compliance/data residency. Also tests that Regions are fully isolated (a failure in one Region does not affect another).",
       noteLabel: "Remember:",
-      note: "4 Region-selection factors: compliance, latency, service availability, pricing.",
+      note: "Four factors drive Region choice: compliance, latency, service availability, and pricing.",
       followups: [
         "A German company must legally store customer data within Germany — what Region-selection factor is this?",
         "A US-based company wants the lowest latency for Australian users — what factor drives the Region choice?"
@@ -343,7 +343,7 @@ concepts: {
       navLabel: "Exam angle:",
       nav: "Common trap: an AZ is NOT the same as a data center — an AZ can consist of multiple data centers. Exam tests that deploying an app across 2+ AZs (not just multiple EC2 instances in the same AZ) is what provides high availability.",
       noteLabel: "Remember:",
-      note: "AZ = one or more data centers within a Region; every Region has ≥3 AZs; spread across AZs for HA.",
+      note: "An AZ is one or more data centers inside a Region. Every Region has at least 3 AZs. Spread your app across AZs for high availability.",
       followups: [
         "A company runs all its EC2 instances in a single Availability Zone — what risk does this create, and what's the fix?",
         "True or false: an Availability Zone is exactly one physical data center."
@@ -357,7 +357,7 @@ concepts: {
       navLabel: "Exam angle:",
       nav: "Exam matches scenario to the right edge concept: 'cache video content globally' = Edge Location/CloudFront; 'run a low-latency app in Los Angeles without a full Region there' = Local Zone; 'mobile game needs ultra-low latency over 5G' = Wavelength; 'run AWS services in our own data center' = Outposts.",
       noteLabel: "Remember:",
-      note: "Edge Locations=CDN caching; Local Zones=metro-area low latency; Wavelength=5G network edge; Outposts=AWS hardware on your premises.",
+      note: "Edge Locations do CDN caching. Local Zones give metro-area low latency. Wavelength lives at the 5G network edge. Outposts puts AWS hardware on your own premises.",
       followups: [
         "A telecom wants its 5G mobile app to have minimal latency by keeping compute inside the carrier network — which AWS offering?",
         "A company needs to run AWS services physically inside its own on-premises data center for local processing — which offering?",
@@ -372,7 +372,7 @@ concepts: {
       navLabel: "Exam angle:",
       nav: "Exam distinguishes HA (minimize downtime, brief failover acceptable) from fault tolerance (zero perceptible disruption) — fault tolerance is the stricter, higher bar. Both are usually achieved via multi-AZ deployment, so the mechanism-question answer is often the same ('deploy across multiple AZs'), but the terminology question tests you know they're not identical.",
       noteLabel: "Remember:",
-      note: "HA = minimal downtime with quick failover; Fault Tolerance = zero perceptible impact from failures; both leverage multiple AZs.",
+      note: "High availability means minimal downtime with quick failover. Fault tolerance means failures cause zero perceptible impact. Both rely on multiple AZs.",
       followups: [
         "A system continues serving users with absolutely no interruption even when a server fails — is this best described as HA or fault tolerant?",
         "What is the primary AWS mechanism used to achieve both high availability and fault tolerance for a web application?"
@@ -386,7 +386,7 @@ concepts: {
       navLabel: "Exam angle:",
       nav: "Exam gives a scenario ('resize a single database server to have more CPU/RAM' = vertical scaling; 'add more web servers during a traffic spike, then remove them after' = elasticity/horizontal scaling + Auto Scaling) and asks you to name the concept. Elasticity is specifically about automatic, demand-driven adjustment — plain 'scalability' just means the capability to grow at all.",
       noteLabel: "Remember:",
-      note: "Vertical = bigger instance (ceiling exists); Horizontal = more instances (no real ceiling); Elasticity = automatic scale up/down with real-time demand.",
+      note: "Vertical scaling means a bigger instance, and it has a ceiling. Horizontal scaling means more instances, with no real ceiling. Elasticity means scaling up and down automatically with real-time demand.",
       followups: [
         "A company changes its single EC2 instance from m5.large to m5.4xlarge to handle more load — is this vertical or horizontal scaling?",
         "An e-commerce site automatically adds EC2 instances during a flash sale and removes them once traffic normalizes — which concept best names this behavior?",
@@ -410,7 +410,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "Expect a scenario naming a service (EC2, RDS, S3, Lambda) and asking who is responsible for a specific task (e.g., 'patching the OS' or 'physical security'). Trap: customers sometimes assume AWS manages IAM or data encryption configuration — AWS provides the tools (KMS, IAM) but the customer must configure and use them.",
       noteLabel: "Remember:",
-      note: "AWS = security OF the cloud (infrastructure); Customer = security IN the cloud (data, access, config).",
+      note: "AWS owns security OF the cloud, meaning the infrastructure. The customer owns security IN the cloud, meaning data, access, and configuration.",
       followups: [
         "Who patches the OS on an EC2 instance vs. an RDS instance?",
         "Does the customer manage the underlying hardware for any AWS service?",
@@ -425,7 +425,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "Questions often ask 'what should you do immediately after creating an AWS account' — answer: enable MFA on root, create an IAM admin user, and stop using root. Trap answers suggest creating IAM users with root-equivalent access keys for automation — wrong, use IAM roles instead.",
       noteLabel: "Remember:",
-      note: "Lock up root: enable MFA, don't create access keys, use IAM for everyday work.",
+      note: "Lock the root user away. Enable MFA on it, do not create access keys for it, and use IAM for everyday work.",
       followups: [
         "What tasks specifically still require the root user?",
         "Why are long-term root access keys considered a major risk?"
@@ -439,7 +439,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "Classic scenario: 'An application on EC2 needs to access S3 — what is the best practice?' Answer: attach an IAM role to the EC2 instance. Trap answers: hardcoding access keys in the app, or creating an IAM user for the EC2 instance — both violate best practice.",
       noteLabel: "Remember:",
-      note: "Roles = temporary credentials, assumed; preferred for EC2, cross-account, and federation.",
+      note: "Roles hand out temporary credentials that identities assume. Prefer them for EC2, cross-account access, and federation.",
       followups: [
         "Why shouldn't you embed access keys in application code on EC2?",
         "What is the difference between a role and a group?",
@@ -454,7 +454,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "Expect to identify the effect of a policy from a snippet, or to know that an explicit Deny beats an Allow. Trap: confusing resource-based policies (e.g., S3 bucket policy granting another account access) with identity-based policies.",
       noteLabel: "Remember:",
-      note: "Effect/Action/Resource/Condition; explicit Deny always wins.",
+      note: "A policy statement has four parts: Effect, Action, Resource, and Condition. An explicit Deny always wins.",
       followups: [
         "What's the difference between a managed policy and an inline policy?",
         "When would you use a resource-based policy instead of an identity-based one?"
@@ -468,7 +468,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "'Least privilege' is a direct vocabulary term the exam tests — recognize it as the correct answer to 'how should permissions be granted.' MFA questions often pair with root user security.",
       noteLabel: "Remember:",
-      note: "Grant minimum necessary access; MFA adds a second factor beyond password.",
+      note: "Grant only the access that is truly needed. MFA adds a second factor on top of the password.",
       followups: [
         "What does IAM Access Analyzer actually check for?",
         "Why is starting with broad permissions and narrowing later considered bad practice?"
@@ -482,7 +482,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "Exam may still reference the old name 'AWS SSO' — know it's the same service, now IAM Identity Center. Tested as the answer for 'centralized workforce access across multiple AWS accounts.'",
       noteLabel: "Remember:",
-      note: "IAM Identity Center = single sign-on across multiple AWS accounts/apps (formerly AWS SSO).",
+      note: "IAM Identity Center gives single sign-on across multiple AWS accounts and apps. It was formerly called AWS SSO.",
       followups: []
     },
     {
@@ -493,7 +493,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "Key distinction tested: SCPs set boundaries/maximum permissions (restrict only) and apply org-wide; IAM policies grant actual permissions to identities. Trap: thinking an SCP can grant access — it cannot, it can only limit.",
       noteLabel: "Remember:",
-      note: "SCPs = guardrails that restrict maximum permissions org-wide; they never grant permissions.",
+      note: "SCPs are guardrails that cap the maximum permissions across the organization. They never grant permissions on their own.",
       followups: [
         "Can an SCP grant a permission that no IAM policy grants?",
         "What is Consolidated Billing and why do organizations use it?"
@@ -507,7 +507,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "If a question asks 'who deleted this resource' or 'how do I audit API activity,' the answer is CloudTrail. Don't confuse with CloudWatch (performance/operational monitoring) or Config (compliance/configuration tracking).",
       noteLabel: "Remember:",
-      note: "CloudTrail = who did what (API activity audit log).",
+      note: "CloudTrail tells you who did what. It is your API activity audit log.",
       followups: []
     },
     {
@@ -518,7 +518,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "Distinguish from CloudTrail: Config = configuration state/compliance over time; CloudTrail = API call history. A scenario about 'tracking resource configuration changes for compliance' = Config.",
       noteLabel: "Remember:",
-      note: "Config = configuration compliance and change history for resources.",
+      note: "Config tracks resource configuration compliance and change history over time.",
       followups: []
     },
     {
@@ -529,7 +529,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "'Intelligent threat detection' or 'continuously monitors for malicious activity' = GuardDuty. Trap: confusing with Inspector (vulnerability scanning of resources) or Macie (sensitive data discovery).",
       noteLabel: "Remember:",
-      note: "GuardDuty = intelligent threat detection (analyzes logs for malicious activity).",
+      note: "GuardDuty is intelligent threat detection. It analyzes your logs for malicious activity.",
       followups: []
     },
     {
@@ -540,7 +540,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "Match the keyword to the service: 'vulnerability scanning' = Inspector; 'sensitive data / PII discovery in S3' = Macie; 'central dashboard aggregating findings from multiple security services' = Security Hub.",
       noteLabel: "Remember:",
-      note: "Inspector = vulnerabilities; Macie = sensitive data in S3; Security Hub = aggregated findings dashboard.",
+      note: "Inspector finds vulnerabilities. Macie finds sensitive data in S3. Security Hub is the dashboard that aggregates findings.",
       followups: [
         "Which service would you use to find PII accidentally stored in an S3 bucket?",
         "How does Security Hub relate to GuardDuty and Inspector findings?"
@@ -554,7 +554,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "'Protect against SQL injection/XSS on a web app' = WAF. 'Protect against DDoS' = Shield. Know Shield Standard is free/automatic; Shield Advanced is paid and adds DRT access and cost protection.",
       noteLabel: "Remember:",
-      note: "WAF = filters web application traffic (SQLi, XSS); Shield = DDoS protection (Standard free, Advanced paid).",
+      note: "WAF filters web application traffic, blocking things like SQL injection and XSS. Shield handles DDoS protection: Standard is free, Advanced is paid.",
       followups: [
         "Is Shield Standard something you have to enable, or is it automatic?",
         "What extra capability does Shield Advanced add beyond Standard?"
@@ -568,7 +568,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "Distinguish at-rest (stored data) from in-transit (moving data, typically via SSL/TLS). A scenario naming 'centrally manage and audit use of encryption keys' = KMS.",
       noteLabel: "Remember:",
-      note: "At rest = stored data encryption; in transit = SSL/TLS over network; KMS = managed key creation/control.",
+      note: "Encryption at rest protects stored data. Encryption in transit uses SSL/TLS across the network. KMS is the managed service that creates and controls the keys.",
       followups: []
     },
     {
@@ -579,7 +579,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "'Free SSL/TLS certificates that auto-renew' = ACM. Often paired with ELB or CloudFront in scenario questions about enabling HTTPS.",
       noteLabel: "Remember:",
-      note: "ACM = free, auto-renewing SSL/TLS certificates for AWS services.",
+      note: "ACM gives you free SSL/TLS certificates for AWS services, and it renews them automatically.",
       followups: []
     },
     {
@@ -590,7 +590,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "Trap: exam may ask which is more cost-effective for simple config values (Parameter Store, free Standard tier) vs. which natively auto-rotates database credentials (Secrets Manager).",
       noteLabel: "Remember:",
-      note: "Secrets Manager = secrets with automatic rotation (paid); Parameter Store = config/secrets storage, free Standard tier, no built-in rotation.",
+      note: "Secrets Manager stores secrets and rotates them automatically, and it is paid. Parameter Store stores config and secrets, has a free Standard tier, and has no built-in rotation.",
       followups: [
         "Which service would you choose for a database password that needs automatic rotation?"
       ]
@@ -603,7 +603,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "Core distinction tested repeatedly: Security Group = stateful, instance-level, allow-only. NACL = stateless, subnet-level, allow AND deny. Public subnet = has internet gateway route; private = does not.",
       noteLabel: "Remember:",
-      note: "Security groups: stateful, instance-level, allow-only. NACLs: stateless, subnet-level, allow/deny.",
+      note: "Security groups are stateful, work at the instance level, and only allow. NACLs are stateless, work at the subnet level, and can allow or deny.",
       followups: [
         "Why must a NACL have both inbound and outbound rules for a single request/response, unlike a security group?"
       ]
@@ -616,7 +616,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "'Where do I download AWS's compliance reports/certifications' = AWS Artifact. Trap: assuming using AWS automatically makes a workload HIPAA/PCI compliant — the customer must still configure their environment correctly.",
       noteLabel: "Remember:",
-      note: "AWS Artifact = on-demand compliance reports/agreements; AWS enables compliance, customer is still responsible for their own.",
+      note: "AWS Artifact gives you compliance reports and agreements on demand. AWS enables compliance, but the customer is still responsible for their own.",
       followups: [
         "If a company needs to prove PCI DSS compliance to an auditor, where do they get AWS's attestation?"
       ]
@@ -629,7 +629,7 @@ security: {
       navLabel: "Exam angle:",
       nav: "'Automated recommendations for open security groups / root MFA / exposed access keys' = Trusted Advisor security checks. Know the five categories and that full checks need Business/Enterprise support.",
       noteLabel: "Remember:",
-      note: "Trusted Advisor security checks flag open security groups, missing root MFA, and exposed keys; full checks need Business/Enterprise support.",
+      note: "Trusted Advisor security checks flag open security groups, missing root MFA, and exposed keys. Full checks require a Business or Enterprise support plan.",
       followups: []
     }
   ]
@@ -649,7 +649,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "CCP never asks for exact instance sizes — it asks 'which family for this workload' at the letter level. Memorize: C=compute, R=RAM/memory, I=IOPS/storage, P/G=GPU.",
       noteLabel: "Remember:",
-      note: "T-series (T3/T4g) is burstable general purpose — cheapest entry point for variable, low-to-moderate CPU workloads.",
+      note: "The T-series (T3, T4g) is burstable general purpose. It is the cheapest entry point for variable, low-to-moderate CPU workloads.",
       followups: ["A workload needs an in-memory cache-like database with huge RAM — which family?", "Which family suits a genomics/ML training job needing GPUs?"]
     },
     {
@@ -660,7 +660,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "Classic matching question: 'batch job that can tolerate interruption' = Spot; 'steady 3-year production workload' = Reserved/Savings Plan; 'unknown/spiky traffic' = On-Demand.",
       noteLabel: "Remember:",
-      note: "Spot is cheapest but can be terminated by AWS anytime; never use it for stateful, non-fault-tolerant workloads.",
+      note: "Spot is the cheapest option, but AWS can terminate it at any time. Never use it for stateful or non-fault-tolerant workloads.",
       followups: ["Which pricing model for a workload with a known 3-year baseline but flexibility to change instance families?", "Why is Spot unsuitable for a single-instance production database?"]
     },
     {
@@ -671,7 +671,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "Paired conceptually with Elastic Load Balancing — ASG handles 'how many instances,' ELB handles 'distribute traffic to them.'",
       noteLabel: "Remember:",
-      note: "Auto Scaling is about elasticity (horizontal scale-out/in), not fault tolerance alone — it also replaces unhealthy instances.",
+      note: "Auto Scaling is about elasticity: scaling instances out and in horizontally. It is not only about fault tolerance, though it does also replace unhealthy instances.",
       followups: []
     },
     {
@@ -682,7 +682,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "Exam gives a protocol/use-case clue: 'route based on URL path' = ALB; 'millions of requests, need static IP, TCP' = NLB; 'deploy inline security appliances' = GWLB.",
       noteLabel: "Remember:",
-      note: "ALB = smart Layer 7 routing; NLB = raw Layer 4 speed.",
+      note: "ALB gives smart Layer 7 routing. NLB gives raw Layer 4 speed.",
       followups: ["Which load balancer type provides a static IP address?", "Which load balancer would front a fleet of intrusion-detection appliances?"]
     },
     {
@@ -693,7 +693,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "Signal words 'event-driven,' 'no server management,' 'pay only when code runs,' or 'short-lived function' all point to Lambda.",
       noteLabel: "Remember:",
-      note: "Lambda is not for long-running or stateful processes — use EC2, ECS/EKS, or Batch instead.",
+      note: "Lambda is not for long-running or stateful processes. For those, use EC2, ECS/EKS, or Batch instead.",
       followups: ["What triggers commonly invoke a Lambda function?", "Why is Lambda a poor fit for a 2-hour video transcoding job?"]
     },
     {
@@ -704,7 +704,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "Distinguish from CloudFormation: Beanstalk = quick app deployment with underlying infra abstracted; CloudFormation = explicit infrastructure-as-code control.",
       noteLabel: "Remember:",
-      note: "Beanstalk still lets you access the underlying EC2 resources if needed — it's not fully opaque like Lambda.",
+      note: "Beanstalk still lets you reach the underlying EC2 resources when you need to. It is not fully hidden the way Lambda is.",
       followups: []
     },
     {
@@ -715,7 +715,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "'Serverless containers' or 'run containers without managing servers' = Fargate. 'Need Kubernetes API compatibility' = EKS. 'AWS-proprietary orchestrator' = ECS.",
       noteLabel: "Remember:",
-      note: "Fargate is a launch type, not a competitor to ECS/EKS — you choose EC2 launch type (you manage instances) or Fargate launch type (AWS manages them).",
+      note: "Fargate is a launch type, not a competitor to ECS or EKS. You pick the EC2 launch type, where you manage the instances, or the Fargate launch type, where AWS manages them.",
       followups: ["A team wants to run containers with zero server management on ECS — which launch type?", "Which service would a team already using open-source Kubernetes tooling prefer?"]
     },
     {
@@ -726,7 +726,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "Keyword 'batch jobs at scale' or 'job queue' without needing to manage scheduling infrastructure.",
       noteLabel: "Remember:",
-      note: "AWS Batch decides instance types for you based on job resource requirements — you don't have to.",
+      note: "AWS Batch picks the instance types for you, based on what the job needs. You do not have to.",
       followups: []
     },
     {
@@ -737,7 +737,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "Signal: 'simple, low-cost way to launch a website/app' or 'don't need full EC2 flexibility' = Lightsail.",
       noteLabel: "Remember:",
-      note: "Lightsail trades EC2's flexibility for simplicity and flat-rate pricing.",
+      note: "Lightsail gives up EC2's flexibility in exchange for simplicity and flat-rate pricing.",
       followups: []
     },
     {
@@ -748,7 +748,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "These overlap with Global Infrastructure content — recognize them as 'compute closer to where the data/user is' rather than needing config detail.",
       noteLabel: "Remember:",
-      note: "Outposts = your data center; Wavelength = telecom 5G edge; Local Zones = AWS-operated edge sites near cities.",
+      note: "Outposts runs in your own data center. Wavelength sits at the telecom 5G edge. Local Zones are AWS-run edge sites near big cities.",
       followups: []
     },
     {
@@ -759,7 +759,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "'Store any amount of unstructured data, access via URL/API' = S3. Distinguish from EBS/EFS (see block vs file vs object card).",
       noteLabel: "Remember:",
-      note: "S3 bucket names are globally unique across all AWS accounts.",
+      note: "S3 bucket names must be globally unique across every AWS account.",
       followups: []
     },
     {
@@ -770,7 +770,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "Exam gives access frequency + retrieval time tolerance; you pick the cheapest class that satisfies it. 'Rarely accessed, retrieval can take 12 hours' = Deep Archive.",
       noteLabel: "Remember:",
-      note: "Cost and retrieval time move in opposite directions — cheaper storage classes mean slower/costlier retrieval.",
+      note: "Cost and retrieval time move in opposite directions. The cheaper the storage class, the slower or costlier the retrieval.",
       followups: ["Which storage class fits data accessed unpredictably where access patterns are unknown?", "Which class fits 7-year regulatory archives rarely if ever retrieved?"]
     },
     {
@@ -781,7 +781,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "The 11-nines durability figure is a frequently quoted exact exam fact — memorize it distinctly from availability percentages, which vary by storage class.",
       noteLabel: "Remember:",
-      note: "Durability = won't lose the data; availability = can access it right now. S3 excels at both but they're not the same number.",
+      note: "Durability means the data will not be lost. Availability means you can access it right now. S3 is strong on both, but they are not the same number.",
       followups: []
     },
     {
@@ -792,7 +792,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "'Attached to one instance, boot volume' = EBS. 'Shared across many instances, POSIX/NFS' = EFS. 'Needs Windows file shares' or 'HPC scratch storage' = FSx.",
       noteLabel: "Remember:",
-      note: "Object (S3) = files+metadata via API; Block (EBS) = raw disk volumes; File (EFS/FSx) = shared filesystem mounted by multiple compute nodes.",
+      note: "Object storage (S3) holds files plus metadata, accessed via API. Block storage (EBS) gives raw disk volumes. File storage (EFS/FSx) is a shared filesystem that many compute nodes can mount.",
       followups: ["A fleet of Linux instances needs a shared, concurrently-writable filesystem — which service?", "A single EC2 instance needs a low-latency boot volume — which service and volume type for a high-IOPS database?"]
     },
     {
@@ -803,7 +803,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "Signal words: 'extend on-premises storage to the cloud' or 'replace physical tape backups with cloud storage.'",
       noteLabel: "Remember:",
-      note: "Storage Gateway is about ongoing hybrid access, not one-time bulk transfer — that's the Snow Family's job.",
+      note: "Storage Gateway is for ongoing hybrid access, not a one-time bulk transfer. Bulk transfer is the Snow Family's job.",
       followups: []
     },
     {
@@ -814,7 +814,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "'Migrate petabytes of data and internet transfer would take weeks/months' = Snowball/Snowmobile family, scaled to data volume.",
       noteLabel: "Remember:",
-      note: "Rule of thumb the exam relies on: if transferring over the network would take more than about a week, use Snow Family instead.",
+      note: "Here is the rule of thumb the exam relies on. If a network transfer would take more than about a week, use the Snow Family instead.",
       followups: []
     },
     {
@@ -825,7 +825,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "Signal: 'single place to manage backup policies across many AWS resources.'",
       noteLabel: "Remember:",
-      note: "AWS Backup is policy orchestration on top of existing services' native snapshot/backup capabilities.",
+      note: "AWS Backup orchestrates backup policies on top of each service's own native snapshot and backup features.",
       followups: []
     },
     {
@@ -836,7 +836,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "'Database tier that shouldn't be reachable from the internet but needs outbound updates' = private subnet + NAT Gateway.",
       noteLabel: "Remember:",
-      note: "Internet Gateway = two-way internet access (public subnet); NAT Gateway = one-way outbound-only access (private subnet).",
+      note: "An Internet Gateway gives two-way internet access for a public subnet. A NAT Gateway gives one-way, outbound-only access for a private subnet.",
       followups: ["Why would a web server sit in a public subnet but its database in a private subnet?", "What component allows a private-subnet instance to download OS patches from the internet?"]
     },
     {
@@ -847,7 +847,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "Trade-off question: 'need connection today' = VPN; 'need guaranteed bandwidth and consistent low latency for a long-term data-heavy workload' = Direct Connect. They can also be combined for failover.",
       noteLabel: "Remember:",
-      note: "Direct Connect = dedicated line, not encrypted by default; VPN = encrypted, over shared internet.",
+      note: "Direct Connect is a dedicated line, and it is not encrypted by default. VPN is encrypted, but it runs over the shared internet.",
       followups: []
     },
     {
@@ -858,7 +858,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "Match the routing policy name to the scenario description — e.g., 'send 90% of traffic to old version, 10% to new' = Weighted.",
       noteLabel: "Remember:",
-      note: "Route 53 = DNS/domain routing; it does not cache or serve content itself (that's CloudFront).",
+      note: "Route 53 handles DNS and domain routing. It does not cache or serve content itself; that is CloudFront's job.",
       followups: []
     },
     {
@@ -869,7 +869,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "'Cache static website/video content near users' = CloudFront. 'Improve performance/availability for non-HTTP or gaming/VoIP traffic across regions without caching' = Global Accelerator.",
       noteLabel: "Remember:",
-      note: "CloudFront caches content at the edge; Global Accelerator only accelerates the network path — it never caches.",
+      note: "CloudFront caches content at the edge. Global Accelerator only speeds up the network path; it never caches.",
       followups: ["Which service would speed up a UDP-based gaming application across multiple AWS regions?"]
     },
     {
@@ -880,7 +880,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "Paired heavily with Lambda in exam scenarios: 'expose a serverless backend as a REST API' = API Gateway + Lambda.",
       noteLabel: "Remember:",
-      note: "API Gateway is the entry point/router for API traffic — it is not compute itself.",
+      note: "API Gateway is the entry point and router for API traffic. It is not compute itself.",
       followups: []
     },
     {
@@ -891,7 +891,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "'Improve availability/failover' = Multi-AZ. 'Reduce load on primary from heavy read traffic' or 'scale reads' = Read Replicas. They solve different problems and can be combined.",
       noteLabel: "Remember:",
-      note: "Multi-AZ standby is for failover only (not queryable); Read Replicas are queryable but exist for scaling reads, not HA by default.",
+      note: "A Multi-AZ standby is for failover only, and you cannot query it. Read Replicas are queryable, but they exist to scale reads, not to provide HA by default.",
       followups: ["Which RDS feature would you add solely to survive an AZ outage?", "Which RDS feature would you add to handle a reporting dashboard hammering the database with SELECT queries?"]
     },
     {
@@ -902,7 +902,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "'Need RDS-like relational database but with better performance/availability at a premium' = Aurora over standard RDS engines.",
       noteLabel: "Remember:",
-      note: "Aurora is a distinct, AWS-proprietary engine choice within RDS — not a separate service category.",
+      note: "Aurora is a distinct, AWS-proprietary engine you choose within RDS. It is not a separate service category.",
       followups: []
     },
     {
@@ -913,7 +913,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "Choose DynamoDB over RDS when the workload is: flexible/non-relational schema, needs massive horizontal scale, or needs serverless operation with no capacity management — 'session state,' 'IoT data,' 'gaming leaderboards' are classic cues.",
       noteLabel: "Remember:",
-      note: "RDS/Aurora = relational, structured, SQL, joins; DynamoDB = NoSQL, key-value/document, no joins, massive scale.",
+      note: "RDS and Aurora are relational: structured, SQL, with joins. DynamoDB is NoSQL: key-value or document, no joins, and massive scale.",
       followups: ["Why would a gaming leaderboard use DynamoDB instead of RDS?"]
     },
     {
@@ -924,7 +924,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "'Run business intelligence/analytics queries across years of historical data' = Redshift. 'Process day-to-day application transactions' = RDS/Aurora.",
       noteLabel: "Remember:",
-      note: "OLTP = transactional (RDS); OLAP = analytical (Redshift). This distinction is a recurring exam pairing.",
+      note: "OLTP is transactional and maps to RDS. OLAP is analytical and maps to Redshift. This pairing comes up on the exam again and again.",
       followups: []
     },
     {
@@ -935,7 +935,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "Recognition-level: 'speed up database reads with an in-memory cache' = ElastiCache; 'MongoDB workload' = DocumentDB; 'relationships/connections between entities matter most' = Neptune.",
       noteLabel: "Remember:",
-      note: "Each is purpose-built: cache (ElastiCache), documents (DocumentDB), graphs/relationships (Neptune) — pick by data shape.",
+      note: "Each one is purpose-built. ElastiCache is for caching, DocumentDB is for documents, and Neptune is for graphs and relationships. Pick by the shape of your data.",
       followups: []
     },
     {
@@ -946,7 +946,7 @@ infra: {
       navLabel: "Exam angle:",
       nav: "Signal: 'migrate an on-premises database to AWS with minimal downtime.' Often paired with the Schema Conversion Tool (SCT) for heterogeneous engine changes.",
       noteLabel: "Remember:",
-      note: "DMS handles the data/engine migration itself; SCT converts schema/code when engines differ.",
+      note: "DMS handles the actual data and engine migration. SCT converts the schema and code when the engines differ.",
       followups: []
     }
   ]
@@ -966,7 +966,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'run ad-hoc SQL queries against log files in S3 without managing infrastructure' → Athena. Pay only per query (per data scanned).",
       noteLabel: "Remember:",
-      note: "Athena queries data in place in S3; it does not store or move the data itself."
+      note: "Athena queries data right where it sits in S3. It does not store or move the data itself."
     },
     {
       title: "AWS Glue",
@@ -976,7 +976,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'prepare/clean/transform data before analysis' or 'discover and catalog schemas across data lakes' → Glue. Athena and QuickSight can both use the Glue Data Catalog.",
       noteLabel: "Remember:",
-      note: "Glue = ETL + Catalog; Athena = query; QuickSight = visualize. They form a common serverless analytics pipeline together."
+      note: "Glue does ETL and the catalog. Athena queries. QuickSight visualizes. Together they form a common serverless analytics pipeline."
     },
     {
       title: "Amazon QuickSight",
@@ -986,7 +986,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'business dashboards for executives' or 'self-service BI/visualization' → QuickSight.",
       noteLabel: "Remember:",
-      note: "QuickSight is the visualization/dashboard layer — pairs with Athena/Redshift/Glue as data sources."
+      note: "QuickSight is the visualization and dashboard layer. It pairs with Athena, Redshift, or Glue as data sources."
     },
     {
       title: "Amazon EMR",
@@ -996,7 +996,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'process petabytes of data with Spark/Hadoop' or 'big data processing framework needing clusters' → EMR. Contrast with Athena/Glue which are serverless and framework-agnostic.",
       noteLabel: "Remember:",
-      note: "EMR = you still think in terms of clusters and frameworks; Athena/Glue = fully serverless, no cluster concept."
+      note: "With EMR, you still think in terms of clusters and frameworks. Athena and Glue are fully serverless, with no cluster to think about."
     },
     {
       title: "Amazon Kinesis (family)",
@@ -1006,7 +1006,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'real-time clickstream/IoT/log data ingestion and processing' → Kinesis. 'Deliver streaming data to a data store with minimal setup' → Firehose specifically.",
       noteLabel: "Remember:",
-      note: "Kinesis = real-time/streaming; Glue/EMR = batch-oriented (though EMR can do streaming via Spark Streaming)."
+      note: "Kinesis is for real-time streaming. Glue and EMR are batch-oriented, though EMR can also stream through Spark Streaming."
     },
     {
       title: "Amazon OpenSearch Service",
@@ -1016,7 +1016,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'full-text search engine' or 'centralized log analytics/observability' → OpenSearch Service. Formerly named 'Amazon Elasticsearch Service' — exam may reference either name.",
       noteLabel: "Remember:",
-      note: "Search + log analytics use case, distinct from Athena's ad-hoc SQL-over-S3 use case."
+      note: "This is the search and log-analytics use case. It is different from Athena's ad-hoc SQL-over-S3 use case."
     },
     {
       title: "Amazon SageMaker",
@@ -1026,7 +1026,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'build a custom ML model' or 'train and deploy your own model' → SageMaker. Contrast with the pre-built AI services below, which require no model-building.",
       noteLabel: "Remember:",
-      note: "SageMaker = build your own model. Rekognition/Comprehend/etc. = use AWS's pre-trained model via API call."
+      note: "SageMaker is for building your own model. Rekognition, Comprehend, and the rest use AWS's pre-trained models through a simple API call."
     },
     {
       title: "Pre-built AI Services (recognition set)",
@@ -1036,7 +1036,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Exam tests pattern-matching a keyword to a service name: 'scanned invoices/forms' → Textract; 'sentiment analysis of text' → Comprehend; 'detect objects/faces in images' → Rekognition; 'chatbot' → Lex; 'product recommendations' → Personalize; 'demand forecasting' → Forecast.",
       noteLabel: "Remember:",
-      note: "No ML expertise required for any of these — that's the whole selling point vs. SageMaker.",
+      note: "None of these need any ML expertise. That is the whole selling point compared with SageMaker.",
       followups: ["Which single word in a scenario maps to which AI service — build a mental keyword table before the exam."]
     },
     {
@@ -1047,7 +1047,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'decouple application components so a spike in one doesn't overwhelm another' → SQS. Point-to-point / one message consumed by one consumer (per queue).",
       noteLabel: "Remember:",
-      note: "SQS = queue = pull-based, decoupling. Not a broadcast mechanism."
+      note: "SQS is a queue. It is pull-based and used for decoupling. It is not a broadcast mechanism."
     },
     {
       title: "Amazon SNS (Simple Notification Service)",
@@ -1057,7 +1057,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'notify multiple subscribers/systems of an event at once' → SNS. Classic fan-out pattern: SNS topic → multiple SQS queues.",
       noteLabel: "Remember:",
-      note: "SNS = push, one-to-many broadcast. SQS = pull, one-to-one queue. This pairing is a top exam favorite."
+      note: "SNS is push: one-to-many broadcast. SQS is pull: a one-to-one queue. This pairing is a top exam favorite."
     },
     {
       title: "Amazon EventBridge",
@@ -1067,7 +1067,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'route events from many different AWS/SaaS sources based on content-based rules' → EventBridge. Broader/more flexible routing than SNS's simple topic model.",
       noteLabel: "Remember:",
-      note: "SQS = queue; SNS = pub/sub broadcast; EventBridge = event bus with rule-based routing across many sources including third-party SaaS."
+      note: "SQS is a queue. SNS is pub/sub broadcast. EventBridge is an event bus that routes by rules across many sources, including third-party SaaS."
     },
     {
       title: "AWS Step Functions",
@@ -1077,7 +1077,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'orchestrate a multi-step workflow/business process across services in a defined order' → Step Functions.",
       noteLabel: "Remember:",
-      note: "Step Functions coordinates the sequence/logic of a workflow, distinct from SQS/SNS/EventBridge which move individual messages/events."
+      note: "Step Functions coordinates the sequence and logic of a workflow. That is different from SQS, SNS, and EventBridge, which just move individual messages and events."
     },
     {
       title: "Amazon CloudWatch",
@@ -1087,7 +1087,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'monitor CPU/memory/performance metrics' or 'trigger an alarm/auto scaling action on a threshold' → CloudWatch.",
       noteLabel: "Remember:",
-      note: "CloudWatch = performance/operational monitoring (the 'what is happening / how is it performing'). Contrast directly with CloudTrail below."
+      note: "CloudWatch is performance and operational monitoring. It answers what is happening and how things are performing. Contrast it directly with CloudTrail below."
     },
     {
       title: "AWS CloudTrail",
@@ -1097,7 +1097,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'audit who made a change / deleted a resource / API call history for compliance investigation' → CloudTrail.",
       noteLabel: "Remember:",
-      note: "CloudWatch = performance monitoring. CloudTrail = API activity auditing/governance. This distinction is asked almost every exam sitting."
+      note: "CloudWatch is performance monitoring. CloudTrail is API activity auditing and governance. This distinction shows up on almost every exam sitting."
     },
     {
       title: "AWS Config",
@@ -1107,7 +1107,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'track configuration changes to resources over time' or 'assess/audit resource compliance against a rule' → AWS Config.",
       noteLabel: "Remember:",
-      note: "CloudTrail records the API call/action; Config records the resulting resource configuration state and evaluates compliance."
+      note: "CloudTrail records the API call or action. Config records the resulting resource configuration state and checks it for compliance."
     },
     {
       title: "AWS Systems Manager",
@@ -1117,7 +1117,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'centrally manage/patch fleets of servers' or 'securely store configuration values/secrets' or 'connect to an instance without SSH keys/open ports' → Systems Manager.",
       noteLabel: "Remember:",
-      note: "Session Manager specifically eliminates the need for bastion hosts and inbound SSH/RDP ports — a common security best-practice scenario."
+      note: "Session Manager removes the need for bastion hosts and inbound SSH or RDP ports. That is a common security best-practice scenario."
     },
     {
       title: "AWS Trusted Advisor",
@@ -1127,7 +1127,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'get recommendations on unused resources / security gaps / approaching service limits' → Trusted Advisor. Access to full check set scales with support plan (see Support Plans card).",
       noteLabel: "Remember:",
-      note: "Basic/Developer support: only 7 core security + service-limit checks. Business/Enterprise support: full access to all Trusted Advisor checks across all five categories."
+      note: "On Basic and Developer support, you get only the 7 core security and service-limit checks. On Business and Enterprise support, you get full access to all Trusted Advisor checks across all five categories."
     },
     {
       title: "AWS Organizations",
@@ -1137,7 +1137,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'manage billing for multiple accounts under one company' or 'restrict what actions accounts in a group can ever take' → Organizations + SCPs.",
       noteLabel: "Remember:",
-      note: "SCPs set a permission ceiling (what CAN be allowed) — they don't grant permissions themselves; IAM policies still grant the actual access within that ceiling."
+      note: "SCPs set a permission ceiling, meaning what can ever be allowed. They do not grant permissions themselves. IAM policies still grant the actual access within that ceiling."
     },
     {
       title: "AWS Control Tower",
@@ -1147,7 +1147,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'quickly set up a well-architected multi-account landing zone with governance guardrails out of the box' → Control Tower.",
       noteLabel: "Remember:",
-      note: "Control Tower automates and extends Organizations; Organizations alone is more manual/lower-level account/billing management."
+      note: "Control Tower automates and extends Organizations. Organizations on its own is more manual, lower-level account and billing management."
     },
     {
       title: "AWS CloudFormation",
@@ -1157,7 +1157,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'provision infrastructure repeatably/consistently via code/templates' or 'automate environment replication' → CloudFormation.",
       noteLabel: "Remember:",
-      note: "CloudFormation provisions the infrastructure itself (IaC); Config tracks/evaluates configuration after the fact. Different job entirely."
+      note: "CloudFormation provisions the infrastructure itself, as code. Config tracks and evaluates configuration after the fact. They do entirely different jobs."
     },
     {
       title: "AWS Well-Architected Tool",
@@ -1167,7 +1167,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'review a workload against AWS best practices across the well-architected pillars' → Well-Architected Tool.",
       noteLabel: "Remember:",
-      note: "Well-Architected Tool = workload-level architectural review; Trusted Advisor = account-wide automated checks. Complementary, not the same."
+      note: "The Well-Architected Tool does a workload-level architectural review. Trusted Advisor runs account-wide automated checks. They complement each other; they are not the same."
     },
     {
       title: "The 6 R's of Migration Strategy",
@@ -1177,7 +1177,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Exam gives a scenario description and asks 'which of the 6 R's does this describe?' — memorize each definition precisely, especially the distinction between Rehost and Replatform, and Repurchase vs Refactor.",
       noteLabel: "Remember:",
-      note: "Order of increasing effort/change (roughly): Retain/Retire → Rehost → Replatform → Repurchase → Refactor."
+      note: "Roughly in order of increasing effort and change: Retain and Retire, then Rehost, then Replatform, then Repurchase, then Refactor."
     },
     {
       title: "AWS Migration Hub & Application Discovery Service",
@@ -1187,7 +1187,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'central dashboard to track status of many migrations' → Migration Hub. 'Discover what's running on-prem before migrating' → Application Discovery Service.",
       noteLabel: "Remember:",
-      note: "Discovery happens first (know what you have) → Migration Hub tracks the move (know how far along you are). DMS (Database Migration Service) and the Snow Family handle the actual data/database transfer and are covered under infra/storage."
+      note: "Discovery comes first, so you know what you have. Then Migration Hub tracks the move, so you know how far along you are.<br><br>DMS (Database Migration Service) and the Snow Family handle the actual data and database transfer. Those are covered under infra and storage."
     },
     {
       title: "AWS Developer Tools (CI/CD suite)",
@@ -1197,7 +1197,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'automate build-test-deploy pipeline' → CodePipeline orchestrating the others. Exam tests recognition-level matching of each name to its pipeline stage.",
       noteLabel: "Remember:",
-      note: "Order mirrors the pipeline: Commit (source) → Build → Deploy → Pipeline (glues all stages together)."
+      note: "The names mirror the pipeline. Commit is source, then Build, then Deploy, and Pipeline glues all the stages together."
     },
     {
       title: "AWS Cloud9 & AWS X-Ray",
@@ -1207,7 +1207,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'browser-based code editor, no local setup' → Cloud9. 'Trace a request across multiple microservices to find where latency/errors occur' → X-Ray.",
       noteLabel: "Remember:",
-      note: "X-Ray = distributed tracing/debugging, distinct from CloudWatch's metrics/logs and CloudTrail's API audit trail."
+      note: "X-Ray is for distributed tracing and debugging. That is different from CloudWatch's metrics and logs, and from CloudTrail's API audit trail."
     },
     {
       title: "AWS IoT Core",
@@ -1217,7 +1217,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'connect and manage fleets of IoT/sensor devices to the cloud' → IoT Core. Recognition-level only for CCP.",
       noteLabel: "Remember:",
-      note: "Just know the name and one-line purpose — depth is not tested at CCP level."
+      note: "Just know the name and its one-line purpose. Depth is not tested at the CCP level."
     },
     {
       title: "AWS Support Plans: Basic & Developer",
@@ -1227,7 +1227,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'individual/learning account with no need for guaranteed response times' → Basic. 'Testing/early development, want some support access to a person' → Developer.",
       noteLabel: "Remember:",
-      note: "Basic = no case support at all, forums/docs only. Developer = first tier with an actual support case channel (email only, business hours)."
+      note: "Basic has no case support at all, just forums and docs. Developer is the first tier with a real support case channel, and it is email only during business hours."
     },
     {
       title: "AWS Support Plans: Business",
@@ -1237,7 +1237,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'production workloads on AWS, need 24/7 support and full Trusted Advisor access, but no dedicated account manager' → Business.",
       noteLabel: "Remember:",
-      note: "Business is the first tier with full Trusted Advisor access and the first with a sub-1-hour SLA (production down < 1 hr). No TAM yet."
+      note: "Business is the first tier with full Trusted Advisor access. It is also the first with a sub-1-hour SLA, since production down is under 1 hour. There is no TAM yet."
     },
     {
       title: "AWS Support Plans: Enterprise On-Ramp",
@@ -1247,7 +1247,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'wants some TAM-like guidance but not the full dedicated Enterprise cost' → Enterprise On-Ramp (pool of TAMs, concierge support team access).",
       noteLabel: "Remember:",
-      note: "On-Ramp is the bridge tier: TAM access exists but shared/pooled, not a single dedicated person like full Enterprise."
+      note: "On-Ramp is the bridge tier. TAM access exists, but it is shared and pooled, not a single dedicated person like full Enterprise."
     },
     {
       title: "AWS Support Plans: Enterprise",
@@ -1257,7 +1257,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'mission-critical workloads needing a dedicated named point of contact' or 'which plan includes a TAM' → Enterprise (dedicated TAM is exclusive to this tier; On-Ramp only gets a pooled TAM team).",
       noteLabel: "Remember:",
-      note: "Memorize the SLA ladder for 'production/business-critical system down': Business < 1 hr, Enterprise On-Ramp/Enterprise < 30 min / < 15 min respectively — Enterprise is fastest and only tier with a single dedicated TAM."
+      note: "Memorize the SLA ladder for a production or business-critical system being down. Business is under 1 hour. Enterprise On-Ramp is under 30 minutes, and Enterprise is under 15 minutes. Enterprise is the fastest, and the only tier with a single dedicated TAM."
     },
     {
       title: "AWS Technology Support Resources",
@@ -1267,7 +1267,7 @@ services: {
       navLabel: "Exam angle:",
       nav: "Scenario: 'find a certified third-party consulting partner to help with a migration' → AWS Partner Network. 'Look up a community-answered technical question for free' → AWS re:Post.",
       noteLabel: "Remember:",
-      note: "These resources are available at every support tier, including Basic — they are not gated by paid support plans."
+      note: "These resources are available at every support tier, including Basic. They are not locked behind paid support plans."
     }
   ]
 },
@@ -1286,7 +1286,7 @@ billing: {
       navLabel: "Exam angle:",
       nav: "Expect a question framing pay-as-you-go against traditional on-prem CapEx: AWS converts capital expense (buying servers) into variable operating expense (paying for usage). Also tested: economies of scale — AWS passes bulk-purchasing savings to customers via periodic price reductions.",
       noteLabel: "Remember:",
-      note: "No upfront investment, pay only for what you consume, stop paying when you stop using it. This is one of the core 'value proposition' pillars of cloud (elasticity, agility, cost).",
+      note: "No upfront investment. You pay only for what you consume, and you stop paying when you stop using it. This is one of cloud's core value-proposition pillars: elasticity, agility, and cost.",
       followups: [
         "How does pay-as-you-go change CapEx into OpEx?",
         "Name three different pricing dimensions across AWS services."
@@ -1300,7 +1300,7 @@ billing: {
       navLabel: "Exam angle:",
       nav: "The exam tests whether you can classify a given offer into the correct bucket, especially distinguishing '12 months from account creation' vs 'always free regardless of account age' vs 'trial starts on activation, time-boxed.'",
       noteLabel: "Remember:",
-      note: "12-months = new account clock. Always Free = no clock, no expiry. Trials = clock starts at service activation, short duration.",
+      note: "12 Months Free runs on a new-account clock. Always Free has no clock and never expires. Trials start their clock when you activate the service and last only a short time.",
       followups: [
         "A 2-year-old AWS account launches EC2 — does it get the 12-months-free tier?",
         "Which Free Tier type has no expiration date at all?"
@@ -1314,7 +1314,7 @@ billing: {
       navLabel: "Exam angle:",
       nav: "Scenario questions describe a workload (steady-state DB, flexible batch job, fault-tolerant/interruptible analytics) and ask which pricing model fits best. Steady predictable workload → Reserved/Savings Plans. Fault-tolerant, flexible timing, cost-sensitive → Spot. Unpredictable/short-term → On-Demand.",
       noteLabel: "Remember:",
-      note: "Discount order roughly: On-Demand (0%) < Savings Plans/RI (up to ~72%) < Spot (up to ~90%, but interruptible). Spot is never for critical always-on workloads.",
+      note: "Roughly by discount: On-Demand at 0%, then Savings Plans and RIs up to about 72%, then Spot up to about 90% but interruptible. Never use Spot for critical, always-on workloads.",
       followups: [
         "Which pricing model suits a fault-tolerant, interruptible batch analytics job?",
         "Why would a company choose a Savings Plan over a Reserved Instance?"
@@ -1328,7 +1328,7 @@ billing: {
       navLabel: "Exam angle:",
       nav: "Recognition-level only: know that Compute Savings Plans = maximum flexibility (multi-service), EC2 Instance Savings Plans = narrower scope but bigger discount than Compute SP.",
       noteLabel: "Remember:",
-      note: "Compute SP = flexible across compute services. EC2 Instance SP = specific family/region, higher discount.",
+      note: "Compute Savings Plans are flexible across compute services. EC2 Instance Savings Plans lock to a specific family and region, but give a higher discount.",
       followups: [
         "Which Savings Plan type also covers Fargate and Lambda usage?"
       ]
@@ -1341,7 +1341,7 @@ billing: {
       navLabel: "Exam angle:",
       nav: "Brief recognition item: if a company over-purchased RIs and no longer needs them, they can sell them on the RI Marketplace rather than let them go to waste.",
       noteLabel: "Remember:",
-      note: "RI Marketplace = secondary market for unused Standard RIs (not Convertible RIs).",
+      note: "The RI Marketplace is a secondary market for unused Standard RIs. It does not cover Convertible RIs.",
       followups: [
         "Can Convertible RIs be sold on the RI Marketplace?"
       ]
@@ -1354,7 +1354,7 @@ billing: {
       navLabel: "Exam angle:",
       nav: "Expect a conceptual ranking question: 'which is most expensive — same-AZ, cross-AZ same-region, or cross-region data transfer?' Answer: cross-region > cross-AZ > same-AZ, and inbound is generally cheaper than outbound.",
       noteLabel: "Remember:",
-      note: "IN = usually free. OUT to internet = costs money. Farther the hop (same AZ → cross-AZ → cross-region), the higher the cost.",
+      note: "Data IN is usually free. Data OUT to the internet costs money. The farther the hop, the more it costs: same AZ is cheapest, then cross-AZ, then cross-region.",
       followups: [
         "Why do architects try to keep chatty services in the same AZ?",
         "Which direction of data transfer is typically free?"
@@ -1368,7 +1368,7 @@ billing: {
       navLabel: "Exam angle:",
       nav: "Classic distractor set: Pricing Calculator (future/hypothetical estimate) vs Cost Explorer (past/current actual usage) vs Budgets (alerts on thresholds) vs CUR (raw detailed billing data). If the scenario says 'planning a new workload not yet deployed,' the answer is Pricing Calculator.",
       noteLabel: "Remember:",
-      note: "Pricing Calculator = estimate FUTURE costs for a not-yet-built or hypothetical architecture.",
+      note: "Use the Pricing Calculator to estimate future costs for an architecture you have not built yet, or a hypothetical one.",
       followups: [
         "A company wants to estimate costs before migrating a workload to AWS — which tool?"
       ]
@@ -1381,7 +1381,7 @@ billing: {
       navLabel: "Exam angle:",
       nav: "If the scenario says 'analyze spending trends over the last 6 months' or 'see which service is driving cost increases,' the answer is Cost Explorer, not the Pricing Calculator.",
       noteLabel: "Remember:",
-      note: "Cost Explorer = visualize/analyze PAST and CURRENT actual spend (plus light forecasting).",
+      note: "Use Cost Explorer to visualize and analyze your past and current actual spend. It also does light forecasting.",
       followups: [
         "How is Cost Explorer different from the Pricing Calculator in terms of time direction?"
       ]
@@ -1394,7 +1394,7 @@ billing: {
       navLabel: "Exam angle:",
       nav: "If the scenario says 'notify the finance team when spending exceeds $X' or 'alert before month-end forecast exceeds budget,' the answer is AWS Budgets, not Cost Explorer.",
       noteLabel: "Remember:",
-      note: "Budgets = set a threshold and get ALERTED when it's crossed (actual or forecasted).",
+      note: "Set a threshold in Budgets and it alerts you when you cross it, whether that is actual or forecasted spend.",
       followups: [
         "Does AWS Budgets automatically stop resources when a threshold is exceeded?"
       ]
@@ -1407,7 +1407,7 @@ billing: {
       navLabel: "Exam angle:",
       nav: "If the scenario mentions 'most detailed billing data available' or 'ingest billing data into a data lake / BI tool,' the answer is CUR — it is the raw source of truth, richer than what Cost Explorer's UI shows.",
       noteLabel: "Remember:",
-      note: "CUR = most granular/detailed billing and usage data, exportable to S3 for custom analysis.",
+      note: "The CUR is the most granular, detailed billing and usage data available. You can export it to S3 for custom analysis.",
       followups: [
         "Which billing tool provides the most granular line-item data, and where can it be delivered?"
       ]
@@ -1420,7 +1420,7 @@ billing: {
       navLabel: "Exam angle:",
       nav: "Know it exists as a distinct path from AWS Budgets: billing alerts must first be enabled in the Billing console, then a CloudWatch alarm is created against the EstimatedCharges metric.",
       noteLabel: "Remember:",
-      note: "CloudWatch billing alarm = simple threshold alert on estimated charges; AWS Budgets = more flexible, purpose-built budgeting/alerting tool.",
+      note: "A CloudWatch billing alarm is a simple threshold alert on estimated charges. AWS Budgets is the more flexible, purpose-built budgeting and alerting tool.",
       followups: [
         "What must be enabled first before a CloudWatch billing alarm can be created?"
       ]
@@ -1433,7 +1433,7 @@ billing: {
       navLabel: "Exam angle:",
       nav: "Recognition-level: 'unexpected spend spike, no manual threshold set' → Cost Anomaly Detection. 'Recommend a better/cheaper instance type for my workload' → Compute Optimizer.",
       noteLabel: "Remember:",
-      note: "Anomaly Detection = ML-based unusual-spend alerting. Compute Optimizer = rightsizing recommendations based on utilization.",
+      note: "Cost Anomaly Detection uses ML to alert you to unusual spend. Compute Optimizer gives rightsizing recommendations based on how much you actually use.",
       followups: [
         "Which service would recommend downsizing an underutilized EC2 instance?"
       ]
@@ -1446,7 +1446,7 @@ billing: {
       navLabel: "Exam angle:",
       nav: "Key exam point: consolidated billing gives pricing benefits (volume discounts, RI/Savings Plans sharing across accounts) but does NOT merge accounts operationally — each account still has separate usage reports and resource isolation.",
       noteLabel: "Remember:",
-      note: "One bill, pooled volume discounts and RI/SP sharing, but usage/resources remain separately tracked per account.",
+      note: "You get one bill, pooled volume discounts, and RI and Savings Plans sharing. Even so, usage and resources are still tracked separately per account.",
       followups: [
         "Does consolidated billing allow one account's RI discount to benefit usage in a different linked account?",
         "Is usage still tracked separately per account under consolidated billing?"
@@ -1460,7 +1460,7 @@ billing: {
       navLabel: "Exam angle:",
       nav: "This card is a pointer, not the full comparison — the detailed SLA/response-time table lives in the Support domain section. Here, just know that choosing a higher support tier costs more but also unlocks faster technical response and a named Technical Account Manager (Enterprise tiers), on top of billing/account support which is free at every tier.",
       noteLabel: "Remember:",
-      note: "Billing and account support = free for all customers, all tiers. Technical support = paid tiers only, cost scales with tier.",
+      note: "Billing and account support is free for every customer, on every tier. Technical support comes only with paid tiers, and the cost scales with the tier.",
       followups: [
         "Is billing/account support available on the free Basic support plan?"
       ]
@@ -1473,7 +1473,7 @@ billing: {
       navLabel: "Exam angle:",
       nav: "Brief recognition: know that Marketplace purchases show up as a line item on the same consolidated AWS invoice, rather than requiring a separate vendor billing relationship.",
       noteLabel: "Remember:",
-      note: "Marketplace software cost = billed through your existing AWS bill, not a separate invoice.",
+      note: "Marketplace software cost lands on your existing AWS bill, not on a separate invoice.",
       followups: [
         "Where does a Marketplace software charge appear — a separate vendor invoice or the AWS bill?"
       ]
