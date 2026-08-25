@@ -35,6 +35,19 @@ amex: {
     title: "American Express — risk & transaction data at scale (2024–present)",
     desc: "These are four projects pulled out of your Amex bullets: the Databricks and PySpark platform that runs the transaction and customer ETL, the Azure ingestion and source-onboarding layer, the data-quality and reliability work that covers CI/CD and on-call, and the FastAPI and RAG path that serves insights to downstream applications. Because this is a large financial institution, a platform or finance interviewer will push hardest on scale, on cost, on reliability, and on how you carry yourself inside a heavily regulated enterprise where mistakes are expensive."
   },
+  diagram: [
+    { label: "Sources / APIs" },
+    { arrow: true },
+    { label: "Azure Data Factory\n(orchestrate)" },
+    { arrow: true },
+    { label: "ADLS bronze\n(Delta, raw)", hl: true },
+    { arrow: true },
+    { label: "PySpark silver\n(conformed)" },
+    { arrow: true },
+    { label: "gold" },
+    { arrow: true },
+    { label: "Snowflake marts\n+ FastAPI / RAG" }
+  ],
   cards: [
     {
       title: "Project 1 — Databricks/PySpark ETL platform for transaction & customer data",
@@ -106,6 +119,19 @@ cedar: {
     title: "Cedar Gate Technologies — healthcare claims & clinical data (2022–2024)",
     desc: "These four projects are the healthcare-DE core of your resume: the pipeline that ingests HL7, FHIR, and EDI data, the migration off legacy batch scripts onto Airflow and dbt that gained 35% throughput, the validation and reconciliation framework that reduced claim denials, and the Kafka and CDC replication with dimensional modeling and HIPAA controls layered on top. A healthcare or data-platform interviewer will almost certainly spend more time here than anywhere else, because this is where the domain complexity and the compliance stakes are highest."
   },
+  diagram: [
+    { label: "EHR / Payer feeds\n(HL7v2 · FHIR · EDI)" },
+    { arrow: true },
+    { label: "parse +\nquarantine" },
+    { arrow: true },
+    { label: "raw immutable\n(by ingest date)", hl: true },
+    { arrow: true },
+    { label: "Airflow + dbt\n(incremental)" },
+    { arrow: true },
+    { label: "Snowflake\ndimensional" },
+    { arrow: true },
+    { label: "BI / reporting\n+ reconciliation" }
+  ],
   cards: [
     {
       title: "Project 1 — HL7v2 / FHIR / EDI ingestion into a centralized warehouse",
@@ -180,6 +206,19 @@ infodev: {
     title: "InfoDevelopers — software engineering & the DE foundation (2019–2022)",
     desc: "These two projects come from the earlier software-engineering role that seeded the data-engineering career: the predictive forecasting system that cut operational costs by 25%, and the pytest and Selenium test-automation framework. Interviewers use this period both to check that your foundations are solid and to understand the deliberate arc from software engineering into data engineering, so the goal on these cards is to show real depth while being honest about which parts you owned."
   },
+  diagram: [
+    { label: "Source systems" },
+    { arrow: true },
+    { label: "ETL pipeline" },
+    { arrow: true },
+    { label: "feature\nengineering", hl: true },
+    { arrow: true },
+    { label: "ARIMA + LSTM\n(held-out eval)" },
+    { arrow: true },
+    { label: "forecast" },
+    { arrow: true },
+    { label: "proactive ops\n(−25% cost)" }
+  ],
   cards: [
     {
       title: "Project 1 — Predictive forecasting system (−25% operational cost) + ETL",
@@ -215,3 +254,107 @@ infodev: {
 }
 
 };
+
+// Quiz — knowledge check spanning the three roles. Format: { q, options, correct (index) }.
+const QUIZ = [
+  {
+    q: "You confirm a Spark stage has a few tasks running 10x longer while most executors sit idle. What is this, and what does it tell you?",
+    options: [
+      "An undersized cluster — add more nodes",
+      "Data skew — more nodes wouldn't help; broadcast or salt the hot key",
+      "A memory leak — restart the job",
+      "Normal behaviour for large joins"
+    ],
+    correct: 1
+  },
+  {
+    q: "A Snowflake query that looks filtered still scans the whole table. Most likely cause?",
+    options: [
+      "The warehouse is too small",
+      "Missing an index on the filter column",
+      "A function wrapping the pruning column in WHERE defeats micro-partition pruning",
+      "Too many micro-partitions"
+    ],
+    correct: 2
+  },
+  {
+    q: "A batch of 837 claims contains malformed segments. What's the right handling?",
+    options: [
+      "Drop the bad records silently and continue",
+      "Fail the whole batch so nothing loads",
+      "Quarantine the bad records with the reason; let valid claims flow",
+      "Load them anyway and fix later"
+    ],
+    correct: 2
+  },
+  {
+    q: "Why land raw data as immutable Delta bronze before transforming it?",
+    options: [
+      "It's required by Delta Lake",
+      "So a later bug is a reprocess from raw, not a re-pull from the source",
+      "To save storage cost",
+      "Because Snowflake can't read raw files"
+    ],
+    correct: 1
+  },
+  {
+    q: "Why key Airflow tasks on the logical execution_date instead of wall-clock 'now'?",
+    options: [
+      "It's faster to compute",
+      "So runs are deterministic and re-runnable — backfills and retries process the correct window",
+      "Airflow requires it",
+      "To avoid timezone bugs only"
+    ],
+    correct: 1
+  },
+  {
+    q: "In the Kafka/CDC design, where does 'effectively exactly-once' actually come from?",
+    options: [
+      "Kafka guarantees exactly-once delivery by default",
+      "At-least-once delivery plus an idempotent, keyed upsert sink",
+      "Committing offsets before the write",
+      "Using a single partition"
+    ],
+    correct: 1
+  },
+  {
+    q: "Provider network status changes over time. Which modeling choice preserves correct historical reporting?",
+    options: [
+      "SCD Type 1 — overwrite with the current status",
+      "SCD Type 2 — effective-dated versions, facts join on surrogate key",
+      "Delete and reload the dimension nightly",
+      "Store status only on the fact table"
+    ],
+    correct: 1
+  },
+  {
+    q: "A pipeline passes every unit test but still loads bad data. Why, and what catches it?",
+    options: [
+      "The tests are wrong; rewrite them",
+      "Unit tests check your code, not upstream data — runtime data-quality gates catch it",
+      "It's impossible if coverage is 100%",
+      "Integration tests alone would have caught it"
+    ],
+    correct: 1
+  },
+  {
+    q: "An alerting threshold set to fire on any nonzero claim mismatch will mostly produce…",
+    options: [
+      "Perfect coverage of every issue",
+      "Noise the team learns to ignore — baseline and alert on deviation instead",
+      "Fewer false negatives with no downside",
+      "Lower compute cost"
+    ],
+    correct: 1
+  },
+  {
+    q: "Why evaluate a time-series forecasting model on chronological splits rather than a random split?",
+    options: [
+      "Random splits are slower to compute",
+      "A random split leaks future information and inflates accuracy",
+      "Chronological splits use less memory",
+      "It's only a convention, not a correctness issue"
+    ],
+    correct: 1
+  }
+];
