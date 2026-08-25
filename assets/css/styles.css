@@ -184,3 +184,14 @@ footer { text-align: center; color: var(--text-dim); font-size: 0.75rem; padding
   .progress-bar, .progress-wrap { width: 100%; }
   .topbar { flex-direction: column; align-items: flex-start; }
 }
+
+/* Floating theme toggle (injected by script.js) */
+#theme-toggle {
+  position: fixed; bottom: 1.1rem; right: 1.1rem; z-index: 50;
+  width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border);
+  box-shadow: var(--shadow); font-size: 1.15rem; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+#theme-toggle:hover { transform: translateY(-2px); border-color: var(--accent); }
