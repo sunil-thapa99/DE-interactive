@@ -19,6 +19,11 @@
   </p>
 </div>
 
+<div class="search-wrap">
+  <input id="tech-search" type="search" placeholder="Search modules — e.g. spark, kafka, star schema, RLS, generators, kubernetes…" autocomplete="off" />
+</div>
+<p class="no-results" id="noResults" style="display:none">No modules match your search.</p>
+
 <div class="section">
   <h2>Technologies</h2>
   <div class="tech-grid">
@@ -82,6 +87,33 @@
       <p><strong>What it is:</strong> The transformation layer of the modern data stack &mdash; the "T" in ELT. SQL SELECTs plus software engineering (version control, a testable dependency DAG, data tests, docs/lineage) that turn raw warehouse tables into trustworthy models, executed by the warehouse.</p>
       <p><strong>Why use it:</strong> It replaces untested, warehouse-locked stored procs and ad-hoc SQL scripts with modular, tested, documented, environment-portable transformations &mdash; and it's the tool most analytics-engineering roles are built around.</p>
       <p><strong>Covers:</strong> Models/ref/sources &amp; the DAG, materializations, incremental models &amp; strategies, testing (generic/singular/unit), snapshots (SCD2) &amp; seeds, Jinja/macros/packages, project layering (staging/intermediate/marts), deployment &amp; Slim CI (state:modified/defer), docs/lineage/exposures, contracts &amp; governance, the semantic layer, and interview Q&amp;A with answered follow-ups.</p>
+      <span class="tag">Available now</span>
+    </a>
+
+    <a class="tech-card" href="technologies/python/index.html">
+      <span class="icon">&#128013;</span>
+      <h3>Python for Data Engineering</h3>
+      <p><strong>What it is:</strong> The DE lingua franca &mdash; the language your pipelines, transforms, orchestration glue, and PySpark jobs are written in, focused on what interviewers actually test rather than general Python trivia.</p>
+      <p><strong>Why use it:</strong> The coding screen and the "make this not fall over on a big file" questions turn on generators, vectorization, memory, and testable transforms &mdash; the difference between a script and a production pipeline.</p>
+      <p><strong>Covers:</strong> Core language (data structures &amp; complexity, comprehensions, generators, context managers, decorators, gotchas), pandas (vectorization, chunking, dtypes/memory, when it breaks down), performance (streaming, the GIL, profiling, Parquet), testing (pytest, pure transforms, mocking IO), and interview Q&amp;A.</p>
+      <span class="tag">Available now</span>
+    </a>
+
+    <a class="tech-card" href="technologies/devops/index.html">
+      <span class="icon">&#128230;</span>
+      <h3>Docker, Kubernetes &amp; CI/CD</h3>
+      <p><strong>What it is:</strong> The deploy story for data work &mdash; containerizing jobs with Docker, running batch on Kubernetes, shipping pipelines through CI/CD, and provisioning infra as code.</p>
+      <p><strong>Why use it:</strong> "How do you actually ship and run this?" separates someone who edits jobs by hand from someone who treats pipelines as reproducible, tested, rollback-able software.</p>
+      <p><strong>Covers:</strong> Docker (layers/caching, multi-stage, slim/non-root images, a real job Dockerfile), Kubernetes (pods/deployments, Jobs &amp; CronJobs, requests/limits, Airflow/Spark on K8s, when not to), CI/CD (tests, staged promotion, gated deploys, rollback, GitHub Actions), infra as code (Terraform), and interview Q&amp;A.</p>
+      <span class="tag">Available now</span>
+    </a>
+
+    <a class="tech-card" href="technologies/powerbi/index.html">
+      <span class="icon">&#128200;</span>
+      <h3>Power BI &amp; Tableau</h3>
+      <p><strong>What it is:</strong> The BI &amp; visualization layer from a data engineer's seat &mdash; modeling the warehouse so dashboards are fast, and understanding the two dominant BI engines well enough to serve and secure them.</p>
+      <p><strong>Why use it:</strong> A DE owns the model BI sits on; the interview turns on star-schema-for-BI, import vs DirectQuery, row vs filter context, and per-user security, not on dragging fields onto a canvas.</p>
+      <p><strong>Covers:</strong> Modeling for BI (star schema, grain, date dimension, many-to-many traps), Power BI (VertiPaq, import vs DirectQuery, DAX &amp; contexts, dataflows, incremental refresh, RLS), Tableau (extracts vs live, LOD expressions, order of operations), performance, and interview Q&amp;A.</p>
       <span class="tag">Available now</span>
     </a>
   </div>
@@ -201,6 +233,52 @@
 <footer>
   <p>Built for learning purposes. Source on <a href="https://github.com/sunil-thapa99/DE-interactive" style="color:inherit">GitHub</a>.</p>
 </footer>
+
+<script>
+// Theme toggle — home page has no script.js, so this mirrors its theme logic.
+(function () {
+  var saved = localStorage.getItem("de-theme");
+  if (saved) document.documentElement.setAttribute("data-theme", saved);
+  var btn = document.createElement("button");
+  btn.id = "theme-toggle"; btn.type = "button"; btn.title = "Toggle light / dark";
+  function eff() {
+    return document.documentElement.getAttribute("data-theme")
+      || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  }
+  function paint() { btn.textContent = eff() === "dark" ? "☀️" : "🌙"; }
+  btn.addEventListener("click", function () {
+    var next = eff() === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("de-theme", next);
+    paint();
+  });
+  paint();
+  document.body.appendChild(btn);
+})();
+
+// Client-side module search — filters cards by text, hides empty sections.
+(function () {
+  var input = document.getElementById("tech-search");
+  var noResults = document.getElementById("noResults");
+  if (!input) return;
+  var cards = Array.prototype.slice.call(document.querySelectorAll(".tech-card"));
+  var sections = Array.prototype.slice.call(document.querySelectorAll(".section"));
+  input.addEventListener("input", function () {
+    var q = input.value.trim().toLowerCase();
+    var anyVisible = false;
+    cards.forEach(function (c) {
+      var match = !q || c.textContent.toLowerCase().indexOf(q) !== -1;
+      c.style.display = match ? "" : "none";
+      if (match) anyVisible = true;
+    });
+    sections.forEach(function (s) {
+      var visibleInSection = s.querySelectorAll('.tech-card:not([style*="display: none"])').length;
+      s.classList.toggle("is-empty", q && visibleInSection === 0);
+    });
+    noResults.style.display = (q && !anyVisible) ? "" : "none";
+  });
+})();
+</script>
 
 </body>
 </html>

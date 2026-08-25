@@ -1,3 +1,27 @@
+// Theme toggle — CSS already defines the [data-theme] light/dark overrides; this just
+// persists an explicit choice and injects the floating button. ponytail: duplicated as a
+// small inline snippet on the home page, which doesn't load this script.
+(function initTheme() {
+  const saved = localStorage.getItem("de-theme");
+  if (saved) document.documentElement.setAttribute("data-theme", saved);
+  const btn = document.createElement("button");
+  btn.id = "theme-toggle";
+  btn.type = "button";
+  btn.title = "Toggle light / dark";
+  const eff = () => document.documentElement.getAttribute("data-theme")
+    || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  const paint = () => { btn.textContent = eff() === "dark" ? "☀️" : "🌙"; };
+  btn.addEventListener("click", () => {
+    const next = eff() === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("de-theme", next);
+    paint();
+  });
+  paint();
+  if (document.body) document.body.appendChild(btn);
+  else document.addEventListener("DOMContentLoaded", () => document.body.appendChild(btn));
+})();
+
 (function () {
   const app = document.getElementById("app");
   const tabs = document.querySelectorAll(".tab");
