@@ -63,6 +63,15 @@
       <span class="tag">Available now</span>
     </a>
 
+    <a class="tech-card" href="technologies/delta/index.html">
+      <span class="icon">&#9651;&#65039;</span>
+      <h3>Delta Lake Deep-Dive</h3>
+      <p><strong>What it is:</strong> Delta Lake from the inside &mdash; the transaction log that turns a folder of Parquet into an ACID table, and everything that falls out of it: upserts, time travel, schema enforcement, and the performance layout levers. Goes deeper than the Databricks module's overview.</p>
+      <p><strong>Why use it:</strong> Interviewers push past "Delta gives you MERGE" into the internals &mdash; how the _delta_log computes state, how optimistic concurrency keeps writes safe, how time travel and data skipping actually work; tracing every feature back to the log is the senior signal.</p>
+      <p><strong>Covers:</strong> The transaction log (commits/checkpoints/state replay) &amp; Delta-vs-Iceberg-vs-Hudi, ACID &amp; optimistic concurrency &amp; schema enforcement/evolution, DML (MERGE, SCD2, GDPR deletes + VACUUM, streaming sinks &amp; exactly-once), time travel/RESTORE/retention, performance (data skipping, OPTIMIZE, Z-order, liquid clustering, deletion vectors), and interview Q&amp;A.</p>
+      <span class="tag">Available now</span>
+    </a>
+
     <a class="tech-card" href="technologies/airflow/index.html">
       <span class="icon">&#127939;</span>
       <h3>Apache Airflow</h3>
