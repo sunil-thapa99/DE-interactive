@@ -81,6 +81,15 @@
       <span class="tag">Available now</span>
     </a>
 
+    <a class="tech-card" href="technologies/iceberg/index.html">
+      <span class="icon">&#128011;</span>
+      <h3>Apache Iceberg Deep-Dive</h3>
+      <p><strong>What it is:</strong> The engine-neutral open table format from the inside &mdash; the catalog&rarr;metadata&rarr;manifest&rarr;data tree that turns Parquet on object storage into an ACID, evolvable table read by Spark, Trino, Flink, Snowflake, BigQuery, and DuckDB alike.</p>
+      <p><strong>Why use it:</strong> Iceberg is the de-facto industry-standard table format, and interviewers push past "it's like Delta" into the internals &mdash; how the metadata tree computes state, how the atomic pointer swap gives ACID, how hidden partitioning and true partition/schema evolution work, and why the catalog is the real decision; tracing every feature back to the tree is the senior signal.</p>
+      <p><strong>Covers:</strong> The metadata tree &amp; Iceberg-vs-Delta-vs-Hudi, snapshots &amp; optimistic-concurrency commits &amp; the catalog (REST/Polaris/Nessie), time travel/rollback/incremental reads/branching (write-audit-publish), hidden partitioning + partition &amp; schema evolution (field IDs), row-level deletes (CoW vs MoR), maintenance (compaction, expire snapshots, orphan files) &amp; data skipping, and interview Q&amp;A.</p>
+      <span class="tag">Available now</span>
+    </a>
+
     <a class="tech-card" href="technologies/airflow/index.html">
       <span class="icon">&#127939;</span>
       <h3>Apache Airflow</h3>
